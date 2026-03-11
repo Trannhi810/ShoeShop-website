@@ -1,14 +1,25 @@
-const express = require("express");
-const connectDB = require("./config/database");
+const express = require("express")
+const path = require("path")
 
-const app = express();
+const connectDB = require("./config/database")
+const productRoutes = require("./routes/productRoutes")
 
-connectDB();
+const app = express()
 
-app.get("/", (req, res) => {
-  res.send("API running");
-});
+app.use(express.json())
 
-app.listen(5000, () => {
-  console.log("Server running on port 5000");
-});
+connectDB()
+
+// API
+app.use("/api/products", productRoutes)
+
+// serve frontend
+app.use(express.static(path.join(__dirname, "../Frontend")))
+
+app.get("/", (req,res)=>{
+    res.sendFile(path.join(__dirname, "../Frontend/index.html"))
+})
+
+app.listen(5000, ()=>{
+    console.log("Server running http://localhost:5000")
+})
