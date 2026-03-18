@@ -1,25 +1,32 @@
-const express = require("express")
-const path = require("path")
+require("dotenv").config();
+const express = require("express");
+const path = require("path");
 
-const connectDB = require("./config/database")
-const productRoutes = require("./routes/productRoutes")
+const connectDB = require("./config/database");
+const productRoutes = require("./routes/productRoutes");
+const userRoutes = require("./routes/userRoutes");
 
-const app = express()
+const app = express();
 
-app.use(express.json())
+app.use(express.json());
 
-connectDB()
+// Gọi hàm kết nối database
+connectDB();
 
 // API
-app.use("/api/products", productRoutes)
+app.use("/api/products", productRoutes);
+app.use("/api/users", userRoutes);
 
-// serve frontend
-app.use(express.static(path.join(__dirname, "../Frontend")))
+// Serve frontend
+app.use(express.static(path.join(__dirname, "../Frontend")));
 
-app.get("/", (req,res)=>{
-    res.sendFile(path.join(__dirname, "../Frontend/index.html"))
-})
+app.get("/", (req, res) => {
+    res.sendFile(path.join(__dirname, "../Frontend/index.html"));
+});
 
-app.listen(5000, ()=>{
-    console.log("Server running http://localhost:5000")
-})
+// Ưu tiên dùng PORT trong file .env, nếu không có thì chạy port 5000
+const PORT = process.env.PORT || 5000;
+
+app.listen(PORT, () => {
+    console.log(`Server running at http://localhost:${PORT}`);
+});
