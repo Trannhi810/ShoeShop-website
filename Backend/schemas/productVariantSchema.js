@@ -1,13 +1,12 @@
-const mongoose = require('mongoose');
-
-const productVariantSchema = new mongoose.Schema(
-  {
-    productId: { type: mongoose.Schema.Types.ObjectId, ref: 'Product' },
-    size: { type: String },
-    color: { type: String },
-    stock: { type: Number, default: 0 },
+const productVariantSchema = new mongoose.Schema({
+  productId: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: "Product"
   },
-  { timestamps: true }
-);
+  size: String,
+  color: String,
+  price: Number,
+  stock: Number
+}, { timestamps: true });
 
-module.exports = mongoose.model('ProductVariant', productVariantSchema);
+module.exports = mongoose.model("ProductVariant", productVariantSchema);
