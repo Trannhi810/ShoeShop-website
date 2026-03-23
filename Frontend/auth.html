@@ -311,8 +311,26 @@
             0% { transform: rotate(0deg); }
             100% { transform: rotate(360deg); }
         }
+        .divider {
+            display: flex;
+            align-items: center;
+            text-align: center;
+            margin: 20px 0;
+            color: var(--text-muted);
+            font-size: 0.9rem;
+        }
 
+        .divider::before, .divider::after {
+            content: '';
+            flex: 1;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .divider span {
+            padding: 0 10px;
+        }
     </style>
+    <script src="https://accounts.google.com/gsi/client" async defer></script>
 </head>
 <body>
 
@@ -343,6 +361,27 @@
                         <span class="btn-text">Đăng nhập</span>
                         <div class="loading-spinner"></div>
                     </button>
+                    
+                    <div class="divider"><span>Hoặc đăng nhập bằng</span></div>
+                    
+                    <!-- Phần hiển thị nút Google theo chuẩn GSI -->
+                    <div style="display: flex; justify-content: center; width: 100%;">
+                        <div id="g_id_onload"
+                             data-client_id="839295398542-omtv5qflf1qgej5b1dpotj95a4d80qeg.apps.googleusercontent.com"
+                             data-context="signin"
+                             data-ux_mode="popup"
+                             data-callback="handleGoogleCallback"
+                             data-auto_prompt="false">
+                        </div>
+                        <div class="g_id_signin"
+                             data-type="standard"
+                             data-shape="rectangular"
+                             data-theme="outline"
+                             data-text="signin_with"
+                             data-size="large"
+                             data-logo_alignment="left">
+                        </div>
+                    </div>
                 </form>
             </div>
 
@@ -540,6 +579,34 @@
                 showMessage('Lỗi kết nối tới máy chủ', 'error');
             } finally {
                 toggleLoading('btn-register', false);
+            }
+        }
+
+        async function handleGoogleCallback(response) {
+            const token = response.credential;
+            showMessage('Đang xác thực với Google...', 'success');
+
+            try {
+                const res = await fetch('/api/users/google-login', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ token })
+                });
+                const data = await res.json();
+                
+                if (res.ok) {
+                    showMessage('Đăng nhập Google thành công! Đang chuyển hướng...', 'success');
+                    localStorage.setItem('shoeshop_token', data.token);
+                    localStorage.setItem('shoeshop_user', JSON.stringify(data.user));
+                    
+                    setTimeout(() => {
+                        window.location.href = '/index.html'; 
+                    }, 1000);
+                } else {
+                    showMessage(data.message || 'Xác thực Google thất bại', 'error');
+                }
+            } catch (error) {
+                showMessage('Lỗi kết nối tới máy chủ', 'error');
             }
         }
 

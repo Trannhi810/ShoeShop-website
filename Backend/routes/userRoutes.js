@@ -1,6 +1,6 @@
 const express = require('express');
 
-const { register, login, getProfile, updateProfile } = require('../controllers/userController');
+const { register, login, getProfile, updateProfile, googleLogin } = require('../controllers/userController');
 const { verifyToken } = require('../middlewares/authMiddleware');
 
 const router = express.Router();
@@ -8,6 +8,7 @@ const router = express.Router();
 // Routes Authentication
 router.post('/register', register);
 router.post('/login', login);
+router.post('/google-login', googleLogin);
 
 // Routes truy cập Profile (Yêu cầu đăng nhập)
 router.get('/profile', verifyToken, getProfile);
