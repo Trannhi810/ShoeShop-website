@@ -30,39 +30,81 @@ h1{
 
 <body>
 
-<h1>Danh sách giày</h1>
+<div style="display: flex; justify-content: space-between; align-items: center; background: #eee; padding: 10px 20px;">
+    <h1>Trang Chủ Danh Sách Giày</h1>
+    <div id="user-info"></div>
+</div>
 
-<button onclick="loadProducts()">Load Products</button>
+<div style="margin:20px 0;">
+    <button onclick="loadProducts()">Tải Danh Sách Giày</button>
+    <button id="btn-admin" style="display:none;" onclick="alert('Demo: Khu vực Admin')">Trang Quản Trị (Admin Only)</button>
+</div>
 
 <div id="product-list"></div>
 
 <script>
+    // Kiểm tra đăng nhập
+    const token = localStorage.getItem('shoeshop_token');
+    const userStr = localStorage.getItem('shoeshop_user');
+    let user = null;
 
-async function loadProducts(){
-    try{
+    if (!token) {
+        alert("Vui lòng đăng nhập!");
+        window.location.href = '/auth.html';
+    } else {
+        user = JSON.parse(userStr);
+        document.getElementById('user-info').innerHTML = `
+            <p>Xin chào: <b>${user.fullName}</b> (<i>${user.role}</i>)</p>
+            <button onclick="logout()">Đăng Xuất</button>
+        `;
 
-        // gọi API backend
-        const res = await fetch("/api/products")
-        const data = await res.json()
-
-        const list = document.getElementById("product-list")
-        list.innerHTML = ""
-
-        data.forEach(p => {
-            const html = `
-                <div class="product">
-                    <h3>${p.name}</h3>
-                    <p>Price: ${p.price}$</p>
-                </div>
-            `
-            list.innerHTML += html
-        })
-
-    }catch(err){
-        console.log(err)
-        alert("Cannot connect to backend")
+        if(user.role === 'Admin'){
+            document.getElementById('btn-admin').style.display = 'inline-block';
+        }
     }
-}
+
+    function logout() {
+        localStorage.removeItem('shoeshop_token');
+        localStorage.removeItem('shoeshop_user');
+        window.location.href = '/auth.html';
+    }
+
+    async function loadProducts(){
+        try{
+            // Gọi API có kèm Token JWT
+            const res = await fetch("/api/products", {
+                headers: {
+                    'Authorization': 'Bearer ' + token
+                }
+            });
+            const data = await res.json();
+            
+            if(!res.ok){
+                alert(data.message || 'Lỗi lấy sản phẩm');
+                return;
+            }
+
+            const list = document.getElementById("product-list");
+            list.innerHTML = "";
+
+            data.forEach(p => {
+                const html = `
+                    <div class="product">
+                        <h3>${p.name}</h3>
+                        <p>Price: ${p.price}$</p>
+                        <p><i>ID: ${p._id}</i></p>
+                    </div>
+                `;
+                list.innerHTML += html;
+            });
+
+        } catch(err){
+            console.log(err);
+            alert("Không thể kết nối Backend");
+        }
+    }
+
+
 
 </script>
 

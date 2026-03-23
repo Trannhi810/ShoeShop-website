@@ -32,6 +32,7 @@ const register = async (req, res) => {
       fullName,
       phone,
       address,
+      role: 'Customer' // Bắt buộc mọi tài khoản đăng ký mới là Customer
     });
 
     const token = generateToken(user);
@@ -88,7 +89,48 @@ const login = async (req, res) => {
   }
 };
 
+const getProfile = async (req, res) => {
+  try {
+    const user = await User.findById(req.user.id).select('-password');
+    if (!user) {
+      return res.status(404).json({ message: 'Không tìm thấy người dùng' });
+    }
+    return res.status(200).json(user);
+  } catch (error) {
+    return res.status(500).json({ message: error.message });
+  }
+};
+
+const updateProfile = async (req, res) => {
+  try {
+    const { fullName, phone, address } = req.body;
+    const user = await User.findById(req.user.id);
+
+    if (!user) {
+      return res.status(404).json({ message: 'Không tìm thấy người dùng' });
+    }
+
+    user.fullName = fullName || user.fullName;
+    user.phone = phone || user.phone;
+    user.address = address || user.address;
+
+    const updatedUser = await user.save();
+    return res.status(200).json({
+      id: updatedUser._id,
+      email: updatedUser.email,
+      role: updatedUser.role,
+      fullName: updatedUser.fullName,
+      phone: updatedUser.phone,
+      address: updatedUser.address,
+    });
+  } catch (error) {
+    return res.status(500).json({ message: error.message });
+  }
+};
+
 module.exports = {
   register,
   login,
+  getProfile,
+  updateProfile,
 };
