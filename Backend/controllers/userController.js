@@ -1,5 +1,8 @@
 const bcrypt = require('bcrypt');
 const jwt = require('jsonwebtoken');
+const { OAuth2Client } = require('google-auth-library');
+const GOOGLE_CLIENT_ID = "839295398542-omtv5qflf1qgej5b1dpotj95a4d80qeg.apps.googleusercontent.com";
+const client = new OAuth2Client(GOOGLE_CLIENT_ID);
 
 const User = require('../schemas/userSchema');
 
@@ -32,6 +35,7 @@ const register = async (req, res) => {
       fullName,
       phone,
       address,
+      role: 'Customer' // Bắt buộc mọi tài khoản đăng ký mới là Customer
     });
 
     const token = generateToken(user);
@@ -88,7 +92,98 @@ const login = async (req, res) => {
   }
 };
 
+const getProfile = async (req, res) => {
+  try {
+    const user = await User.findById(req.user.id).select('-password');
+    if (!user) {
+      return res.status(404).json({ message: 'Không tìm thấy người dùng' });
+    }
+    return res.status(200).json(user);
+  } catch (error) {
+    return res.status(500).json({ message: error.message });
+  }
+};
+
+const updateProfile = async (req, res) => {
+  try {
+    const { fullName, phone, address } = req.body;
+    const user = await User.findById(req.user.id);
+
+    if (!user) {
+      return res.status(404).json({ message: 'Không tìm thấy người dùng' });
+    }
+
+    user.fullName = fullName || user.fullName;
+    user.phone = phone || user.phone;
+    user.address = address || user.address;
+
+    const updatedUser = await user.save();
+    return res.status(200).json({
+      id: updatedUser._id,
+      email: updatedUser.email,
+      role: updatedUser.role,
+      fullName: updatedUser.fullName,
+      phone: updatedUser.phone,
+      address: updatedUser.address,
+    });
+  } catch (error) {
+    return res.status(500).json({ message: error.message });
+  }
+};
+
+const googleLogin = async (req, res) => {
+  try {
+    const { token } = req.body;
+    
+    // Nếu bạn muốn test thật thì điền GOOGLE_CLIENT_ID ở file .env
+    // Còn nếu không, fake verify hoặc đổi audience cẩn thận 
+    // Tuy nhiên ở code bài tập ta sẽ gọi chuẩn hàm verifyIdToken 
+    // (Lưu ý: google auth library sẽ báo lỗi nếu xài ID sai, hãy dùng Client ID thật nếu cần)
+
+    const ticket = await client.verifyIdToken({
+      idToken: token,
+      audience: GOOGLE_CLIENT_ID,
+    });
+    
+    const payload = ticket.getPayload();
+    const { email, name, picture, sub: googleId } = payload;
+
+    let user = await User.findOne({ email });
+
+    if (!user) {
+      // Nếu chưa tồn tại -> Tự động đăng ký
+      user = await User.create({
+        email,
+        fullName: name,
+        googleId,
+        role: 'Customer', // Mặc định role là Customer
+      });
+    }
+
+    // Đăng nhập thành công, tạo JWT nội bộ
+    const appToken = generateToken(user);
+
+    return res.status(200).json({
+      token: appToken,
+      user: {
+        id: user._id,
+        email: user.email,
+        role: user.role,
+        fullName: user.fullName,
+        phone: user.phone,
+        address: user.address,
+        picture, 
+      },
+    });
+  } catch (error) {
+    return res.status(401).json({ message: "Xác thực Google thất bại!", error: error.message });
+  }
+};
+
 module.exports = {
   register,
   login,
+  getProfile,
+  updateProfile,
+  googleLogin,
 };
