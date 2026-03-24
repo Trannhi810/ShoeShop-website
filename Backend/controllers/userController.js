@@ -35,7 +35,7 @@ const register = async (req, res) => {
       fullName,
       phone,
       address,
-      role: 'Customer' // Bắt buộc mọi tài khoản đăng ký mới là Customer
+      role: 'CUSTOMER' // Bắt buộc mọi tài khoản đăng ký mới là Customer
     });
 
     const token = generateToken(user);
@@ -156,7 +156,7 @@ const googleLogin = async (req, res) => {
         email,
         fullName: name,
         googleId,
-        role: 'Customer', // Mặc định role là Customer
+        role: 'CUSTOMER', // Mặc định role là Customer
       });
     }
 
