@@ -1,0 +1,128 @@
+<header class="site-header">
+  <div class="header-inner">
+
+    <!-- LOGO -->
+    <div class="logo">
+      <a href="/Frontend/index.html">ShoeShop</a>
+    </div>
+
+    <!-- MENU -->
+    <nav class="main-nav">
+      <a href="/Frontend/index.html">Trang chủ</a>
+      <a href="/Frontend/pages/products.html">Sản phẩm</a>
+      <a href="/Frontend/pages/cart.html">Giỏ hàng</a>
+    </nav>
+
+    <!-- RIGHT -->
+    <div class="header-right" id="headerRight"></div>
+
+  </div>
+</header>
+
+<style>
+.site-header {
+  background: #111;
+  color: white;
+}
+
+.header-inner {
+  width: 1200px;
+  max-width: calc(100% - 40px);
+  margin: 0 auto;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 14px 0;
+}
+
+.logo a {
+  color: white;
+  font-size: 22px;
+  font-weight: bold;
+  text-decoration: none;
+}
+
+.main-nav {
+  display: flex;
+  gap: 20px;
+}
+
+.main-nav a {
+  color: #ddd;
+  text-decoration: none;
+  font-weight: 500;
+}
+
+.main-nav a:hover {
+  color: white;
+}
+
+.header-right {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.header-link {
+  color: #ddd;
+  text-decoration: none;
+}
+
+.header-link:hover {
+  color: white;
+}
+
+.header-btn {
+  background: #e63946;
+  color: white;
+  border: none;
+  padding: 8px 12px;
+  border-radius: 6px;
+  cursor: pointer;
+}
+
+.user-text {
+  font-size: 14px;
+}
+</style>
+
+<script>
+function renderHeaderAuth() {
+  const headerRight = document.getElementById("headerRight");
+  const user = JSON.parse(localStorage.getItem("shoeshop_current_user_v1"));
+
+  if (!headerRight) return;
+
+  if (user) {
+    let extra = "";
+
+    if (user.role === "admin") {
+      extra += `<a class="header-link" href="/Frontend/pages/admin-dashboard.html">Admin</a>`;
+    }
+
+    if (user.role === "staff") {
+      extra += `<a class="header-link" href="/Frontend/pages/staff-dashboard.html">Staff</a>`;
+    }
+
+    if (user.role === "customer") {
+      extra += `<a class="header-link" href="/Frontend/pages/orders.html">Đơn hàng</a>`;
+    }
+
+    headerRight.innerHTML = `
+      ${extra}
+      <span class="user-text">Xin chào, ${user.fullName || user.email}</span>
+      <button class="header-btn" onclick="logout()">Đăng xuất</button>
+    `;
+  } else {
+    headerRight.innerHTML = `
+      <a class="header-link" href="/Frontend/pages/login.html">Đăng nhập</a>
+      <a class="header-link" href="/Frontend/pages/register.html">Đăng ký</a>
+    `;
+  }
+}
+
+function logout() {
+  localStorage.removeItem("shoeshop_current_user_v1");
+  window.location.href = "/Frontend/index.html";
+}
+</script>

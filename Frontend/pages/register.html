@@ -1,0 +1,265 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Đăng ký - ShoeShop</title>
+  <link rel="stylesheet" href="/Frontend/css/layout.css" />
+  <link rel="stylesheet" href="/Frontend/css/auth.css" />
+  <style>
+    .auth-page {
+      min-height: 75vh;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      padding: 40px 20px;
+      background: linear-gradient(135deg, #f6f6f6, #ffffff);
+    }
+
+    .auth-box {
+      width: 460px;
+      max-width: 100%;
+      background: white;
+      border: 1px solid #e5e5e5;
+      border-radius: 20px;
+      padding: 28px;
+      box-shadow: 0 14px 40px rgba(0,0,0,0.08);
+    }
+
+    .auth-box h1 {
+      margin-bottom: 10px;
+      font-size: 32px;
+    }
+
+    .auth-subtitle {
+      color: #666;
+      margin-bottom: 20px;
+      line-height: 1.5;
+    }
+
+    .auth-form {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+
+    .auth-form label {
+      font-weight: 600;
+    }
+
+    .auth-form input,
+    .auth-form select {
+      padding: 12px 14px;
+      border: 1px solid #ccc;
+      border-radius: 10px;
+      font-size: 15px;
+    }
+
+    .auth-form button {
+      margin-top: 8px;
+      padding: 12px;
+      border: none;
+      border-radius: 10px;
+      background: #111;
+      color: white;
+      font-size: 15px;
+      font-weight: 600;
+      cursor: pointer;
+    }
+
+    .auth-bottom {
+      margin-top: 18px;
+      text-align: center;
+    }
+
+    .auth-bottom a {
+      font-weight: 700;
+      color: #111;
+      text-decoration: none;
+    }
+
+    .msg {
+      margin-top: 14px;
+      font-size: 14px;
+      color: #d62828;
+      min-height: 20px;
+    }
+  </style>
+</head>
+<body>
+  <div id="header"></div>
+
+  <main class="auth-page">
+    <div class="auth-box">
+      <h1>Đăng ký</h1>
+      <p class="auth-subtitle">Tạo tài khoản mới để trải nghiệm mua sắm thuận tiện hơn.</p>
+
+      <form class="auth-form" id="registerForm">
+        <label for="registerName">Họ và tên</label>
+        <input id="registerName" type="text" placeholder="Nhập họ và tên" required />
+
+        <label for="registerEmail">Email</label>
+        <input id="registerEmail" type="email" placeholder="Nhập email" required />
+
+        <label for="registerPassword">Mật khẩu</label>
+        <input id="registerPassword" type="password" placeholder="Nhập mật khẩu" required />
+
+        <label for="registerConfirmPassword">Xác nhận mật khẩu</label>
+        <input id="registerConfirmPassword" type="password" placeholder="Nhập lại mật khẩu" required />
+
+        <button type="submit">Tạo tài khoản</button>
+      </form>
+
+      <div id="registerMessage" class="msg"></div>
+
+      <p class="auth-bottom">
+        Đã có tài khoản?
+        <a href="/Frontend/pages/login.html">Đăng nhập</a>
+      </p>
+    </div>
+  </main>
+
+  <div id="footer"></div>
+
+  <script>
+    const PRODUCTS_KEY = "shoeshop_products_v1";
+    const USERS_KEY = "shoeshop_users_v1";
+    const USER_KEY = "shoeshop_current_user_v1";
+    const CART_KEY = "shoeshop_cart_v1";
+
+    const defaultProducts = [
+      {
+        id: 1,
+        name: "Nike Air Force 1",
+        price: 2200000,
+        category: "Sneaker",
+        image: "https://images.unsplash.com/photo-1542291026-7eec264c27ff?auto=format&fit=crop&w=900&q=80",
+        description: "Thiết kế trẻ trung, dễ phối đồ."
+      }
+    ];
+
+    const defaultUsers = [
+      { id: 1, fullName: "Admin", email: "admin@gmail.com", password: "123456", role: "admin" },
+      { id: 2, fullName: "Staff", email: "staff@gmail.com", password: "123456", role: "staff" },
+      { id: 3, fullName: "Customer", email: "customer@gmail.com", password: "123456", role: "customer" }
+    ];
+
+    function seedData() {
+      if (!localStorage.getItem(PRODUCTS_KEY)) {
+        localStorage.setItem(PRODUCTS_KEY, JSON.stringify(defaultProducts));
+      }
+      if (!localStorage.getItem(USERS_KEY)) {
+        localStorage.setItem(USERS_KEY, JSON.stringify(defaultUsers));
+      }
+      if (!localStorage.getItem(CART_KEY)) {
+        localStorage.setItem(CART_KEY, JSON.stringify([]));
+      }
+    }
+
+    function getUsers() {
+      return JSON.parse(localStorage.getItem(USERS_KEY)) || [];
+    }
+
+    function saveUsers(users) {
+      localStorage.setItem(USERS_KEY, JSON.stringify(users));
+    }
+
+    async function loadComponent(id, file) {
+      const res = await fetch(file);
+      const html = await res.text();
+      document.getElementById(id).innerHTML = html;
+
+      if (id === "header") {
+        renderHeaderAuth();
+      }
+    }
+
+    function renderHeaderAuth() {
+  const headerRight = document.getElementById("headerRight");
+  if (!headerRight) return;
+
+  const currentUser = JSON.parse(localStorage.getItem(USER_KEY));
+
+  if (currentUser) {
+    let extraLink = "";
+
+    if (currentUser.role === "admin") {
+      extraLink = `<a class="header-link" href="/Frontend/pages/admin-dashboard.html">Admin</a>`;
+    } else if (currentUser.role === "staff") {
+      extraLink = `<a class="header-link" href="/Frontend/pages/staff-dashboard.html">Staff</a>`;
+    }
+
+    headerRight.innerHTML = `
+      <div id="notificationBellArea"></div>
+      ${extraLink}
+      <span class="user-text">Xin chào, ${currentUser.fullName || currentUser.email}</span>
+      <button class="header-btn" onclick="logout()">Đăng xuất</button>
+    `;
+
+    renderNotificationBell();
+  } else {
+    headerRight.innerHTML = `
+      <a class="header-link" href="/Frontend/pages/login.html">Đăng nhập</a>
+      <a class="header-link" href="/Frontend/pages/register.html">Đăng ký</a>
+    `;
+  }
+}
+
+    function logout() {
+      localStorage.removeItem(USER_KEY);
+      window.location.href = "/Frontend/index.html";
+    }
+
+    function handleRegister(event) {
+      event.preventDefault();
+
+      const fullName = document.getElementById("registerName").value.trim();
+      const email = document.getElementById("registerEmail").value.trim();
+      const password = document.getElementById("registerPassword").value;
+      const confirmPassword = document.getElementById("registerConfirmPassword").value;
+      const message = document.getElementById("registerMessage");
+
+      if (password !== confirmPassword) {
+        message.textContent = "Mật khẩu xác nhận không khớp.";
+        return;
+      }
+
+      const users = getUsers();
+      const existed = users.find(user => user.email === email);
+
+      if (existed) {
+        message.textContent = "Email này đã tồn tại.";
+        return;
+      }
+
+      const newUser = {
+        id: generateUserId(users),
+        fullName,
+        email,
+        password,
+        role: "customer"
+      };
+
+      users.push(newUser);
+      saveUsers(users);
+
+      message.style.color = "green";
+      message.textContent = "Đăng ký thành công. Đang chuyển sang trang đăng nhập...";
+
+      setTimeout(() => {
+        window.location.href = "/Frontend/pages/login.html";
+      }, 900);
+    }
+
+    seedData();
+    loadComponent("header", "/Frontend/components/header.html");
+    loadComponent("footer", "/Frontend/components/footer.html");
+    document.getElementById("registerForm").addEventListener("submit", handleRegister);
+
+  function generateUserId(users) {
+  if (!users.length) return 1;
+  return Math.max(...users.map(u => Number(u.id))) + 1;
+}
+  </script>
+</body>
+</html>
