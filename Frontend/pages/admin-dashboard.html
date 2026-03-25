@@ -4,7 +4,7 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Admin Dashboard - ShoeShop</title>
-  <link rel="stylesheet" href="/Frontend/css/layout.css" />
+  <link rel="stylesheet" href="/css/layout.css" />
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
   <style>
@@ -224,12 +224,17 @@
 <body>
   <div id="header"></div>
 
-  <main class="page" id="adminContent"></main>
+  <main class="page" id="adminContent">
+    <div style="padding: 20px; background: #f0f0f0; border-radius: 8px; margin: 20px;">
+      <p id="loadingMessage">Đang tải...</p>
+    </div>
+  </main>
 
   <div id="footer"></div>
 
-  <script src="/Frontend/js/notify.js"></script>
+  <script src="/js/notify.js"></script>
   <script>
+    const USER_KEY = "user";
     const USERS_KEY = "shoeshop_users_v1";
     const PRODUCTS_KEY = "shoeshop_products_v1";
     const ORDERS_KEY = "shoeshop_orders_v1";
@@ -242,10 +247,10 @@
         document.getElementById(id).innerHTML = html;
 
         if (id === "header") {
-          renderHeaderAuth();
+          setTimeout(() => renderHeaderAuth(), 100);
         }
       } catch (error) {
-        console.log("Lỗi load component:", error);
+        console.error("Lỗi load component:", error);
       }
     }
 
@@ -258,11 +263,11 @@
       if (currentUser) {
         let extraLink = "";
 
-        if (currentUser.role === "admin") {
-          extraLink += `<a class="header-link" href="/Frontend/pages/admin-dashboard.html">Admin</a>`;
+        if (currentUser.role === "ADMIN") {
+          extraLink += `<a class="header-link" href="/pages/admin-dashboard.html">Admin</a>`;
         }
-        if (currentUser.role === "staff") {
-          extraLink += `<a class="header-link" href="/Frontend/pages/staff-dashboard.html">Staff</a>`;
+        if (currentUser.role === "STAFF") {
+          extraLink += `<a class="header-link" href="/pages/staff-dashboard.html">Staff</a>`;
         }
 
         headerRight.innerHTML = `
@@ -277,15 +282,15 @@
         }
       } else {
         headerRight.innerHTML = `
-          <a class="header-link" href="/Frontend/pages/login.html">Đăng nhập</a>
-          <a class="header-link" href="/Frontend/pages/register.html">Đăng ký</a>
+          <a class="header-link" href="/pages/auth.html">Đăng nhập</a>
+          <a class="header-link" href="/pages/auth.html?tab=register">Đăng ký</a>
         `;
       }
     }
 
     function logout() {
       localStorage.removeItem(USER_KEY);
-      window.location.href = "/Frontend/index.html";
+      window.location.href = "/";
     }
 
     function getUsers() {
@@ -318,196 +323,105 @@
     }
 
     function renderAdminDashboard() {
-      const currentUser = JSON.parse(localStorage.getItem(USER_KEY));
-      const container = document.getElementById("adminContent");
+      try {
+        console.log("renderAdminDashboard called");
+        const currentUser = JSON.parse(localStorage.getItem(USER_KEY));
+        const container = document.getElementById("adminContent");
+        
+        console.log("Container found:", !!container);
+        console.log("Current user:", currentUser);
 
-      if (!currentUser || currentUser.role !== "admin") {
-        container.innerHTML = `
-          <div class="empty-box">
-            Bạn không có quyền truy cập trang quản trị.<br>
-            <a class="btn-dark" href="/Frontend/pages/login.html">Đăng nhập bằng tài khoản admin</a>
+        if (!currentUser || currentUser.role !== "ADMIN") {
+          console.log("Permission check failed");
+          container.innerHTML = `<div class="empty-box">Bạn không có quyền truy cập.</div>`;
+          return;
+        }
+
+        // Get data
+        const users = getUsers();
+        const products = getProducts();
+        const orders = getOrders();
+        const categories = getCategories();
+        
+        console.log("Data fetched - Users:", users.length, "Products:", products.length, "Orders:", orders.length);
+
+        // Calculate stats
+        const totalRevenue = orders.reduce((sum, order) => sum + (order.total || 0), 0);
+        const pendingOrders = orders.filter(order => order.status === "Chờ xử lý").length;
+        const shippingOrders = orders.filter(order => order.status === "Đang giao").length;
+        const completedOrders = orders.filter(order => order.status === "Hoàn tất").length;
+        const cancelledOrders = orders.filter(order => order.status === "Hủy").length;
+
+        const totalAdmins = users.filter(user => user.role === "ADMIN").length;
+        const totalStaffs = users.filter(user => user.role === "STAFF").length;
+        const totalCustomers = users.filter(user => user.role === "CUSTOMER").length;
+
+        // Build minimal HTML
+        const html = `
+          <h1>Admin Dashboard</h1>
+          <p>Xin chào, ${currentUser.fullName || currentUser.email}</p>
+          
+          <div class="stats-grid">
+            <div class="stat-card">
+              <h3>Tổng người dùng</h3>
+              <div class="value">${users.length}</div>
+            </div>
+            <div class="stat-card">
+              <h3>Tổng sản phẩm</h3>
+              <div class="value">${products.length}</div>
+            </div>
+            <div class="stat-card">
+              <h3>Tổng đơn hàng</h3>
+              <div class="value">${orders.length}</div>
+            </div>
+            <div class="stat-card">
+              <h3>Tổng doanh thu</h3>
+              <div class="value">${totalRevenue.toLocaleString("vi-VN")} VND</div>
+            </div>
+          </div>
+          
+          <div class="quick-grid">
+            <div class="quick-card">
+              <h3>Quản lý sản phẩm</h3>
+              <a href="/pages/admin-products.html">Mở trang</a>
+            </div>
+            <div class="quick-card">
+              <h3>Quản lý người dùng</h3>
+              <a href="/pages/admin-users.html">Mở trang</a>
+            </div>
+            <div class="quick-card">
+              <h3>Quản lý đơn hàng</h3>
+              <a href="/pages/admin-orders.html">Mở trang</a>
+            </div>
+            <div class="quick-card">
+              <h3>Quản lý danh mục</h3>
+              <a href="/pages/admin-categories.html">Mở trang</a>
+            </div>
           </div>
         `;
-        return;
+        
+        console.log("Setting innerHTML");
+        container.innerHTML = html;
+        console.log("innerHTML set successfully");
+        
+        // Try to render chart if available
+        try {
+          renderOrdersChart(pendingOrders, shippingOrders, completedOrders, cancelledOrders);
+        } catch (e) {
+          console.warn("Chart error:", e);
+        }
+        
+      } catch (error) {
+        console.error("Dashboard rendering error:", error);
+        console.error("Stack:", error.stack);
+        const container = document.getElementById("adminContent");
+        container.innerHTML = `
+          <div class="empty-box">
+            Lỗi: ${error.message}
+            <pre>${error.stack}</pre>
+          </div>
+        `;
       }
-
-      const users = getUsers();
-      const products = getProducts();
-      const orders = getOrders();
-      const categories = getCategories();
-
-      const totalRevenue = orders.reduce((sum, order) => sum + (order.total || 0), 0);
-
-      const pendingOrders = orders.filter(order => order.status === "Chờ xử lý").length;
-      const shippingOrders = orders.filter(order => order.status === "Đang giao").length;
-      const completedOrders = orders.filter(order => order.status === "Hoàn tất").length;
-      const cancelledOrders = orders.filter(order => order.status === "Hủy").length;
-
-      const totalAdmins = users.filter(user => user.role === "admin").length;
-      const totalStaffs = users.filter(user => user.role === "staff").length;
-      const totalCustomers = users.filter(user => user.role === "customer").length;
-      const blockedUsers = users.filter(user => user.isBlocked).length;
-
-      const recentOrders = [...orders].slice(0, 8);
-      const recentUsers = [...users].slice(-8).reverse();
-
-      container.innerHTML = `
-        <h1>Admin Dashboard</h1>
-        <div class="page-subtitle">
-          Theo dõi nhanh tình trạng hệ thống, người dùng, sản phẩm và đơn hàng của ShoeShop.
-        </div>
-
-        <div class="stats-grid">
-          <div class="stat-card">
-            <h3>Tổng người dùng</h3>
-            <div class="value">${users.length}</div>
-            <div class="sub">Admin: ${totalAdmins} • Staff: ${totalStaffs} • Customer: ${totalCustomers}</div>
-          </div>
-
-          <div class="stat-card">
-            <h3>Tổng sản phẩm</h3>
-            <div class="value">${products.length}</div>
-            <div class="sub">Danh mục hiện có: ${categories.length}</div>
-          </div>
-
-          <div class="stat-card">
-            <h3>Tổng đơn hàng</h3>
-            <div class="value">${orders.length}</div>
-            <div class="sub">Đơn chờ xử lý: ${pendingOrders}</div>
-          </div>
-
-          <div class="stat-card">
-            <h3>Tổng doanh thu</h3>
-            <div class="value">${totalRevenue.toLocaleString("vi-VN")} VND</div>
-            <div class="sub">User bị khóa: ${blockedUsers}</div>
-          </div>
-        </div>
-
-        <div class="quick-grid">
-          <div class="quick-card">
-            <h3>Quản lý sản phẩm</h3>
-            <p>Thêm, sửa, xóa và theo dõi danh sách sản phẩm hiện có.</p>
-            <a href="/Frontend/pages/admin-products.html">Mở trang</a>
-          </div>
-
-          <div class="quick-card">
-            <h3>Quản lý người dùng</h3>
-            <p>Đổi quyền, khóa tài khoản và xóa người dùng khi cần.</p>
-            <a href="/Frontend/pages/admin-users.html">Mở trang</a>
-          </div>
-
-          <div class="quick-card">
-            <h3>Quản lý đơn hàng</h3>
-            <p>Theo dõi toàn bộ đơn hàng và cập nhật trạng thái xử lý.</p>
-            <a href="/Frontend/pages/admin-orders.html">Mở trang</a>
-          </div>
-
-          <div class="quick-card">
-            <h3>Quản lý danh mục</h3>
-            <p>Thêm, sửa, xóa danh mục sản phẩm để dùng trong hệ thống.</p>
-            <a href="/Frontend/pages/admin-categories.html">Mở trang</a>
-          </div>
-        </div>
-
-        <div class="panel">
-          <h2>Biểu đồ đơn hàng theo trạng thái</h2>
-          <div class="chart-wrap">
-            <canvas id="ordersChart" height="110"></canvas>
-          </div>
-        </div>
-
-        <div class="panel">
-          <h2>Tổng quan trạng thái đơn hàng</h2>
-          <div class="status-overview">
-            <div class="mini-box">
-              <div class="label">Chờ xử lý</div>
-              <div class="number">${pendingOrders}</div>
-            </div>
-            <div class="mini-box">
-              <div class="label">Đang giao</div>
-              <div class="number">${shippingOrders}</div>
-            </div>
-            <div class="mini-box">
-              <div class="label">Hoàn tất</div>
-              <div class="number">${completedOrders}</div>
-            </div>
-            <div class="mini-box">
-              <div class="label">Đã hủy</div>
-              <div class="number">${cancelledOrders}</div>
-            </div>
-          </div>
-        </div>
-
-        <div class="panel">
-          <h2>Đơn hàng gần đây</h2>
-          ${
-            recentOrders.length
-              ? `
-                <table>
-                  <thead>
-                    <tr>
-                      <th>Mã đơn</th>
-                      <th>Khách hàng</th>
-                      <th>Ngày đặt</th>
-                      <th>Trạng thái</th>
-                      <th>Tổng tiền</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    ${recentOrders.map(order => `
-                      <tr>
-                        <td>#${order.id}</td>
-                        <td>${order.customerName}</td>
-                        <td>${order.createdAt}</td>
-                        <td><span class="status-badge ${getStatusClass(order.status)}">${order.status}</span></td>
-                        <td>${(order.total || 0).toLocaleString("vi-VN")}đ</td>
-                      </tr>
-                    `).join("")}
-                  </tbody>
-                </table>
-              `
-              : `<div>Chưa có đơn hàng nào.</div>`
-          }
-        </div>
-
-        <div class="panel">
-          <h2>Người dùng gần đây</h2>
-          ${
-            recentUsers.length
-              ? `
-                <table>
-                  <thead>
-                    <tr>
-                      <th>ID</th>
-                      <th>Họ tên</th>
-                      <th>Email</th>
-                      <th>Vai trò</th>
-                      <th>Provider</th>
-                      <th>Trạng thái</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    ${recentUsers.map(user => `
-                      <tr>
-                        <td>${user.id}</td>
-                        <td>${user.fullName}</td>
-                        <td>${user.email}</td>
-                        <td>${user.role}</td>
-                        <td>${user.loginProvider}</td>
-                        <td class="${user.isBlocked ? "blocked-user" : "active-user"}">
-                          ${user.isBlocked ? "Đã khóa" : "Hoạt động"}
-                        </td>
-                      </tr>
-                    `).join("")}
-                  </tbody>
-                </table>
-              `
-              : `<div>Chưa có người dùng.</div>`
-          }
-        </div>
-      `;
-
-      renderOrdersChart(pendingOrders, shippingOrders, completedOrders, cancelledOrders);
     }
 
     function renderOrdersChart(pending, shipping, completed, cancelled) {
@@ -542,10 +456,58 @@
       });
     }
 
-    seedNotifications();
-    loadComponent("header", "/Frontend/components/header.html");
-    loadComponent("footer", "/Frontend/components/footer.html");
-    renderAdminDashboard();
+    // Check user permission first
+    const currentUser = JSON.parse(localStorage.getItem(USER_KEY));
+    
+    console.log("=== Admin Dashboard Init ===");
+    console.log("Current user:", currentUser);
+    console.log("USER_KEY:", USER_KEY);
+    
+    if (!currentUser || currentUser.role !== "ADMIN") {
+      console.log("User not ADMIN, showing error message");
+      document.getElementById("adminContent").innerHTML = `
+        <div class="empty-box">
+          Bạn không có quyền truy cập trang quản trị.<br>
+          <a class="btn-dark" href="/pages/auth.html">Đăng nhập bằng tài khoản admin</a>
+        </div>
+      `;
+    } else {
+      console.log("User is ADMIN, loading dashboard");
+      
+      // Load header
+      fetch("/components/header.html")
+        .then(r => {
+          console.log("Header fetch status:", r.status);
+          return r.text();
+        })
+        .then(html => {
+          console.log("Header HTML loaded, length:", html.length);
+          document.getElementById("header").innerHTML = html;
+        })
+        .catch(err => {
+          console.error("Error loading header:", err);
+          document.getElementById("header").innerHTML = "<header>Error loading header</header>";
+        });
+      
+      // Load footer
+      fetch("/components/footer.html")
+        .then(r => {
+          console.log("Footer fetch status:", r.status);
+          return r.text();
+        })
+        .then(html => {
+          console.log("Footer HTML loaded, length:", html.length);
+          document.getElementById("footer").innerHTML = html;
+        })
+        .catch(err => {
+          console.error("Error loading footer:", err);
+          document.getElementById("footer").innerHTML = "<footer>Error loading footer</footer>";
+        });
+      
+      // Render dashboard immediately
+      console.log("Starting to render admin dashboard");
+      renderAdminDashboard();
+    }
   </script>
 </body>
 </html>

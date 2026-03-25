@@ -4,9 +4,9 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>ShoeShop - Trang chủ</title>
-  <link rel="stylesheet" href="/Frontend/css/base.css" />
-  <link rel="stylesheet" href="/Frontend/css/layout.css" />
-  <link rel="stylesheet" href="/Frontend/css/home.css" />
+  <link rel="stylesheet" href="../css/base.css">
+  <link rel="stylesheet" href="../css/layout.css">
+  <link rel="stylesheet" href="../css/home.css">
   <style>
     .hero {
       background: linear-gradient(135deg, #111, #333);
@@ -224,8 +224,8 @@
         </p>
 
         <div class="hero-actions">
-          <a class="btn-main" href="/Frontend/pages/products.html">Mua ngay</a>
-          <a class="btn-outline" href="/Frontend/pages/register.html">Tạo tài khoản</a>
+          <a class="btn-main" href="pages/auth.html">Mua ngay</a>
+          <a class="btn-outline" href="pages/auth.html?tab=register">Tạo tài khoản</a>
         </div>
       </div>
 
@@ -273,7 +273,7 @@
 
   <div id="footer"></div>
 
-  <script src="/Frontend/js/notify.js"></script>
+  <script src="js/notify.js"></script>
   <script>
     const PRODUCTS_KEY = "shoeshop_products_v1";
     const USERS_KEY = "shoeshop_users_v1";
@@ -479,8 +479,8 @@
     if (typeof seedNotifications === "function") {
       seedNotifications();
     }
-    loadComponent("header", "/Frontend/components/header.html");
-    loadComponent("footer", "/Frontend/components/footer.html");
+    loadComponent("header", "/components/header.html");
+    loadComponent("footer", "/components/footer.html");
     renderFeaturedProducts();
   </script>
 </body>
