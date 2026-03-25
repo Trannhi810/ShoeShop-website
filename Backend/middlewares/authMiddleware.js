@@ -21,7 +21,8 @@ const verifyToken = (req, res, next) => {
 // Middleware phân quyền Admin (Authorization)
 const verifyAdmin = (req, res, next) => {
     // Phải chạy sau verifyToken để có req.user
-    if (req.user && req.user.role === 'Admin') {
+    // Schema dùng enum 'ADMIN' (uppercase)
+    if (req.user && req.user.role === 'ADMIN') {
         next();
     } else {
         return res.status(403).json({ message: "Chỉ Admin mới có quyền thực hiện thao tác này!" });
