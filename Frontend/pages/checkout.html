@@ -1,0 +1,357 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Thanh toán - ShoeShop</title>
+  <link rel="stylesheet" href="/Frontend/css/layout.css" />
+  <style>
+    .page {
+      width: 1200px;
+      max-width: calc(100% - 40px);
+      margin: 32px auto;
+    }
+
+    .page h1 {
+      font-size: 34px;
+      margin-bottom: 24px;
+    }
+
+    .checkout-layout {
+      display: grid;
+      grid-template-columns: 1.5fr 1fr;
+      gap: 24px;
+      align-items: start;
+    }
+
+    .checkout-form,
+    .order-summary {
+      background: white;
+      border: 1px solid #e5e5e5;
+      border-radius: 18px;
+      padding: 22px;
+      box-shadow: 0 6px 20px rgba(0,0,0,0.04);
+    }
+
+    .checkout-form h2,
+    .order-summary h2 {
+      margin-bottom: 16px;
+      font-size: 24px;
+    }
+
+    .form-group {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      margin-bottom: 14px;
+    }
+
+    .form-group label {
+      font-weight: 600;
+    }
+
+    .form-group input,
+    .form-group textarea,
+    .form-group select {
+      padding: 12px 14px;
+      border: 1px solid #ccc;
+      border-radius: 10px;
+      font-size: 15px;
+      outline: none;
+    }
+
+    .form-group textarea {
+      min-height: 100px;
+      resize: vertical;
+    }
+
+    .summary-list {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      margin-bottom: 18px;
+    }
+
+    .summary-item {
+      display: flex;
+      justify-content: space-between;
+      gap: 16px;
+      padding-bottom: 10px;
+      border-bottom: 1px solid #eee;
+    }
+
+    .summary-total {
+      font-size: 24px;
+      font-weight: bold;
+      color: #d62828;
+      margin: 18px 0;
+    }
+
+    .btn-dark,
+    .btn-light {
+      display: inline-block;
+      width: 100%;
+      padding: 12px;
+      border: none;
+      border-radius: 10px;
+      cursor: pointer;
+      font-weight: 600;
+      text-align: center;
+      text-decoration: none;
+      margin-top: 10px;
+    }
+
+    .btn-dark {
+      background: #111;
+      color: white;
+    }
+
+    .btn-light {
+      background: #ececec;
+      color: #111;
+    }
+
+    .empty-box {
+      background: white;
+      border: 1px dashed #ccc;
+      border-radius: 16px;
+      padding: 30px;
+      text-align: center;
+      color: #666;
+    }
+
+    @media (max-width: 900px) {
+      .checkout-layout {
+        grid-template-columns: 1fr;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div id="header"></div>
+
+  <main class="page">
+    <h1>Thanh toán</h1>
+    <div id="checkoutContent"></div>
+  </main>
+
+  <div id="footer"></div>
+
+  <script src="/Frontend/js/notify.js"></script>
+  <script>
+    const CART_KEY = "shoeshop_cart_v1";
+    const ORDERS_KEY = "shoeshop_orders_v1";
+
+    async function loadComponent(id, file) {
+      try {
+        const res = await fetch(file);
+        const html = await res.text();
+        document.getElementById(id).innerHTML = html;
+
+        if (id === "header") {
+          renderHeaderAuth();
+        }
+      } catch (error) {
+        console.log("Lỗi load component:", error);
+      }
+    }
+
+    function renderHeaderAuth() {
+      const headerRight = document.getElementById("headerRight");
+      if (!headerRight) return;
+
+      const currentUser = JSON.parse(localStorage.getItem(USER_KEY));
+
+      if (currentUser) {
+        let extraLink = "";
+
+        if (currentUser.role === "admin") {
+          extraLink = `<a class="header-link" href="/Frontend/pages/admin-dashboard.html">Admin</a>`;
+        } else if (currentUser.role === "staff") {
+          extraLink = `<a class="header-link" href="/Frontend/pages/staff-dashboard.html">Staff</a>`;
+        }
+
+        headerRight.innerHTML = `
+          <div id="notificationBellArea"></div>
+          ${extraLink}
+          <span class="user-text">Xin chào, ${currentUser.fullName || currentUser.email}</span>
+          <button class="header-btn" onclick="logout()">Đăng xuất</button>
+        `;
+
+        renderNotificationBell();
+      } else {
+        headerRight.innerHTML = `
+          <a class="header-link" href="/Frontend/pages/login.html">Đăng nhập</a>
+          <a class="header-link" href="/Frontend/pages/register.html">Đăng ký</a>
+        `;
+      }
+    }
+
+    function logout() {
+      localStorage.removeItem(USER_KEY);
+      window.location.href = "/Frontend/index.html";
+    }
+
+    function getCart() {
+      return JSON.parse(localStorage.getItem(CART_KEY)) || [];
+    }
+
+    function saveCart(cart) {
+      localStorage.setItem(CART_KEY, JSON.stringify(cart));
+    }
+
+    function getOrders() {
+      return JSON.parse(localStorage.getItem(ORDERS_KEY)) || [];
+    }
+
+    function saveOrders(orders) {
+      localStorage.setItem(ORDERS_KEY, JSON.stringify(orders));
+    }
+
+    function renderCheckout() {
+      const cart = getCart();
+      const currentUser = JSON.parse(localStorage.getItem(USER_KEY));
+      const container = document.getElementById("checkoutContent");
+
+      if (!cart.length) {
+        container.innerHTML = `
+          <div class="empty-box">
+            Giỏ hàng đang trống.<br><br>
+            <a class="btn-dark" style="max-width:240px;" href="/Frontend/pages/products.html">Đi mua sắm ngay</a>
+          </div>
+        `;
+        return;
+      }
+
+      const total = cart.reduce((sum, item) => sum + item.price * item.quantity, 0);
+
+      container.innerHTML = `
+        <div class="checkout-layout">
+          <div class="checkout-form">
+            <h2>Thông tin giao hàng</h2>
+            <form id="checkoutForm">
+              <div class="form-group">
+                <label>Họ và tên</label>
+                <input type="text" id="fullName" value="${currentUser?.fullName || ""}" required />
+              </div>
+
+              <div class="form-group">
+                <label>Email</label>
+                <input type="email" id="email" value="${currentUser?.email || ""}" required />
+              </div>
+
+              <div class="form-group">
+                <label>Số điện thoại</label>
+                <input type="text" id="phone" placeholder="Nhập số điện thoại" required />
+              </div>
+
+              <div class="form-group">
+                <label>Địa chỉ giao hàng</label>
+                <textarea id="address" placeholder="Nhập địa chỉ giao hàng" required></textarea>
+              </div>
+
+              <div class="form-group">
+                <label>Phương thức thanh toán</label>
+                <select id="paymentMethod" required>
+                  <option value="COD">Thanh toán khi nhận hàng (COD)</option>
+                  <option value="Banking">Chuyển khoản ngân hàng</option>
+                  <option value="Momo">Ví Momo</option>
+                </select>
+              </div>
+
+              <div class="form-group">
+                <label>Ghi chú</label>
+                <textarea id="note" placeholder="Ghi chú thêm nếu có"></textarea>
+              </div>
+
+              <button type="submit" class="btn-dark">Xác nhận đặt hàng</button>
+              <a class="btn-light" href="/Frontend/pages/cart.html">Quay lại giỏ hàng</a>
+            </form>
+          </div>
+
+          <div class="order-summary">
+            <h2>Tóm tắt đơn hàng</h2>
+            <div class="summary-list">
+              ${cart.map(item => `
+                <div class="summary-item">
+                  <span>${item.name} x ${item.quantity}</span>
+                  <strong>${(item.price * item.quantity).toLocaleString("vi-VN")}đ</strong>
+                </div>
+              `).join("")}
+            </div>
+            <div class="summary-total">Tổng tiền: ${total.toLocaleString("vi-VN")}đ</div>
+          </div>
+        </div>
+      `;
+
+      document.getElementById("checkoutForm").addEventListener("submit", handleCheckout);
+    }
+
+    function handleCheckout(event) {
+      event.preventDefault();
+
+      const currentUser = JSON.parse(localStorage.getItem(USER_KEY));
+      if (!currentUser) {
+        alert("Bạn cần đăng nhập trước khi đặt hàng.");
+        window.location.href = "/Frontend/pages/login.html";
+        return;
+      }
+
+      const cart = getCart();
+      if (!cart.length) {
+        alert("Giỏ hàng trống.");
+        return;
+      }
+
+      const newOrder = {
+        id: Date.now(),
+        userId: currentUser.id,
+        customerName: document.getElementById("fullName").value.trim(),
+        email: document.getElementById("email").value.trim(),
+        phone: document.getElementById("phone").value.trim(),
+        address: document.getElementById("address").value.trim(),
+        paymentMethod: document.getElementById("paymentMethod").value,
+        note: document.getElementById("note").value.trim(),
+        items: cart,
+        total: cart.reduce((sum, item) => sum + item.price * item.quantity, 0),
+        status: "Chờ xử lý",
+        createdAt: new Date().toLocaleString("vi-VN")
+      };
+
+      const orders = getOrders();
+      orders.unshift(newOrder);
+      saveOrders(orders);
+      saveCart([]);
+
+      addNotification({
+        title: "Đặt hàng thành công",
+        message: `Đơn hàng #${newOrder.id} đã được tạo thành công.`,
+        role: "customer",
+        type: "success"
+      });
+
+      addNotification({
+        title: "Đơn hàng mới",
+        message: `Có đơn hàng mới #${newOrder.id} từ ${newOrder.customerName}.`,
+        role: "staff",
+        type: "info"
+      });
+
+      addNotification({
+        title: "Hệ thống có đơn hàng mới",
+        message: `Đơn hàng #${newOrder.id} vừa được tạo.`,
+        role: "admin",
+        type: "info"
+      });
+
+      alert("Đặt hàng thành công!");
+      window.location.href = "/Frontend/pages/orders.html";
+    }
+
+    seedNotifications();
+    loadComponent("header", "/Frontend/components/header.html");
+    loadComponent("footer", "/Frontend/components/footer.html");
+    renderCheckout();
+  </script>
+</body>
+</html>

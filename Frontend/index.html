@@ -1,91 +1,487 @@
 <!DOCTYPE html>
 <html lang="vi">
 <head>
-<meta charset="UTF-8">
-<title>Shoe Shop</title>
-<link rel="stylesheet" href="css/index.css">
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>ShoeShop - Trang chủ</title>
+  <link rel="stylesheet" href="/Frontend/css/base.css" />
+  <link rel="stylesheet" href="/Frontend/css/layout.css" />
+  <link rel="stylesheet" href="/Frontend/css/home.css" />
+  <style>
+    .hero {
+      background: linear-gradient(135deg, #111, #333);
+      color: white;
+      padding: 60px 20px;
+    }
 
+    .hero-inner {
+      width: 1200px;
+      max-width: calc(100% - 40px);
+      margin: 0 auto;
+      display: grid;
+      grid-template-columns: 1.2fr 1fr;
+      gap: 30px;
+      align-items: center;
+    }
+
+    .hero h1 {
+      font-size: 48px;
+      margin-bottom: 16px;
+    }
+
+    .hero p {
+      font-size: 18px;
+      color: #e5e5e5;
+      margin-bottom: 20px;
+      line-height: 1.6;
+    }
+
+    .hero-actions {
+      display: flex;
+      gap: 12px;
+      flex-wrap: wrap;
+    }
+
+    .btn-main,
+    .btn-outline {
+      padding: 12px 18px;
+      border-radius: 10px;
+      text-decoration: none;
+      font-weight: 600;
+      display: inline-block;
+    }
+
+    .btn-main {
+      background: white;
+      color: #111;
+    }
+
+    .btn-outline {
+      border: 1px solid white;
+      color: white;
+    }
+
+    .hero-card {
+      background: white;
+      color: #111;
+      border-radius: 20px;
+      padding: 24px;
+      box-shadow: 0 15px 40px rgba(0,0,0,0.2);
+    }
+
+    .hero-card h3 {
+      margin-bottom: 10px;
+    }
+
+    .section {
+      width: 1200px;
+      max-width: calc(100% - 40px);
+      margin: 40px auto;
+    }
+
+    .section-head {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 20px;
+      gap: 16px;
+      flex-wrap: wrap;
+    }
+
+    .section-head h2 {
+      font-size: 32px;
+    }
+
+    .section-head a {
+      color: #111;
+      font-weight: 600;
+      text-decoration: none;
+    }
+
+    .product-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+      gap: 20px;
+    }
+
+    .product-card {
+      background: white;
+      border: 1px solid #e5e5e5;
+      border-radius: 18px;
+      overflow: hidden;
+      transition: 0.25s;
+      box-shadow: 0 6px 20px rgba(0,0,0,0.04);
+    }
+
+    .product-card:hover {
+      transform: translateY(-4px);
+      box-shadow: 0 10px 26px rgba(0,0,0,0.08);
+    }
+
+    .product-card img {
+      width: 100%;
+      height: 200px;
+      object-fit: cover;
+      display: block;
+    }
+
+    .product-card-body {
+      padding: 16px;
+    }
+
+    .product-category {
+      color: #777;
+      font-size: 14px;
+      margin-bottom: 6px;
+    }
+
+    .product-name {
+      font-size: 20px;
+      font-weight: 700;
+      margin-bottom: 8px;
+    }
+
+    .product-desc {
+      color: #555;
+      font-size: 14px;
+      min-height: 42px;
+      margin-bottom: 12px;
+      line-height: 1.5;
+    }
+
+    .product-price {
+      color: #d62828;
+      font-size: 20px;
+      font-weight: bold;
+      margin-bottom: 14px;
+    }
+
+    .card-actions {
+      display: flex;
+      gap: 10px;
+    }
+
+    .card-actions button,
+    .card-actions a {
+      flex: 1;
+      border: none;
+      border-radius: 10px;
+      padding: 11px 12px;
+      cursor: pointer;
+      text-decoration: none;
+      text-align: center;
+      font-weight: 600;
+    }
+
+    .btn-dark {
+      background: #111;
+      color: white;
+    }
+
+    .btn-light {
+      background: #f3f3f3;
+      color: #111;
+    }
+
+    .features {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+      gap: 18px;
+    }
+
+    .feature-box {
+      background: white;
+      border: 1px solid #e5e5e5;
+      border-radius: 16px;
+      padding: 20px;
+    }
+
+    .feature-box h3 {
+      margin-bottom: 10px;
+    }
+
+    @media (max-width: 900px) {
+      .hero-inner {
+        grid-template-columns: 1fr;
+      }
+
+      .hero h1 {
+        font-size: 36px;
+      }
+    }
+  </style>
 </head>
-
 <body>
+  <div id="header"></div>
 
-<div style="display: flex; justify-content: space-between; align-items: center; background: #eee; padding: 10px 20px;">
-    <h1>Trang Chủ Danh Sách Giày</h1>
-    <div id="user-info"></div>
-</div>
+  <section class="hero">
+    <div class="hero-inner">
+      <div>
+        <h1>Bước đi phong cách cùng ShoeShop</h1>
+        <p>
+          Khám phá bộ sưu tập giày sneaker, running và casual hiện đại.
+          Giao diện đẹp, dễ dùng và sẵn sàng tích hợp backend sau này.
+        </p>
 
-<div style="margin:20px 0;">
-    <button onclick="loadProducts()">Tải Danh Sách Giày</button>
-    <button id="btn-admin" style="display:none;" onclick="alert('Demo: Khu vực Admin')">Trang Quản Trị (Admin Only)</button>
-</div>
+        <div class="hero-actions">
+          <a class="btn-main" href="/Frontend/pages/products.html">Mua ngay</a>
+          <a class="btn-outline" href="/Frontend/pages/register.html">Tạo tài khoản</a>
+        </div>
+      </div>
 
-<div id="product-list"></div>
+      <div class="hero-card">
+        <h3>Ưu điểm nổi bật</h3>
+        <p>✔ Tìm kiếm và lọc sản phẩm nhanh</p>
+        <p>✔ Giỏ hàng trực quan, dễ thao tác</p>
+        <p>✔ Đăng nhập / đăng ký đơn giản</p>
+        <p>✔ Dễ nâng cấp thành hệ thống fullstack</p>
+      </div>
+    </div>
+  </section>
 
-<script>
-    // Kiểm tra đăng nhập
-    const token = localStorage.getItem('shoeshop_token');
-    const userStr = localStorage.getItem('shoeshop_user');
-    let user = null;
+  <section class="section">
+    <div class="section-head">
+      <h2>Sản phẩm nổi bật</h2>
+      <a href="/Frontend/pages/products.html">Xem tất cả</a>
+    </div>
+    <div id="featuredProducts" class="product-grid"></div>
+  </section>
 
-    if (!token) {
-        alert("Vui lòng đăng nhập!");
-        window.location.href = '/auth.html';
-    } else {
-        user = JSON.parse(userStr);
-        document.getElementById('user-info').innerHTML = `
-            <p>Xin chào: <b>${user.fullName}</b> (<i>${user.role}</i>)</p>
-            <button onclick="logout()">Đăng Xuất</button>
+  <section class="section">
+    <div class="section-head">
+      <h2>Tại sao chọn ShoeShop?</h2>
+    </div>
+    <div class="features">
+      <div class="feature-box">
+        <h3>Mẫu mã đa dạng</h3>
+        <p>Từ sneaker, running đến casual, phù hợp nhiều phong cách.</p>
+      </div>
+      <div class="feature-box">
+        <h3>Giao diện thân thiện</h3>
+        <p>Dễ thao tác cho khách hàng, staff và admin khi mở rộng hệ thống.</p>
+      </div>
+      <div class="feature-box">
+        <h3>Dễ tích hợp API</h3>
+        <p>Có thể thay mock data bằng RESTful API backend bất cứ lúc nào.</p>
+      </div>
+      <div class="feature-box">
+        <h3>Sẵn sàng mở rộng</h3>
+        <p>Dễ bổ sung checkout, orders, phân quyền và realtime sau này.</p>
+      </div>
+    </div>
+  </section>
+
+  <div id="footer"></div>
+
+  <script src="/Frontend/js/notify.js"></script>
+  <script>
+    const PRODUCTS_KEY = "shoeshop_products_v1";
+    const USERS_KEY = "shoeshop_users_v1";
+    const CART_KEY = "shoeshop_cart_v1";
+
+    const defaultProducts = [
+      {
+        id: 1,
+        name: "Nike Air Force 1",
+        price: 2200000,
+        category: "Sneaker",
+        image: "https://images.unsplash.com/photo-1542291026-7eec264c27ff?auto=format&fit=crop&w=900&q=80",
+        description: "Thiết kế trẻ trung, dễ phối đồ."
+      },
+      {
+        id: 2,
+        name: "Adidas Ultraboost",
+        price: 3200000,
+        category: "Running",
+        image: "https://images.unsplash.com/photo-1600185365483-26d7a4cc7519?auto=format&fit=crop&w=900&q=80",
+        description: "Êm ái, phù hợp chạy bộ hằng ngày."
+      },
+      {
+        id: 3,
+        name: "Converse Classic",
+        price: 1500000,
+        category: "Casual",
+        image: "https://images.unsplash.com/photo-1525966222134-fcfa99b8ae77?auto=format&fit=crop&w=900&q=80",
+        description: "Phong cách basic cổ điển."
+      },
+      {
+        id: 4,
+        name: "Puma RS-X",
+        price: 2700000,
+        category: "Sneaker",
+        image: "https://images.unsplash.com/photo-1608231387042-66d1773070a5?auto=format&fit=crop&w=900&q=80",
+        description: "Kiểu dáng thể thao hiện đại."
+      }
+    ];
+
+    const defaultUsers = [
+      {
+        id: 1,
+        fullName: "Admin",
+        email: "admin@gmail.com",
+        password: "123456",
+        role: "admin",
+        isBlocked: false,
+        loginProvider: "email"
+      },
+      {
+        id: 2,
+        fullName: "Staff",
+        email: "staff@gmail.com",
+        password: "123456",
+        role: "staff",
+        isBlocked: false,
+        loginProvider: "email"
+      },
+      {
+        id: 3,
+        fullName: "Customer",
+        email: "customer@gmail.com",
+        password: "123456",
+        role: "customer",
+        isBlocked: false,
+        loginProvider: "email"
+      }
+    ];
+
+    function seedData() {
+      if (!localStorage.getItem(PRODUCTS_KEY)) {
+        localStorage.setItem(PRODUCTS_KEY, JSON.stringify(defaultProducts));
+      }
+
+      if (!localStorage.getItem(USERS_KEY)) {
+        localStorage.setItem(USERS_KEY, JSON.stringify(defaultUsers));
+      } else {
+        const users = JSON.parse(localStorage.getItem(USERS_KEY)) || [];
+        const normalizedUsers = users.map(user => ({
+          ...user,
+          isBlocked: user.isBlocked ?? false,
+          loginProvider: user.loginProvider || "email"
+        }));
+        localStorage.setItem(USERS_KEY, JSON.stringify(normalizedUsers));
+      }
+
+      if (!localStorage.getItem(CART_KEY)) {
+        localStorage.setItem(CART_KEY, JSON.stringify([]));
+      }
+    }
+
+    function getProducts() {
+      return JSON.parse(localStorage.getItem(PRODUCTS_KEY)) || [];
+    }
+
+    function getCart() {
+      return JSON.parse(localStorage.getItem(CART_KEY)) || [];
+    }
+
+    function saveCart(cart) {
+      localStorage.setItem(CART_KEY, JSON.stringify(cart));
+    }
+
+    function addToCart(productId) {
+      const products = getProducts();
+      const product = products.find(item => item.id === productId);
+      if (!product) return;
+
+      const cart = getCart();
+      const existing = cart.find(item => item.id === productId);
+
+      if (existing) {
+        existing.quantity += 1;
+      } else {
+        cart.push({ ...product, quantity: 1 });
+      }
+
+      saveCart(cart);
+      alert("Đã thêm sản phẩm vào giỏ hàng");
+    }
+
+    async function loadComponent(id, file) {
+      try {
+        const res = await fetch(file);
+        const html = await res.text();
+        document.getElementById(id).innerHTML = html;
+
+        if (id === "header") {
+          renderHeaderAuth();
+        }
+      } catch (error) {
+        console.log("Lỗi load component:", error);
+      }
+    }
+
+    function renderHeaderAuth() {
+      const headerRight = document.getElementById("headerRight");
+      if (!headerRight) return;
+
+      const currentUser = JSON.parse(localStorage.getItem(USER_KEY));
+
+      if (currentUser) {
+        let extraLinks = "";
+
+        if (currentUser.role === "admin") {
+          extraLinks += `<a class="header-link" href="/Frontend/pages/admin-dashboard.html">Admin</a>`;
+        }
+
+        if (currentUser.role === "staff") {
+          extraLinks += `<a class="header-link" href="/Frontend/pages/staff-dashboard.html">Staff</a>`;
+        }
+
+        if (currentUser.role === "customer") {
+          extraLinks += `<a class="header-link" href="/Frontend/pages/orders.html">Đơn của tôi</a>`;
+        }
+
+        headerRight.innerHTML = `
+          <div id="notificationBellArea"></div>
+          ${extraLinks}
+          <span class="user-text">Xin chào, ${currentUser.fullName || currentUser.email}</span>
+          <button class="header-btn" onclick="logout()">Đăng xuất</button>
         `;
 
-        if(user.role === 'Admin'){
-            document.getElementById('btn-admin').style.display = 'inline-block';
+        if (typeof renderNotificationBell === "function") {
+          renderNotificationBell();
         }
+      } else {
+        headerRight.innerHTML = `
+          <a class="header-link" href="/Frontend/pages/login.html">Đăng nhập</a>
+          <a class="header-link" href="/Frontend/pages/register.html">Đăng ký</a>
+        `;
+      }
     }
 
     function logout() {
-        localStorage.removeItem('shoeshop_token');
-        localStorage.removeItem('shoeshop_user');
-        window.location.href = '/auth.html';
+      localStorage.removeItem(USER_KEY);
+      window.location.href = "/Frontend/index.html";
     }
 
-    async function loadProducts(){
-        try{
-            // Gọi API có kèm Token JWT
-            const res = await fetch("/api/products", {
-                headers: {
-                    'Authorization': 'Bearer ' + token
-                }
-            });
-            const data = await res.json();
-            
-            if(!res.ok){
-                alert(data.message || 'Lỗi lấy sản phẩm');
-                return;
-            }
+    function renderFeaturedProducts() {
+      const products = getProducts().slice(0, 4);
+      const container = document.getElementById("featuredProducts");
 
-            const list = document.getElementById("product-list");
-            list.innerHTML = "";
-
-            data.forEach(p => {
-                const html = `
-                    <div class="product">
-                        <h3>${p.name}</h3>
-                        <p>Price: ${p.price}$</p>
-                        <p><i>ID: ${p._id}</i></p>
-                    </div>
-                `;
-                list.innerHTML += html;
-            });
-
-        } catch(err){
-            console.log(err);
-            alert("Không thể kết nối Backend");
-        }
+      container.innerHTML = products.map(product => `
+        <div class="product-card">
+          <img src="${product.image}" alt="${product.name}">
+          <div class="product-card-body">
+            <p class="product-category">${product.category}</p>
+            <h3 class="product-name">${product.name}</h3>
+            <p class="product-desc">${product.description}</p>
+            <p class="product-price">${product.price.toLocaleString("vi-VN")}đ</p>
+            <div class="card-actions">
+              <button class="btn-dark" onclick="addToCart(${product.id})">Thêm vào giỏ</button>
+              <a class="btn-light" href="/Frontend/pages/product-detail.html?id=${product.id}">Chi tiết</a>
+            </div>
+          </div>
+        </div>
+      `).join("");
     }
 
-
-
-</script>
-
+    seedData();
+    if (typeof seedNotifications === "function") {
+      seedNotifications();
+    }
+    loadComponent("header", "/Frontend/components/header.html");
+    loadComponent("footer", "/Frontend/components/footer.html");
+    renderFeaturedProducts();
+  </script>
 </body>
 </html>

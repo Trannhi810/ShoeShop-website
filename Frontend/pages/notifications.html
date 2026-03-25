@@ -1,0 +1,248 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Thông báo - ShoeShop</title>
+  <link rel="stylesheet" href="/Frontend/css/layout.css" />
+  <style>
+    .page {
+      width: 1000px;
+      max-width: calc(100% - 40px);
+      margin: 32px auto;
+    }
+
+    .page h1 {
+      font-size: 34px;
+      margin-bottom: 18px;
+    }
+
+    .top-actions {
+      display: flex;
+      gap: 12px;
+      margin-bottom: 20px;
+      flex-wrap: wrap;
+    }
+
+    .btn-dark,
+    .btn-light,
+    .btn-danger {
+      padding: 10px 14px;
+      border: none;
+      border-radius: 10px;
+      cursor: pointer;
+      font-weight: 600;
+      text-decoration: none;
+    }
+
+    .btn-dark {
+      background: #111;
+      color: white;
+    }
+
+    .btn-light {
+      background: #ececec;
+      color: #111;
+    }
+
+    .btn-danger {
+      background: #e63946;
+      color: white;
+    }
+
+    .notifications-list {
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+    }
+
+    .notify-card {
+      background: white;
+      border: 1px solid #e5e5e5;
+      border-radius: 16px;
+      padding: 18px;
+      box-shadow: 0 6px 20px rgba(0,0,0,0.04);
+    }
+
+    .notify-card.unread {
+      border-left: 5px solid #111;
+      background: #fcfcfc;
+    }
+
+    .notify-head {
+      display: flex;
+      justify-content: space-between;
+      gap: 20px;
+      flex-wrap: wrap;
+      margin-bottom: 10px;
+    }
+
+    .notify-title {
+      font-size: 20px;
+      font-weight: bold;
+    }
+
+    .notify-time {
+      color: #666;
+      font-size: 14px;
+    }
+
+    .notify-message {
+      color: #555;
+      line-height: 1.6;
+      margin-bottom: 14px;
+    }
+
+    .notify-actions {
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+    }
+
+    .empty-box {
+      background: white;
+      border: 1px dashed #ccc;
+      border-radius: 16px;
+      padding: 30px;
+      text-align: center;
+      color: #666;
+      font-size: 18px;
+    }
+  </style>
+</head>
+<body>
+  <div id="header"></div>
+
+  <main class="page">
+    <h1>Thông báo</h1>
+
+    <div class="top-actions">
+      <button class="btn-dark" onclick="handleMarkAllAsRead()">Đánh dấu đã đọc tất cả</button>
+      <a class="btn-light" href="/Frontend/index.html">Về trang chủ</a>
+    </div>
+
+    <div id="notificationsList" class="notifications-list"></div>
+  </main>
+
+  <div id="footer"></div>
+
+  <script src="/Frontend/js/notify.js"></script>
+  <script>
+    const USER_KEY = "shoeshop_current_user_v1";
+
+    async function loadComponent(id, file) {
+      try {
+        const res = await fetch(file);
+        const html = await res.text();
+        document.getElementById(id).innerHTML = html;
+
+        if (id === "header") {
+          renderHeaderAuth();
+          renderNotificationBell();
+        }
+      } catch (error) {
+        console.log("Lỗi load component:", error);
+      }
+    }
+
+    function renderHeaderAuth() {
+  const headerRight = document.getElementById("headerRight");
+  if (!headerRight) return;
+
+  const currentUser = JSON.parse(localStorage.getItem(USER_KEY));
+
+  if (currentUser) {
+    let extraLink = "";
+
+    if (currentUser.role === "admin") {
+      extraLink = `<a class="header-link" href="/Frontend/pages/admin-dashboard.html">Admin</a>`;
+    } else if (currentUser.role === "staff") {
+      extraLink = `<a class="header-link" href="/Frontend/pages/staff-dashboard.html">Staff</a>`;
+    }
+
+    headerRight.innerHTML = `
+      <div id="notificationBellArea"></div>
+      ${extraLink}
+      <span class="user-text">Xin chào, ${currentUser.fullName || currentUser.email}</span>
+      <button class="header-btn" onclick="logout()">Đăng xuất</button>
+    `;
+
+    renderNotificationBell();
+  } else {
+    headerRight.innerHTML = `
+      <a class="header-link" href="/Frontend/pages/login.html">Đăng nhập</a>
+      <a class="header-link" href="/Frontend/pages/register.html">Đăng ký</a>
+    `;
+  }
+}
+    function logout() {
+      localStorage.removeItem(USER_KEY);
+      window.location.href = "/Frontend/index.html";
+    }
+
+    function renderNotificationsPage() {
+      const currentUser = JSON.parse(localStorage.getItem(USER_KEY));
+      const container = document.getElementById("notificationsList");
+
+      if (!currentUser) {
+        container.innerHTML = `
+          <div class="empty-box">
+            Bạn cần đăng nhập để xem thông báo.
+          </div>
+        `;
+        return;
+      }
+
+      const notifications = getNotificationsByRole(currentUser.role);
+
+      if (!notifications.length) {
+        container.innerHTML = `
+          <div class="empty-box">
+            Chưa có thông báo nào.
+          </div>
+        `;
+        return;
+      }
+
+      container.innerHTML = notifications.map(item => `
+        <div class="notify-card ${item.isRead ? "" : "unread"}">
+          <div class="notify-head">
+            <div class="notify-title">${item.title}</div>
+            <div class="notify-time">${item.createdAt}</div>
+          </div>
+
+          <div class="notify-message">${item.message}</div>
+
+          <div class="notify-actions">
+            ${!item.isRead ? `<button class="btn-light" onclick="handleMarkOneAsRead(${item.id})">Đánh dấu đã đọc</button>` : ""}
+            <button class="btn-danger" onclick="handleDeleteNotification(${item.id})">Xóa</button>
+          </div>
+        </div>
+      `).join("");
+    }
+
+    function handleMarkAllAsRead() {
+      const currentUser = JSON.parse(localStorage.getItem(USER_KEY));
+      if (!currentUser) return;
+
+      markAllAsRead(currentUser.role);
+      renderNotificationsPage();
+    }
+
+    function handleMarkOneAsRead(id) {
+      markOneAsRead(id);
+      renderNotificationsPage();
+    }
+
+    function handleDeleteNotification(id) {
+      deleteNotification(id);
+      renderNotificationsPage();
+    }
+
+    seedNotifications();
+    loadComponent("header", "/Frontend/components/header.html");
+    loadComponent("footer", "/Frontend/components/footer.html");
+    renderNotificationsPage();
+  </script>
+</body>
+</html>
