@@ -74,6 +74,11 @@ const login = async (req, res) => {
       return res.status(401).json({ message: 'Invalid email or password' });
     }
 
+    // Kiểm tra tài khoản có bị khóa không
+    if (!user.isActive) {
+      return res.status(403).json({ message: 'Tài khoản của bạn đã bị khóa. Vui lòng liên hệ quản trị viên.' });
+    }
+
     const token = generateToken(user);
 
     return res.status(200).json({
@@ -85,6 +90,7 @@ const login = async (req, res) => {
         fullName: user.fullName,
         phone: user.phone,
         address: user.address,
+        isActive: user.isActive,
       },
     });
   } catch (error) {
@@ -180,10 +186,125 @@ const googleLogin = async (req, res) => {
   }
 };
 
+// ===== ADMIN APIs =====
+
+// Lấy danh sách tất cả người dùng
+const adminGetAllUsers = async (req, res) => {
+  try {
+    const { search, role, status, page = 1, limit = 10 } = req.query;
+    const query = {};
+
+    if (search) {
+      query.$or = [
+        { fullName: { $regex: search, $options: 'i' } },
+        { email: { $regex: search, $options: 'i' } },
+      ];
+    }
+    if (role) query.role = role;
+    if (status === 'active') query.isActive = true;
+    if (status === 'locked') query.isActive = false;
+
+    const skip = (parseInt(page) - 1) * parseInt(limit);
+    const total = await User.countDocuments(query);
+    const users = await User.find(query)
+      .select('-password')
+      .sort({ createdAt: -1 })
+      .skip(skip)
+      .limit(parseInt(limit));
+
+    return res.status(200).json({ users, total, page: parseInt(page), limit: parseInt(limit) });
+  } catch (error) {
+    return res.status(500).json({ message: error.message });
+  }
+};
+
+// Lấy chi tiết 1 người dùng
+const adminGetUser = async (req, res) => {
+  try {
+    const user = await User.findById(req.params.id).select('-password');
+    if (!user) return res.status(404).json({ message: 'Không tìm thấy người dùng' });
+    return res.status(200).json(user);
+  } catch (error) {
+    return res.status(500).json({ message: error.message });
+  }
+};
+
+// Cập nhật thông tin + role
+const adminUpdateUser = async (req, res) => {
+  try {
+    const { fullName, email, phone, address, role } = req.body;
+    const user = await User.findById(req.params.id);
+    if (!user) return res.status(404).json({ message: 'Không tìm thấy người dùng' });
+
+    // Kiểm tra email trùng (nếu đổi email)
+    if (email && email !== user.email) {
+      const exists = await User.findOne({ email });
+      if (exists) return res.status(400).json({ message: 'Email này đã được sử dụng' });
+      user.email = email;
+    }
+
+    if (fullName !== undefined) user.fullName = fullName;
+    if (phone !== undefined) user.phone = phone;
+    if (address !== undefined) user.address = address;
+    if (role && ['CUSTOMER', 'STAFF', 'ADMIN'].includes(role)) user.role = role;
+
+    const updated = await user.save();
+    const { password: _, ...result } = updated.toObject();
+    return res.status(200).json(result);
+  } catch (error) {
+    return res.status(500).json({ message: error.message });
+  }
+};
+
+// Khóa / Mở khóa tài khoản
+const adminToggleLock = async (req, res) => {
+  try {
+    const user = await User.findById(req.params.id);
+    if (!user) return res.status(404).json({ message: 'Không tìm thấy người dùng' });
+
+    // Không cho tự khóa chính mình
+    if (user._id.toString() === req.user.id) {
+      return res.status(400).json({ message: 'Không thể khóa chính tài khoản của bạn' });
+    }
+
+    user.isActive = !user.isActive;
+    await user.save();
+    return res.status(200).json({
+      message: user.isActive ? 'Mở khóa tài khoản thành công' : 'Khóa tài khoản thành công',
+      isActive: user.isActive
+    });
+  } catch (error) {
+    return res.status(500).json({ message: error.message });
+  }
+};
+
+// Xóa tài khoản
+const adminDeleteUser = async (req, res) => {
+  try {
+    const user = await User.findById(req.params.id);
+    if (!user) return res.status(404).json({ message: 'Không tìm thấy người dùng' });
+
+    if (user._id.toString() === req.user.id) {
+      return res.status(400).json({ message: 'Không thể xóa chính tài khoản của bạn' });
+    }
+
+    await User.findByIdAndDelete(req.params.id);
+    return res.status(200).json({ message: 'Xóa tài khoản thành công' });
+  } catch (error) {
+    return res.status(500).json({ message: error.message });
+  }
+};
+
 module.exports = {
   register,
   login,
   getProfile,
   updateProfile,
   googleLogin,
+  // Admin
+  adminGetAllUsers,
+  adminGetUser,
+  adminUpdateUser,
+  adminToggleLock,
+  adminDeleteUser,
 };
