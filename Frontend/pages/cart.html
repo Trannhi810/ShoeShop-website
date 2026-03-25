@@ -188,190 +188,179 @@
 
   <div id="footer"></div>
 
+  <!-- Thêm các file JS gọi API -->
+  <script src="/js/admin-utils.js"></script>
+  <script src="/js/api-client.js"></script>
   <script>
-    const PRODUCTS_KEY = "shoeshop_products_v1";
-    const USERS_KEY = "shoeshop_users_v1";
-    const USER_KEY = "shoeshop_current_user_v1";
-    const CART_KEY = "shoeshop_cart_v1";
-
-    const defaultProducts = [
-      {
-        id: 1,
-        name: "Nike Air Force 1",
-        price: 2200000,
-        category: "Sneaker",
-        image: "https://images.unsplash.com/photo-1542291026-7eec264c27ff?auto=format&fit=crop&w=900&q=80",
-        description: "Thiết kế trẻ trung, dễ phối đồ."
-      }
-    ];
-
-    const defaultUsers = [
-      { id: 1, fullName: "Admin", email: "admin@gmail.com", password: "123456", role: "admin" },
-      { id: 2, fullName: "Staff", email: "staff@gmail.com", password: "123456", role: "staff" },
-      { id: 3, fullName: "Customer", email: "customer@gmail.com", password: "123456", role: "customer" }
-    ];
-
-    function seedData() {
-      if (!localStorage.getItem(PRODUCTS_KEY)) {
-        localStorage.setItem(PRODUCTS_KEY, JSON.stringify(defaultProducts));
-      }
-      if (!localStorage.getItem(USERS_KEY)) {
-        localStorage.setItem(USERS_KEY, JSON.stringify(defaultUsers));
-      }
-      if (!localStorage.getItem(CART_KEY)) {
-        localStorage.setItem(CART_KEY, JSON.stringify([]));
-      }
-    }
-
-    function getCart() {
-      return JSON.parse(localStorage.getItem(CART_KEY)) || [];
-    }
-
-    function saveCart(cart) {
-      localStorage.setItem(CART_KEY, JSON.stringify(cart));
-    }
+    const USER_KEY = "shoeshop_user";
 
     async function loadComponent(id, file) {
-      const res = await fetch(file);
-      const html = await res.text();
-      document.getElementById(id).innerHTML = html;
+      try {
+        const res = await fetch(file);
+        const html = await res.text();
+        document.getElementById(id).innerHTML = html;
 
-      if (id === "header") {
-        renderHeaderAuth();
+        if (id === "header") {
+          renderHeaderAuth();
+        }
+      } catch (error) {
+        console.error("Lỗi tải component:", error);
       }
     }
 
     function renderHeaderAuth() {
-  const headerRight = document.getElementById("headerRight");
-  if (!headerRight) return;
+      const headerRight = document.getElementById("headerRight");
+      if (!headerRight) return;
 
-  const currentUser = JSON.parse(localStorage.getItem(USER_KEY));
+      const currentUser = JSON.parse(localStorage.getItem(USER_KEY));
 
-  if (currentUser) {
-    let extraLink = "";
+      if (currentUser) {
+        let extraLink = "";
 
-    if (currentUser.role === "admin") {
-      extraLink = `<a class="header-link" href="/Frontend/pages/admin-dashboard.html">Admin</a>`;
-    } else if (currentUser.role === "staff") {
-      extraLink = `<a class="header-link" href="/Frontend/pages/staff-dashboard.html">Staff</a>`;
+        if (currentUser.role === "ADMIN") {
+          extraLink = `<a class="header-link" href="/Frontend/pages/admin-dashboard.html">Admin</a>`;
+        } else if (currentUser.role === "STAFF") {
+          extraLink = `<a class="header-link" href="/Frontend/pages/staff-dashboard.html">Staff</a>`;
+        }
+
+        headerRight.innerHTML = `
+          <div id="notificationBellArea"></div>
+          ${extraLink}
+          <span class="user-text">Xin chào, ${currentUser.fullName || currentUser.email}</span>
+          <button class="header-btn" onclick="logout()">Đăng xuất</button>
+        `;
+
+        // renderNotificationBell(); // Nếu có hàm này
+      } else {
+        headerRight.innerHTML = `
+          <a class="header-link" href="/Frontend/pages/auth.html">Đăng nhập</a>
+          <a class="header-link" href="/Frontend/pages/auth.html?tab=register">Đăng ký</a>
+        `;
+      }
     }
-
-    headerRight.innerHTML = `
-      <div id="notificationBellArea"></div>
-      ${extraLink}
-      <span class="user-text">Xin chào, ${currentUser.fullName || currentUser.email}</span>
-      <button class="header-btn" onclick="logout()">Đăng xuất</button>
-    `;
-
-    renderNotificationBell();
-  } else {
-    headerRight.innerHTML = `
-      <a class="header-link" href="/Frontend/pages/auth.html">Đăng nhập</a>
-      <a class="header-link" href="/Frontend/pages/auth.html?tab=register">Đăng ký</a>
-    `;
-  }
-}
 
     function logout() {
       localStorage.removeItem(USER_KEY);
+      localStorage.removeItem("shoeshop_token");
       window.location.href = "/Frontend/index.html";
     }
 
-    function increaseQty(productId) {
-      const cart = getCart();
-      const item = cart.find(product => product.id === productId);
-      if (!item) return;
-
-      item.quantity += 1;
-      saveCart(cart);
-      renderCart();
+    async function increaseQty(itemId, currentQty) {
+      try {
+        await cartApi.updateQuantity(itemId, currentQty + 1);
+        renderCart();
+      } catch (error) {
+        alert(error.message);
+      }
     }
 
-    function decreaseQty(productId) {
-      let cart = getCart();
-      const item = cart.find(product => product.id === productId);
-      if (!item) return;
-
-      item.quantity -= 1;
-      cart = cart.filter(product => product.quantity > 0);
-
-      saveCart(cart);
-      renderCart();
+    async function decreaseQty(itemId, currentQty) {
+      if (currentQty <= 1) {
+        return removeItem(itemId);
+      }
+      try {
+        await cartApi.updateQuantity(itemId, currentQty - 1);
+        renderCart();
+      } catch (error) {
+        alert(error.message);
+      }
     }
 
-    function removeItem(productId) {
-      let cart = getCart();
-      cart = cart.filter(product => product.id !== productId);
-      saveCart(cart);
-      renderCart();
+    async function removeItem(itemId) {
+      if (!confirm("Bạn có chắc muốn xóa sản phẩm này khỏi giỏ hàng?")) return;
+      try {
+        await cartApi.removeItem(itemId);
+        renderCart();
+      } catch (error) {
+        alert(error.message);
+      }
     }
 
-    function renderCart() {
-      const cart = getCart();
+    async function renderCart() {
       const list = document.getElementById("cartList");
       const summary = document.getElementById("cartSummary");
+      const currentUser = JSON.parse(localStorage.getItem(USER_KEY));
 
-      if (!cart.length) {
+      if (!currentUser) {
         list.innerHTML = `
           <div class="empty-cart">
-            Giỏ hàng của bạn đang trống.<br><br>
-            <a class="btn-dark" style="display:inline-block; padding:12px 18px; border-radius:10px; text-decoration:none; color:white;" href="/Frontend/pages/products.html">
-              Tiếp tục mua sắm
+            Bạn cần đăng nhập để xem giỏ hàng.<br><br>
+            <a class="btn-dark" style="display:inline-block; padding:12px 18px; border-radius:10px; text-decoration:none; color:white;" href="/Frontend/pages/auth.html">
+              Đăng nhập ngay
             </a>
           </div>
         `;
-
-        summary.innerHTML = `
-          <h3>Tóm tắt đơn hàng</h3>
-          <p>Số dòng sản phẩm: 0</p>
-          <p class="summary-total">Tổng tiền: 0đ</p>
-          <div class="summary-actions">
-            <a class="btn-light" href="/Frontend/pages/products.html">Xem sản phẩm</a>
-            <button class="btn-dark" disabled>Thanh toán</button>
-          </div>
-        `;
+        summary.innerHTML = "";
         return;
       }
 
-      list.innerHTML = cart.map(item => `
-        <div class="cart-item">
-          <img src="${item.image}" alt="${item.name}">
-          <div class="cart-info">
-            <h3>${item.name}</h3>
-            <p>Danh mục: ${item.category}</p>
-            <p>Giá: ${item.price.toLocaleString("vi-VN")}đ</p>
+      try {
+        const cartData = await cartApi.getCart();
+        const cartItems = cartData.items || [];
+
+        if (!cartItems.length) {
+          list.innerHTML = `
+            <div class="empty-cart">
+            Giỏ hàng của bạn đang trống.<br><br>
+            <a class="btn-dark" style="display:inline-block; padding:12px 18px; border-radius:10px; text-decoration:none; color:white;" href="/pages/products.html">
+              Tiếp tục mua sắm
+            </a>
           </div>
-          <div class="cart-actions">
-            <div class="qty-box">
-              <button onclick="decreaseQty(${item.id})">-</button>
-              <span>${item.quantity}</span>
-              <button onclick="increaseQty(${item.id})">+</button>
+          `;
+
+          summary.innerHTML = `
+            <h3>Tóm tắt đơn hàng</h3>
+            <p>Số dòng sản phẩm: 0</p>
+            <p class="summary-total">Tổng tiền: 0đ</p>
+            <div class="summary-actions">
+              <a class="btn-light" href="/pages/products.html">Xem sản phẩm</a>
+              <button class="btn-dark" disabled>Thanh toán</button>
             </div>
-            <div class="item-total">${(item.price * item.quantity).toLocaleString("vi-VN")}đ</div>
-            <button class="remove-btn" onclick="removeItem(${item.id})">Xóa</button>
+          `;
+          return;
+        }
+
+        list.innerHTML = cartItems.map(item => `
+          <div class="cart-item">
+            <img src="${item.image || '/images/placeholder.jpg'}" alt="${item.name}">
+            <div class="cart-info">
+              <h3>${item.name}</h3>
+              <p>Phân loại: ${item.color} - ${item.size}</p>
+              <p>Giá: ${item.price.toLocaleString("vi-VN")}đ</p>
+            </div>
+            <div class="cart-actions">
+              <div class="qty-box">
+                <button onclick="decreaseQty('${item.id}', ${item.quantity})">-</button>
+                <span>${item.quantity}</span>
+                <button onclick="increaseQty('${item.id}', ${item.quantity})">+</button>
+              </div>
+              <div class="item-total">${(item.price * item.quantity).toLocaleString("vi-VN")}đ</div>
+              <button class="remove-btn" onclick="removeItem('${item.id}')">Xóa</button>
+            </div>
           </div>
-        </div>
-      `).join("");
+        `).join("");
 
-      const totalLines = cart.length;
-      const totalAmount = cart.reduce((sum, item) => sum + item.price * item.quantity, 0);
+        const totalLines = cartItems.length;
+        const totalAmount = cartItems.reduce((sum, item) => sum + item.price * item.quantity, 0);
 
-      summary.innerHTML = `
-        <h3>Tóm tắt đơn hàng</h3>
-        <p>Số dòng sản phẩm: ${totalLines}</p>
-        <p class="summary-total">Tổng tiền: ${totalAmount.toLocaleString("vi-VN")}đ</p>
-        <div class="summary-actions">
-          <a class="btn-light" href="/Frontend/pages/products.html">Mua thêm</a>
-          <button class="btn-dark" onclick="checkout()">Thanh toán</button>
-        </div>
-      `;
+        summary.innerHTML = `
+          <h3>Tóm tắt đơn hàng</h3>
+          <p>Số dòng sản phẩm: ${totalLines}</p>
+          <p class="summary-total">Tổng tiền: ${totalAmount.toLocaleString("vi-VN")}đ</p>
+          <div class="summary-actions">
+            <a class="btn-light" href="/pages/products.html">Mua thêm</a>
+            <button class="btn-dark" onclick="checkout()">Thanh toán</button>
+          </div>
+        `;
+      } catch (error) {
+        list.innerHTML = `<div class="empty-cart">Lỗi tải giỏ hàng: ${error.message}</div>`;
+      }
     }
 
     function checkout() {
         window.location.href = "/Frontend/pages/checkout.html";
     }
 
-    seedData();
     loadComponent("header", "/components/header.html");
     loadComponent("footer", "/components/footer.html");
     renderCart();
