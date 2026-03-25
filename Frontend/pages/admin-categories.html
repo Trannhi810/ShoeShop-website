@@ -112,6 +112,7 @@
 
   <script src="/Frontend/js/notify.js"></script>
   <script>
+    const USER_KEY = "shoeshop_current_user_v1";
     const CATEGORIES_KEY = "shoeshop_categories_v1";
     let editingCategoryIndex = null;
 
@@ -133,9 +134,17 @@
       const currentUser = JSON.parse(localStorage.getItem(USER_KEY));
 
       if (currentUser) {
+        let extraLink = "";
+
+        if (currentUser.role === "admin") {
+          extraLink = `<a class="header-link" href="/Frontend/pages/admin-dashboard.html">Admin</a>`;
+        } else if (currentUser.role === "staff") {
+          extraLink = `<a class="header-link" href="/Frontend/pages/staff-dashboard.html">Staff</a>`;
+        }
+
         headerRight.innerHTML = `
           <div id="notificationBellArea"></div>
-          <a class="header-link" href="/Frontend/pages/admin-dashboard.html">Admin</a>
+          ${extraLink}
           <span class="user-text">Xin chào, ${currentUser.fullName || currentUser.email}</span>
           <button class="header-btn" onclick="logout()">Đăng xuất</button>
         `;
