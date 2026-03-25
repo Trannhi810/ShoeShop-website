@@ -1,0 +1,325 @@
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+body {
+  font-family: 'Outfit', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  background: #f5f5f5;
+}
+
+.auth-page {
+  min-height: 100vh;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 40px 20px;
+  background: linear-gradient(135deg, #f6f6f6, #ffffff);
+}
+
+.auth-box {
+  width: 450px;
+  max-width: 100%;
+  background: white;
+  border: 1px solid #e5e5e5;
+  border-radius: 20px;
+  padding: 28px;
+  box-shadow: 0 14px 40px rgba(0,0,0,0.08);
+}
+
+.auth-box h1 {
+  margin-bottom: 10px;
+  font-size: 32px;
+  font-weight: 800;
+}
+
+.auth-subtitle {
+  color: #666;
+  margin-bottom: 20px;
+  line-height: 1.5;
+}
+
+.auth-form {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.auth-form label {
+  font-weight: 600;
+}
+
+.auth-form input {
+  padding: 12px 14px;
+  border: 1px solid #ccc;
+  border-radius: 10px;
+  font-size: 15px;
+  outline: none;
+}
+
+.auth-form input:focus {
+  border-color: #111;
+}
+
+.auth-form button {
+  margin-top: 8px;
+  padding: 12px;
+  border: none;
+  border-radius: 10px;
+  background: #111;
+  color: white;
+  font-size: 15px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.auth-form button:hover {
+  background: #333;
+}
+
+.auth-bottom {
+  margin-top: 18px;
+  text-align: center;
+}
+
+.auth-bottom a {
+  font-weight: 700;
+  color: #111;
+  text-decoration: none;
+}
+
+.msg {
+  margin-top: 14px;
+  font-size: 14px;
+  color: #d62828;
+  min-height: 20px;
+}
+
+.demo-account {
+  margin-top: 20px;
+  background: #f7f7f7;
+  border-radius: 12px;
+  padding: 14px;
+  font-size: 14px;
+  color: #444;
+  line-height: 1.6;
+}
+
+/* Auth Header and Tab Toggle */
+.auth-header {
+  display: flex;
+  position: relative;
+  margin-bottom: 20px;
+  border-bottom: 2px solid #f0f0f0;
+  padding-bottom: 0;
+}
+
+.toggle-btn {
+  flex: 1;
+  padding: 12px 16px;
+  background: none;
+  border: none;
+  cursor: pointer;
+  font-size: 16px;
+  font-weight: 600;
+  color: #999;
+  position: relative;
+  z-index: 1;
+  transition: color 0.3s ease;
+}
+
+.toggle-btn.active {
+  color: #111;
+}
+
+.toggle-indicator {
+  position: absolute;
+  bottom: -2px;
+  left: 0;
+  width: 50%;
+  height: 2px;
+  background: #111;
+  transition: left 0.3s ease;
+  z-index: 0;
+}
+
+/* Form Slider */
+.form-slider {
+  position: relative;
+  overflow: hidden;
+  margin-top: 20px;
+}
+
+.form-section {
+  display: none;
+  animation: slideIn 0.3s ease-in-out;
+}
+
+.form-section.active {
+  display: block;
+}
+
+@keyframes slideIn {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Input Groups */
+.input-group {
+  position: relative;
+  display: flex;
+  align-items: center;
+  margin-bottom: 8px;
+}
+
+.input-group input {
+  width: 100%;
+  padding: 12px 14px;
+  padding-right: 40px;
+  border: 1px solid #ddd;
+  border-radius: 10px;
+  font-size: 15px;
+  outline: none;
+  transition: border-color 0.3s ease;
+}
+
+.input-group input:focus {
+  border-color: #111;
+  box-shadow: 0 0 0 2px rgba(17, 17, 17, 0.05);
+}
+
+.input-icon {
+  position: absolute;
+  right: 14px;
+  color: #ccc;
+  font-size: 18px;
+  pointer-events: none;
+}
+
+.password-toggle {
+  position: absolute;
+  right: 14px;
+  cursor: pointer;
+  color: #999;
+  font-size: 18px;
+  transition: color 0.2s;
+  pointer-events: auto;
+}
+
+.password-toggle:hover {
+  color: #111;
+}
+
+/* Submit Button */
+.btn-submit {
+  width: 100%;
+  padding: 12px;
+  margin-top: 12px;
+  border: none;
+  border-radius: 10px;
+  background: #111;
+  color: white;
+  font-size: 15px;
+  font-weight: 600;
+  cursor: pointer;
+  position: relative;
+  overflow: hidden;
+  transition: background-color 0.3s ease;
+}
+
+.btn-submit:hover {
+  background: #333;
+}
+
+.btn-submit:disabled {
+  background: #ccc;
+  cursor: not-allowed;
+}
+
+.btn-text {
+  display: inline-block;
+}
+
+.loading-spinner {
+  display: none;
+  position: absolute;
+  width: 16px;
+  height: 16px;
+  border: 2px solid rgba(255, 255, 255, 0.3);
+  border-top-color: white;
+  border-radius: 50%;
+  animation: spin 0.6s linear infinite;
+  right: 16px;
+  top: 50%;
+  transform: translateY(-50%);
+}
+
+@keyframes spin {
+  to {
+    transform: translateY(-50%) rotate(360deg);
+  }
+}
+
+.btn-submit.loading .btn-text {
+  visibility: hidden;
+}
+
+.btn-submit.loading .loading-spinner {
+  display: block;
+}
+
+/* Divider */
+.divider {
+  display: flex;
+  align-items: center;
+  margin: 16px 0;
+  color: #ccc;
+  font-size: 14px;
+}
+
+.divider::before,
+.divider::after {
+  content: '';
+  flex: 1;
+  height: 1px;
+  background: #ddd;
+}
+
+.divider span {
+  padding: 0 12px;
+  color: #999;
+}
+
+/* Hint Text */
+.hint-text {
+  display: block;
+  font-size: 12px;
+  color: #999;
+  margin-top: 8px;
+  margin-bottom: 8px;
+  line-height: 1.4;
+}
+
+/* Message Box */
+.message-box {
+  margin-top: 14px;
+  font-size: 14px;
+  color: #d62828;
+  min-height: 20px;
+  text-align: center;
+}
+
+.message-box.success {
+  color: #27ae60;
+}
+
+.message-box.error {
+  color: #d62828;
+}

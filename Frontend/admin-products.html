@@ -1,0 +1,241 @@
+﻿<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Shoe Shop Admin - Quản Lý Sản Phẩm</title>
+    <meta name="description" content="Trang quản trị sản phẩm hệ thống Shoe Shop">
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="css/admin-shared.css">
+</head>
+<body>
+
+    <!-- Sidebar -->
+    <aside class="sidebar" id="sidebar">
+        <div class="sidebar-logo">
+            <i class="fa-solid fa-shoe-prints"></i>
+            <span>ShoeShop</span>
+        </div>
+        <nav class="sidebar-nav">
+            <p class="nav-label">Quản trị</p>
+            <a href="/admin-users.html" class="nav-item">
+                <i class="fa-solid fa-users"></i>
+                <span>Người dùng</span>
+            </a>
+            <a href="/admin-products.html" class="nav-item active">
+                <i class="fa-solid fa-box-open"></i>
+                <span>Sản phẩm</span>
+            </a>
+            <a href="/admin-categories.html" class="nav-item">
+                <i class="fa-solid fa-tags"></i>
+                <span>Danh mục</span>
+            </a>
+            <p class="nav-label">Hệ thống</p>
+            <a href="/index.html" class="nav-item">
+                <i class="fa-solid fa-house"></i>
+                <span>Trang chủ</span>
+            </a>
+        </nav>
+        <div class="sidebar-footer">
+            <div class="admin-avatar" id="admin-avatar">A</div>
+            <div class="admin-info">
+                <p class="admin-name" id="admin-name">Admin</p>
+                <p class="admin-role">Quản trị viên</p>
+            </div>
+            <button class="btn-logout" onclick="logout()" title="Đăng xuất">
+                <i class="fa-solid fa-right-from-bracket"></i>
+            </button>
+        </div>
+    </aside>
+
+    <!-- Main Content -->
+    <main class="main-content">
+        <header class="page-header">
+            <div class="header-left">
+                <button class="btn-menu-toggle" onclick="toggleSidebar()">
+                    <i class="fa-solid fa-bars"></i>
+                </button>
+                <div>
+                    <h1 class="page-title">Quản Lý Sản Phẩm</h1>
+                    <p class="page-subtitle">Thêm, sửa, xóa và quản lý toàn bộ sản phẩm</p>
+                </div>
+            </div>
+            <button class="btn-primary" onclick="openAddModal()" id="btn-add-product">
+                <i class="fa-solid fa-plus"></i>
+                <span>Thêm sản phẩm</span>
+            </button>
+        </header>
+
+        <!-- Stats -->
+        <div class="stats-bar">
+            <div class="stat-card">
+                <div class="stat-icon purple"><i class="fa-solid fa-box-open"></i></div>
+                <div><p class="stat-label">Tổng sản phẩm</p><p class="stat-value" id="stat-total">—</p></div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-icon green"><i class="fa-solid fa-circle-check"></i></div>
+                <div><p class="stat-label">Đang bán</p><p class="stat-value" id="stat-active">—</p></div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-icon red"><i class="fa-solid fa-eye-slash"></i></div>
+                <div><p class="stat-label">Ẩn / Ngừng bán</p><p class="stat-value" id="stat-inactive">—</p></div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-icon orange"><i class="fa-solid fa-triangle-exclamation"></i></div>
+                <div><p class="stat-label">Sắp hết hàng</p><p class="stat-value" id="stat-low">—</p></div>
+            </div>
+        </div>
+
+        <!-- Filter & Search -->
+        <div class="filter-bar">
+            <div class="search-box">
+                <i class="fa-solid fa-magnifying-glass"></i>
+                <input type="text" id="search-input" placeholder="Tìm kiếm tên, mô tả sản phẩm..." oninput="debounceSearch()">
+            </div>
+            <div class="filter-group">
+                <select id="filter-category" onchange="loadProducts(1)">
+                    <option value="">Tất cả danh mục</option>
+                </select>
+                <select id="filter-status" onchange="loadProducts(1)">
+                    <option value="">Tất cả trạng thái</option>
+                    <option value="active">Đang bán</option>
+                    <option value="inactive">Ngừng bán</option>
+                </select>
+            </div>
+        </div>
+
+        <!-- Table -->
+        <div class="table-wrapper">
+            <div class="table-loading" id="table-loading">
+                <div class="spinner"></div>
+                <p>Đang tải dữ liệu...</p>
+            </div>
+            <table class="data-table" id="product-table">
+                <thead>
+                    <tr>
+                        <th>#</th>
+                        <th>Sản phẩm</th>
+                        <th>Danh mục</th>
+                        <th>Giá</th>
+                        <th>Tồn kho</th>
+                        <th>Trạng thái</th>
+                        <th>Ngày tạo</th>
+                        <th>Thao tác</th>
+                    </tr>
+                </thead>
+                <tbody id="product-tbody"></tbody>
+            </table>
+            <div class="empty-state" id="empty-state" style="display:none;">
+                <i class="fa-solid fa-box-open"></i>
+                <p>Chưa có sản phẩm nào</p>
+            </div>
+        </div>
+        <div class="pagination" id="pagination"></div>
+    </main>
+
+    <!-- ===== MODAL: Thêm / Sửa sản phẩm ===== -->
+    <div class="modal-overlay" id="modal-product" onclick="closeModalOnOverlay(event,'modal-product')">
+        <div class="modal">
+            <div class="modal-header">
+                <h2 id="modal-title">Thêm sản phẩm</h2>
+                <button class="btn-close" onclick="closeModal('modal-product')"><i class="fa-solid fa-xmark"></i></button>
+            </div>
+            <div class="modal-body">
+                <form id="product-form" onsubmit="submitProductForm(event)">
+                    <input type="hidden" id="form-product-id">
+
+                    <div class="form-group">
+                        <label>Tên sản phẩm <span class="required">*</span></label>
+                        <div class="input-wrap">
+                            <i class="fa-solid fa-box-open"></i>
+                            <input type="text" id="form-name" placeholder="VD: Nike Air Max 270" required>
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label>Danh mục</label>
+                        <div class="input-wrap">
+                            <i class="fa-solid fa-tags"></i>
+                            <select id="form-category">
+                                <option value="">— Không thuộc danh mục —</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label>Mô tả</label>
+                        <div class="input-wrap">
+                            <i class="fa-solid fa-align-left"></i>
+                            <textarea id="form-description" placeholder="Mô tả ngắn về sản phẩm..."></textarea>
+                        </div>
+                    </div>
+
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label>Giá bán (VNĐ) <span class="required">*</span></label>
+                            <div class="input-wrap">
+                                <i class="fa-solid fa-tag"></i>
+                                <input type="number" id="form-price" placeholder="0" min="0" required>
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <label>Tồn kho <span class="required">*</span></label>
+                            <div class="input-wrap">
+                                <i class="fa-solid fa-warehouse"></i>
+                                <input type="number" id="form-stock" placeholder="0" min="0" required>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label>Trạng thái</label>
+                        <div class="input-wrap">
+                            <i class="fa-solid fa-toggle-on"></i>
+                            <select id="form-isActive">
+                                <option value="true">Đang bán</option>
+                                <option value="false">Ngừng bán / Ẩn</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="modal-actions">
+                        <button type="button" class="btn-secondary" onclick="closeModal('modal-product')">Hủy</button>
+                        <button type="submit" class="btn-primary" id="btn-submit-product">
+                            <span class="btn-text">Lưu</span>
+                            <div class="mini-spinner" style="display:none;"></div>
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- ===== MODAL: Xác nhận xóa ===== -->
+    <div class="modal-overlay" id="modal-delete" onclick="closeModalOnOverlay(event,'modal-delete')">
+        <div class="modal modal-sm">
+            <div class="modal-header danger">
+                <h2><i class="fa-solid fa-triangle-exclamation"></i> Xác nhận xóa</h2>
+                <button class="btn-close" onclick="closeModal('modal-delete')"><i class="fa-solid fa-xmark"></i></button>
+            </div>
+            <div class="modal-body">
+                <p class="delete-msg">Bạn có chắc muốn xóa sản phẩm <strong id="delete-product-name"></strong>?</p>
+                <p class="delete-warn">Hành động này <strong>không thể hoàn tác</strong>.</p>
+                <div class="modal-actions">
+                    <button class="btn-secondary" onclick="closeModal('modal-delete')">Hủy</button>
+                    <button class="btn-danger" id="btn-confirm-delete" onclick="confirmDelete()">
+                        <span class="btn-text"><i class="fa-solid fa-trash"></i> Xóa</span>
+                        <div class="mini-spinner" style="display:none;"></div>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="toast-container" id="toast-container"></div>
+
+    <script src="js/admin-utils.js"></script>
+    <script src="js/api-client.js"></script>
+    <script src="js/admin-products.js"></script>
+</body>
+</html>
