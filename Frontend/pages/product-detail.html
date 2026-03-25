@@ -4,11 +4,9 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Chi tiết sản phẩm - ShoeShop</title>
-  <link rel="stylesheet" href="/Frontend/css/layout.css" />
+  <link rel="stylesheet" href="/css/layout.css" />
   <style>
     .page {
-      width: 1200px;
-      max-width: calc(100% - 40px);
       margin: 32px auto;
     }
 
@@ -146,8 +144,8 @@
     renderNotificationBell();
   } else {
     headerRight.innerHTML = `
-      <a class="header-link" href="/Frontend/pages/login.html">Đăng nhập</a>
-      <a class="header-link" href="/Frontend/pages/register.html">Đăng ký</a>
+      <a class="header-link" href="/Frontend/pages/auth.html">Đăng nhập</a>
+      <a class="header-link" href="/Frontend/pages/auth.html?tab=register">Đăng ký</a>
     `;
   }
 }

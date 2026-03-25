@@ -181,8 +181,8 @@
         renderNotificationBell();
       } else {
         headerRight.innerHTML = `
-          <a class="header-link" href="/Frontend/pages/login.html">Đăng nhập</a>
-          <a class="header-link" href="/Frontend/pages/register.html">Đăng ký</a>
+          <a class="header-link" href="/Frontend/pages/auth.html">Đăng nhập</a>
+          <a class="header-link" href="/Frontend/pages/auth.html?tab=register">Đăng ký</a>
         `;
       }
     }
@@ -293,7 +293,7 @@
       const currentUser = JSON.parse(localStorage.getItem(USER_KEY));
       if (!currentUser) {
         alert("Bạn cần đăng nhập trước khi đặt hàng.");
-        window.location.href = "/Frontend/pages/login.html";
+        window.location.href = "/Frontend/pages/auth.html";
         return;
       }
 

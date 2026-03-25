@@ -4,9 +4,7 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>ShoeShop - Trang chủ</title>
-  <link rel="stylesheet" href="../css/base.css">
-  <link rel="stylesheet" href="../css/layout.css">
-  <link rel="stylesheet" href="../css/home.css">
+  <link rel="stylesheet" href="/css/layout.css">
   <style>
     .hero {
       background: linear-gradient(135deg, #111, #333);
@@ -15,8 +13,6 @@
     }
 
     .hero-inner {
-      width: 1200px;
-      max-width: calc(100% - 40px);
       margin: 0 auto;
       display: grid;
       grid-template-columns: 1.2fr 1fr;
@@ -74,8 +70,6 @@
     }
 
     .section {
-      width: 1200px;
-      max-width: calc(100% - 40px);
       margin: 40px auto;
     }
 
@@ -443,8 +437,8 @@
         }
       } else {
         headerRight.innerHTML = `
-          <a class="header-link" href="/Frontend/pages/login.html">Đăng nhập</a>
-          <a class="header-link" href="/Frontend/pages/register.html">Đăng ký</a>
+          <a class="header-link" href="/pages/auth.html">Đăng nhập</a>
+          <a class="header-link" href="/pages/auth.html?tab=register">Đăng ký</a>
         `;
       }
     }

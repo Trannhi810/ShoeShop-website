@@ -171,8 +171,8 @@
     renderNotificationBell();
   } else {
     headerRight.innerHTML = `
-      <a class="header-link" href="/Frontend/pages/login.html">Đăng nhập</a>
-      <a class="header-link" href="/Frontend/pages/register.html">Đăng ký</a>
+      <a class="header-link" href="/Frontend/pages/auth.html">Đăng nhập</a>
+      <a class="header-link" href="/Frontend/pages/auth.html?tab=register">Đăng ký</a>
     `;
   }
 }
@@ -202,7 +202,7 @@
         container.innerHTML = `
           <div class="empty-box">
             Bạn cần đăng nhập để xem đơn hàng.<br>
-            <a class="btn-dark" href="/Frontend/pages/login.html">Đăng nhập ngay</a>
+            <a class="btn-dark" href="/Frontend/pages/auth.html">Đăng nhập ngay</a>
           </div>
         `;
         return;

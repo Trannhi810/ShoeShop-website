@@ -183,7 +183,15 @@ function handleGoogleCallback(response) {
       alert("Lỗi kết nối: " + error.message);
     });
 }
-
+// Handle URL tab parameter - switch to register tab if tab=register in URL
+document.addEventListener("DOMContentLoaded", function() {
+  const urlParams = new URLSearchParams(window.location.search);
+  const tab = urlParams.get("tab");
+  
+  if (tab === "register") {
+    switchTab("register");
+  }
+});
 // Check URL parameter để tự động switch tab khi load
 document.addEventListener("DOMContentLoaded", () => {
   const params = new URLSearchParams(window.location.search);

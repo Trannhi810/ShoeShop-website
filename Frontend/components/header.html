@@ -3,12 +3,12 @@
 
     <!-- LOGO -->
     <div class="logo">
-      <a href="/">ShoeShop</a>
+      <a href="/index.html">ShoeShop</a>
     </div>
 
     <!-- MENU -->
     <nav class="main-nav">
-      <a href="/">Trang chủ</a>
+      <a href="/index.html">Trang chủ</a>
       <a href="/pages/products.html">Sản phẩm</a>
       <a href="/pages/cart.html">Giỏ hàng</a>
     </nav>
@@ -19,110 +19,48 @@
   </div>
 </header>
 
-<style>
-.site-header {
-  background: #111;
-  color: white;
-}
-
-.header-inner {
-  width: 1200px;
-  max-width: calc(100% - 40px);
-  margin: 0 auto;
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 14px 0;
-}
-
-.logo a {
-  color: white;
-  font-size: 22px;
-  font-weight: bold;
-  text-decoration: none;
-}
-
-.main-nav {
-  display: flex;
-  gap: 20px;
-}
-
-.main-nav a {
-  color: #ddd;
-  text-decoration: none;
-  font-weight: 500;
-}
-
-.main-nav a:hover {
-  color: white;
-}
-
-.header-right {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-}
-
-.header-link {
-  color: #ddd;
-  text-decoration: none;
-}
-
-.header-link:hover {
-  color: white;
-}
-
-.header-btn {
-  background: #e63946;
-  color: white;
-  border: none;
-  padding: 8px 12px;
-  border-radius: 6px;
-  cursor: pointer;
-}
-
-.user-text {
-  font-size: 14px;
-}
-</style>
-
 <script>
-function renderHeaderAuth() {
-  const headerRight = document.getElementById("headerRight");
-  const user = JSON.parse(localStorage.getItem("shoeshop_current_user_v1"));
+  function renderHeaderAuth() {
+    const headerRight = document.getElementById("headerRight");
+    const user = JSON.parse(localStorage.getItem("shoeshop_current_user_v1"));
 
-  if (!headerRight) return;
+    if (!headerRight) return;
 
-  if (user) {
-    let extra = "";
+    if (user) {
+      let extra = "";
 
-    if (user.role === "admin") {
-      extra += `<a class="header-link" href="/Frontend/pages/admin-dashboard.html">Admin</a>`;
-    }
+      if (user.role === "admin") {
+        extra += `<a class="header-link" href="/pages/admin-dashboard.html">Admin</a>`;
+      }
 
-    if (user.role === "staff") {
-      extra += `<a class="header-link" href="/Frontend/pages/staff-dashboard.html">Staff</a>`;
-    }
+      if (user.role === "staff") {
+        extra += `<a class="header-link" href="/pages/staff-dashboard.html">Staff</a>`;
+      }
 
-    if (user.role === "customer") {
-      extra += `<a class="header-link" href="/Frontend/pages/orders.html">Đơn hàng</a>`;
-    }
+      if (user.role === "customer") {
+        extra += `<a class="header-link" href="/pages/orders.html">Đơn hàng</a>`;
+      }
 
-    headerRight.innerHTML = `
+      headerRight.innerHTML = `
+      <div id="notificationBellArea"></div>
       ${extra}
       <span class="user-text">Xin chào, ${user.fullName || user.email}</span>
       <button class="header-btn" onclick="logout()">Đăng xuất</button>
     `;
-  } else {
-    headerRight.innerHTML = `
-      <a class="header-link" href="/Frontend/pages/login.html">Đăng nhập</a>
-      <a class="header-link" href="/Frontend/pages/register.html">Đăng ký</a>
-    `;
-  }
-}
 
-function logout() {
-  localStorage.removeItem("shoeshop_current_user_v1");
-  window.location.href = "/Frontend/index.html";
-}
+      if (typeof renderNotificationBell === "function") {
+        renderNotificationBell();
+      }
+    } else {
+      headerRight.innerHTML = `
+      <a class="header-link" href="/pages/auth.html">Đăng nhập</a>
+      <a class="header-link" href="/pages/auth.html?tab=register">Đăng ký</a>
+    `;
+    }
+  }
+
+  function logout() {
+    localStorage.removeItem("shoeshop_current_user_v1");
+    window.location.href = "/index.html";
+  }
 </script>
