@@ -1,0 +1,234 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Chi tiết sản phẩm - ShoeShop</title>
+  <link rel="stylesheet" href="/Frontend/css/layout.css" />
+  <style>
+    .page {
+      width: 1200px;
+      max-width: calc(100% - 40px);
+      margin: 32px auto;
+    }
+
+    .detail-box {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 28px;
+      background: white;
+      border: 1px solid #e5e5e5;
+      border-radius: 20px;
+      padding: 24px;
+      box-shadow: 0 6px 20px rgba(0,0,0,0.04);
+    }
+
+    .detail-image img {
+      width: 100%;
+      height: 420px;
+      object-fit: cover;
+      border-radius: 18px;
+      background: #f3f3f3;
+    }
+
+    .detail-info h1 {
+      font-size: 34px;
+      margin-bottom: 10px;
+    }
+
+    .detail-category {
+      color: #666;
+      margin-bottom: 10px;
+    }
+
+    .detail-price {
+      color: #d62828;
+      font-size: 28px;
+      font-weight: bold;
+      margin-bottom: 16px;
+    }
+
+    .detail-desc {
+      color: #555;
+      line-height: 1.7;
+      margin-bottom: 20px;
+    }
+
+    .detail-actions {
+      display: flex;
+      gap: 12px;
+      flex-wrap: wrap;
+    }
+
+    .btn-dark,
+    .btn-light {
+      padding: 12px 18px;
+      border-radius: 10px;
+      border: none;
+      text-decoration: none;
+      cursor: pointer;
+      font-weight: 600;
+    }
+
+    .btn-dark {
+      background: #111;
+      color: white;
+    }
+
+    .btn-light {
+      background: #ececec;
+      color: #111;
+    }
+
+    .not-found {
+      background: white;
+      border: 1px dashed #ccc;
+      border-radius: 18px;
+      padding: 30px;
+      text-align: center;
+      color: #666;
+    }
+
+    @media (max-width: 900px) {
+      .detail-box {
+        grid-template-columns: 1fr;
+      }
+
+      .detail-image img {
+        height: 300px;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div id="header"></div>
+
+  <main class="page">
+    <div id="productDetail"></div>
+  </main>
+
+  <div id="footer"></div>
+
+  <script>
+    const PRODUCTS_KEY = "shoeshop_products_v1";
+    const USER_KEY = "shoeshop_current_user_v1";
+    const CART_KEY = "shoeshop_cart_v1";
+
+    async function loadComponent(id, file) {
+      const res = await fetch(file);
+      const html = await res.text();
+      document.getElementById(id).innerHTML = html;
+      if (id === "header") renderHeaderAuth();
+    }
+
+    function renderHeaderAuth() {
+  const headerRight = document.getElementById("headerRight");
+  if (!headerRight) return;
+
+  const currentUser = JSON.parse(localStorage.getItem(USER_KEY));
+
+  if (currentUser) {
+    let extraLink = "";
+
+    if (currentUser.role === "admin") {
+      extraLink = `<a class="header-link" href="/Frontend/pages/admin-dashboard.html">Admin</a>`;
+    } else if (currentUser.role === "staff") {
+      extraLink = `<a class="header-link" href="/Frontend/pages/staff-dashboard.html">Staff</a>`;
+    }
+
+    headerRight.innerHTML = `
+      <div id="notificationBellArea"></div>
+      ${extraLink}
+      <span class="user-text">Xin chào, ${currentUser.fullName || currentUser.email}</span>
+      <button class="header-btn" onclick="logout()">Đăng xuất</button>
+    `;
+
+    renderNotificationBell();
+  } else {
+    headerRight.innerHTML = `
+      <a class="header-link" href="/Frontend/pages/login.html">Đăng nhập</a>
+      <a class="header-link" href="/Frontend/pages/register.html">Đăng ký</a>
+    `;
+  }
+}
+
+    function logout() {
+      localStorage.removeItem(USER_KEY);
+      window.location.href = "/Frontend/index.html";
+    }
+
+    function getProducts() {
+      return JSON.parse(localStorage.getItem(PRODUCTS_KEY)) || [];
+    }
+
+    function getCart() {
+      return JSON.parse(localStorage.getItem(CART_KEY)) || [];
+    }
+
+    function saveCart(cart) {
+      localStorage.setItem(CART_KEY, JSON.stringify(cart));
+    }
+
+    function addToCart(productId) {
+      const products = getProducts();
+      const product = products.find(item => item.id === productId);
+      if (!product) return;
+
+      const cart = getCart();
+      const existing = cart.find(item => item.id === productId);
+
+      if (existing) {
+        existing.quantity += 1;
+      } else {
+        cart.push({ ...product, quantity: 1 });
+      }
+
+      saveCart(cart);
+      alert("Đã thêm sản phẩm vào giỏ hàng");
+    }
+
+    function renderProductDetail() {
+      const params = new URLSearchParams(window.location.search);
+      const id = Number(params.get("id"));
+      const products = getProducts();
+      const product = products.find(item => item.id === id);
+      const container = document.getElementById("productDetail");
+
+      if (!product) {
+        container.innerHTML = `
+          <div class="not-found">
+            Không tìm thấy sản phẩm.<br><br>
+            <a class="btn-dark" href="/Frontend/pages/products.html">Quay lại danh sách sản phẩm</a>
+          </div>
+        `;
+        return;
+      }
+
+      container.innerHTML = `
+        <div class="detail-box">
+          <div class="detail-image">
+            <img src="${product.image}" alt="${product.name}">
+          </div>
+
+          <div class="detail-info">
+            <div class="detail-category">${product.category}</div>
+            <h1>${product.name}</h1>
+            <div class="detail-price">${product.price.toLocaleString("vi-VN")}đ</div>
+            <div class="detail-desc">${product.description}</div>
+
+            <div class="detail-actions">
+              <button class="btn-dark" onclick="addToCart(${product.id})">Thêm vào giỏ</button>
+              <a class="btn-light" href="/Frontend/pages/cart.html">Xem giỏ hàng</a>
+              <a class="btn-light" href="/Frontend/pages/products.html">Quay lại</a>
+            </div>
+          </div>
+        </div>
+      `;
+    }
+
+    loadComponent("header", "/Frontend/components/header.html");
+    loadComponent("footer", "/Frontend/components/footer.html");
+    renderProductDetail();
+  </script>
+</body>
+</html>

@@ -1,0 +1,551 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Admin Dashboard - ShoeShop</title>
+  <link rel="stylesheet" href="/Frontend/css/layout.css" />
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <style>
+    .page {
+      width: 1200px;
+      max-width: calc(100% - 40px);
+      margin: 32px auto;
+    }
+
+    .page h1 {
+      font-size: 34px;
+      margin-bottom: 10px;
+    }
+
+    .page-subtitle {
+      color: #666;
+      margin-bottom: 24px;
+      line-height: 1.6;
+    }
+
+    .stats-grid {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 18px;
+      margin-bottom: 28px;
+    }
+
+    .stat-card,
+    .panel,
+    .quick-card {
+      background: white;
+      border: 1px solid #e5e5e5;
+      border-radius: 18px;
+      padding: 20px;
+      box-shadow: 0 6px 20px rgba(0,0,0,0.04);
+    }
+
+    .stat-card h3 {
+      color: #666;
+      font-size: 15px;
+      margin-bottom: 8px;
+    }
+
+    .stat-card .value {
+      font-size: 30px;
+      font-weight: bold;
+      color: #111;
+    }
+
+    .stat-card .sub {
+      margin-top: 8px;
+      font-size: 14px;
+      color: #666;
+    }
+
+    .quick-grid {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 16px;
+      margin-bottom: 28px;
+    }
+
+    .quick-card h3 {
+      margin-bottom: 8px;
+      font-size: 18px;
+    }
+
+    .quick-card p {
+      color: #666;
+      font-size: 14px;
+      line-height: 1.6;
+      margin-bottom: 14px;
+    }
+
+    .quick-card a {
+      display: inline-block;
+      background: #111;
+      color: white;
+      text-decoration: none;
+      padding: 10px 14px;
+      border-radius: 10px;
+      font-weight: 600;
+    }
+
+    .panel {
+      margin-bottom: 24px;
+    }
+
+    .panel h2 {
+      margin-bottom: 16px;
+      font-size: 24px;
+    }
+
+    .chart-wrap {
+      width: 100%;
+      max-width: 100%;
+      overflow-x: auto;
+    }
+
+    .status-overview {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 16px;
+    }
+
+    .mini-box {
+      border-radius: 14px;
+      padding: 16px;
+      border: 1px solid #eee;
+      background: #fafafa;
+    }
+
+    .mini-box .label {
+      font-size: 14px;
+      color: #666;
+      margin-bottom: 8px;
+    }
+
+    .mini-box .number {
+      font-size: 24px;
+      font-weight: bold;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+    }
+
+    table th,
+    table td {
+      text-align: left;
+      padding: 12px 10px;
+      border-bottom: 1px solid #eee;
+      vertical-align: top;
+    }
+
+    table th {
+      background: #f7f7f7;
+    }
+
+    .status-badge {
+      display: inline-block;
+      padding: 7px 10px;
+      border-radius: 16px;
+      font-size: 13px;
+      font-weight: 600;
+    }
+
+    .pending {
+      background: #fff3cd;
+      color: #856404;
+    }
+
+    .shipping {
+      background: #d1ecf1;
+      color: #0c5460;
+    }
+
+    .completed {
+      background: #d4edda;
+      color: #155724;
+    }
+
+    .cancelled {
+      background: #f8d7da;
+      color: #721c24;
+    }
+
+    .active-user {
+      color: green;
+      font-weight: 600;
+    }
+
+    .blocked-user {
+      color: red;
+      font-weight: 600;
+    }
+
+    .empty-box {
+      background: white;
+      border: 1px dashed #ccc;
+      border-radius: 16px;
+      padding: 30px;
+      text-align: center;
+      color: #666;
+      font-size: 18px;
+    }
+
+    .btn-dark {
+      display: inline-block;
+      background: #111;
+      color: white;
+      text-decoration: none;
+      padding: 12px 18px;
+      border-radius: 10px;
+      font-weight: 600;
+      margin-top: 16px;
+    }
+
+    @media (max-width: 1000px) {
+      .stats-grid,
+      .quick-grid,
+      .status-overview {
+        grid-template-columns: 1fr 1fr;
+      }
+    }
+
+    @media (max-width: 700px) {
+      .stats-grid,
+      .quick-grid,
+      .status-overview {
+        grid-template-columns: 1fr;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div id="header"></div>
+
+  <main class="page" id="adminContent"></main>
+
+  <div id="footer"></div>
+
+  <script src="/Frontend/js/notify.js"></script>
+  <script>
+    const USERS_KEY = "shoeshop_users_v1";
+    const PRODUCTS_KEY = "shoeshop_products_v1";
+    const ORDERS_KEY = "shoeshop_orders_v1";
+    const CATEGORIES_KEY = "shoeshop_categories_v1";
+
+    async function loadComponent(id, file) {
+      try {
+        const res = await fetch(file);
+        const html = await res.text();
+        document.getElementById(id).innerHTML = html;
+
+        if (id === "header") {
+          renderHeaderAuth();
+        }
+      } catch (error) {
+        console.log("Lỗi load component:", error);
+      }
+    }
+
+    function renderHeaderAuth() {
+      const headerRight = document.getElementById("headerRight");
+      if (!headerRight) return;
+
+      const currentUser = JSON.parse(localStorage.getItem(USER_KEY));
+
+      if (currentUser) {
+        let extraLink = "";
+
+        if (currentUser.role === "admin") {
+          extraLink += `<a class="header-link" href="/Frontend/pages/admin-dashboard.html">Admin</a>`;
+        }
+        if (currentUser.role === "staff") {
+          extraLink += `<a class="header-link" href="/Frontend/pages/staff-dashboard.html">Staff</a>`;
+        }
+
+        headerRight.innerHTML = `
+          <div id="notificationBellArea"></div>
+          ${extraLink}
+          <span class="user-text">Xin chào, ${currentUser.fullName || currentUser.email}</span>
+          <button class="header-btn" onclick="logout()">Đăng xuất</button>
+        `;
+
+        if (typeof renderNotificationBell === "function") {
+          renderNotificationBell();
+        }
+      } else {
+        headerRight.innerHTML = `
+          <a class="header-link" href="/Frontend/pages/login.html">Đăng nhập</a>
+          <a class="header-link" href="/Frontend/pages/register.html">Đăng ký</a>
+        `;
+      }
+    }
+
+    function logout() {
+      localStorage.removeItem(USER_KEY);
+      window.location.href = "/Frontend/index.html";
+    }
+
+    function getUsers() {
+      const users = JSON.parse(localStorage.getItem(USERS_KEY)) || [];
+      return users.map(user => ({
+        ...user,
+        isBlocked: user.isBlocked ?? false,
+        loginProvider: user.loginProvider || "email"
+      }));
+    }
+
+    function getProducts() {
+      return JSON.parse(localStorage.getItem(PRODUCTS_KEY)) || [];
+    }
+
+    function getOrders() {
+      return JSON.parse(localStorage.getItem(ORDERS_KEY)) || [];
+    }
+
+    function getCategories() {
+      return JSON.parse(localStorage.getItem(CATEGORIES_KEY)) || ["Sneaker", "Running", "Casual"];
+    }
+
+    function getStatusClass(status) {
+      if (status === "Chờ xử lý") return "pending";
+      if (status === "Đang giao") return "shipping";
+      if (status === "Hoàn tất") return "completed";
+      if (status === "Hủy") return "cancelled";
+      return "pending";
+    }
+
+    function renderAdminDashboard() {
+      const currentUser = JSON.parse(localStorage.getItem(USER_KEY));
+      const container = document.getElementById("adminContent");
+
+      if (!currentUser || currentUser.role !== "admin") {
+        container.innerHTML = `
+          <div class="empty-box">
+            Bạn không có quyền truy cập trang quản trị.<br>
+            <a class="btn-dark" href="/Frontend/pages/login.html">Đăng nhập bằng tài khoản admin</a>
+          </div>
+        `;
+        return;
+      }
+
+      const users = getUsers();
+      const products = getProducts();
+      const orders = getOrders();
+      const categories = getCategories();
+
+      const totalRevenue = orders.reduce((sum, order) => sum + (order.total || 0), 0);
+
+      const pendingOrders = orders.filter(order => order.status === "Chờ xử lý").length;
+      const shippingOrders = orders.filter(order => order.status === "Đang giao").length;
+      const completedOrders = orders.filter(order => order.status === "Hoàn tất").length;
+      const cancelledOrders = orders.filter(order => order.status === "Hủy").length;
+
+      const totalAdmins = users.filter(user => user.role === "admin").length;
+      const totalStaffs = users.filter(user => user.role === "staff").length;
+      const totalCustomers = users.filter(user => user.role === "customer").length;
+      const blockedUsers = users.filter(user => user.isBlocked).length;
+
+      const recentOrders = [...orders].slice(0, 8);
+      const recentUsers = [...users].slice(-8).reverse();
+
+      container.innerHTML = `
+        <h1>Admin Dashboard</h1>
+        <div class="page-subtitle">
+          Theo dõi nhanh tình trạng hệ thống, người dùng, sản phẩm và đơn hàng của ShoeShop.
+        </div>
+
+        <div class="stats-grid">
+          <div class="stat-card">
+            <h3>Tổng người dùng</h3>
+            <div class="value">${users.length}</div>
+            <div class="sub">Admin: ${totalAdmins} • Staff: ${totalStaffs} • Customer: ${totalCustomers}</div>
+          </div>
+
+          <div class="stat-card">
+            <h3>Tổng sản phẩm</h3>
+            <div class="value">${products.length}</div>
+            <div class="sub">Danh mục hiện có: ${categories.length}</div>
+          </div>
+
+          <div class="stat-card">
+            <h3>Tổng đơn hàng</h3>
+            <div class="value">${orders.length}</div>
+            <div class="sub">Đơn chờ xử lý: ${pendingOrders}</div>
+          </div>
+
+          <div class="stat-card">
+            <h3>Tổng doanh thu</h3>
+            <div class="value">${totalRevenue.toLocaleString("vi-VN")} VND</div>
+            <div class="sub">User bị khóa: ${blockedUsers}</div>
+          </div>
+        </div>
+
+        <div class="quick-grid">
+          <div class="quick-card">
+            <h3>Quản lý sản phẩm</h3>
+            <p>Thêm, sửa, xóa và theo dõi danh sách sản phẩm hiện có.</p>
+            <a href="/Frontend/pages/admin-products.html">Mở trang</a>
+          </div>
+
+          <div class="quick-card">
+            <h3>Quản lý người dùng</h3>
+            <p>Đổi quyền, khóa tài khoản và xóa người dùng khi cần.</p>
+            <a href="/Frontend/pages/admin-users.html">Mở trang</a>
+          </div>
+
+          <div class="quick-card">
+            <h3>Quản lý đơn hàng</h3>
+            <p>Theo dõi toàn bộ đơn hàng và cập nhật trạng thái xử lý.</p>
+            <a href="/Frontend/pages/admin-orders.html">Mở trang</a>
+          </div>
+
+          <div class="quick-card">
+            <h3>Quản lý danh mục</h3>
+            <p>Thêm, sửa, xóa danh mục sản phẩm để dùng trong hệ thống.</p>
+            <a href="/Frontend/pages/admin-categories.html">Mở trang</a>
+          </div>
+        </div>
+
+        <div class="panel">
+          <h2>Biểu đồ đơn hàng theo trạng thái</h2>
+          <div class="chart-wrap">
+            <canvas id="ordersChart" height="110"></canvas>
+          </div>
+        </div>
+
+        <div class="panel">
+          <h2>Tổng quan trạng thái đơn hàng</h2>
+          <div class="status-overview">
+            <div class="mini-box">
+              <div class="label">Chờ xử lý</div>
+              <div class="number">${pendingOrders}</div>
+            </div>
+            <div class="mini-box">
+              <div class="label">Đang giao</div>
+              <div class="number">${shippingOrders}</div>
+            </div>
+            <div class="mini-box">
+              <div class="label">Hoàn tất</div>
+              <div class="number">${completedOrders}</div>
+            </div>
+            <div class="mini-box">
+              <div class="label">Đã hủy</div>
+              <div class="number">${cancelledOrders}</div>
+            </div>
+          </div>
+        </div>
+
+        <div class="panel">
+          <h2>Đơn hàng gần đây</h2>
+          ${
+            recentOrders.length
+              ? `
+                <table>
+                  <thead>
+                    <tr>
+                      <th>Mã đơn</th>
+                      <th>Khách hàng</th>
+                      <th>Ngày đặt</th>
+                      <th>Trạng thái</th>
+                      <th>Tổng tiền</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    ${recentOrders.map(order => `
+                      <tr>
+                        <td>#${order.id}</td>
+                        <td>${order.customerName}</td>
+                        <td>${order.createdAt}</td>
+                        <td><span class="status-badge ${getStatusClass(order.status)}">${order.status}</span></td>
+                        <td>${(order.total || 0).toLocaleString("vi-VN")}đ</td>
+                      </tr>
+                    `).join("")}
+                  </tbody>
+                </table>
+              `
+              : `<div>Chưa có đơn hàng nào.</div>`
+          }
+        </div>
+
+        <div class="panel">
+          <h2>Người dùng gần đây</h2>
+          ${
+            recentUsers.length
+              ? `
+                <table>
+                  <thead>
+                    <tr>
+                      <th>ID</th>
+                      <th>Họ tên</th>
+                      <th>Email</th>
+                      <th>Vai trò</th>
+                      <th>Provider</th>
+                      <th>Trạng thái</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    ${recentUsers.map(user => `
+                      <tr>
+                        <td>${user.id}</td>
+                        <td>${user.fullName}</td>
+                        <td>${user.email}</td>
+                        <td>${user.role}</td>
+                        <td>${user.loginProvider}</td>
+                        <td class="${user.isBlocked ? "blocked-user" : "active-user"}">
+                          ${user.isBlocked ? "Đã khóa" : "Hoạt động"}
+                        </td>
+                      </tr>
+                    `).join("")}
+                  </tbody>
+                </table>
+              `
+              : `<div>Chưa có người dùng.</div>`
+          }
+        </div>
+      `;
+
+      renderOrdersChart(pendingOrders, shippingOrders, completedOrders, cancelledOrders);
+    }
+
+    function renderOrdersChart(pending, shipping, completed, cancelled) {
+      const canvas = document.getElementById("ordersChart");
+      if (!canvas) return;
+
+      new Chart(canvas, {
+        type: "bar",
+        data: {
+          labels: ["Chờ xử lý", "Đang giao", "Hoàn tất", "Đã hủy"],
+          datasets: [{
+            label: "Số lượng đơn hàng",
+            data: [pending, shipping, completed, cancelled]
+          }]
+        },
+        options: {
+          responsive: true,
+          plugins: {
+            legend: {
+              display: true
+            }
+          },
+          scales: {
+            y: {
+              beginAtZero: true,
+              ticks: {
+                precision: 0
+              }
+            }
+          }
+        }
+      });
+    }
+
+    seedNotifications();
+    loadComponent("header", "/Frontend/components/header.html");
+    loadComponent("footer", "/Frontend/components/footer.html");
+    renderAdminDashboard();
+  </script>
+</body>
+</html>

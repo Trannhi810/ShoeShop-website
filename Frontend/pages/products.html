@@ -3,103 +3,71 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>ShoeShop - Trang chủ</title>
-  <link rel="stylesheet" href="/Frontend/css/base.css" />
+  <title>Sản phẩm - ShoeShop</title>
   <link rel="stylesheet" href="/Frontend/css/layout.css" />
-  <link rel="stylesheet" href="/Frontend/css/home.css" />
   <style>
-    .hero {
-      background: linear-gradient(135deg, #111, #333);
-      color: white;
-      padding: 60px 20px;
-    }
-
-    .hero-inner {
+    .page {
       width: 1200px;
       max-width: calc(100% - 40px);
-      margin: 0 auto;
+      margin: 32px auto;
+    }
+
+    .page-header {
+      margin-bottom: 24px;
+    }
+
+    .page-header h1 {
+      font-size: 34px;
+      margin-bottom: 8px;
+    }
+
+    .page-header p {
+      color: #666;
+      font-size: 16px;
+    }
+
+    .filter-box {
       display: grid;
-      grid-template-columns: 1.2fr 1fr;
-      gap: 30px;
-      align-items: center;
-    }
-
-    .hero h1 {
-      font-size: 48px;
-      margin-bottom: 16px;
-    }
-
-    .hero p {
-      font-size: 18px;
-      color: #e5e5e5;
-      margin-bottom: 20px;
-      line-height: 1.6;
-    }
-
-    .hero-actions {
-      display: flex;
+      grid-template-columns: 1.6fr 1fr 1fr auto auto;
       gap: 12px;
-      flex-wrap: wrap;
+      background: #f7f7f7;
+      border: 1px solid #eaeaea;
+      border-radius: 18px;
+      padding: 16px;
+      margin-bottom: 26px;
     }
 
-    .btn-main,
-    .btn-outline {
-      padding: 12px 18px;
+    .filter-box input,
+    .filter-box select,
+    .filter-box button {
+      padding: 12px 14px;
       border-radius: 10px;
-      text-decoration: none;
-      font-weight: 600;
+      border: 1px solid #ccc;
+      font-size: 15px;
     }
 
-    .btn-main {
-      background: white;
-      color: #111;
-    }
-
-    .btn-outline {
-      border: 1px solid white;
+    .filter-box button {
+      background: #111;
       color: white;
-    }
-
-    .hero-card {
-      background: white;
-      color: #111;
-      border-radius: 20px;
-      padding: 24px;
-      box-shadow: 0 15px 40px rgba(0,0,0,0.2);
-    }
-
-    .hero-card h3 {
-      margin-bottom: 10px;
-    }
-
-    .section {
-      width: 1200px;
-      max-width: calc(100% - 40px);
-      margin: 40px auto;
-    }
-
-    .section-head {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      margin-bottom: 20px;
-      gap: 16px;
-      flex-wrap: wrap;
-    }
-
-    .section-head h2 {
-      font-size: 32px;
-    }
-
-    .section-head a {
-      color: #111;
+      border: none;
+      cursor: pointer;
       font-weight: 600;
-      text-decoration: none;
+    }
+
+    .filter-box button.secondary {
+      background: #ececec;
+      color: #111;
+    }
+
+    .result-info {
+      margin-bottom: 18px;
+      color: #555;
+      font-size: 15px;
     }
 
     .product-grid {
       display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+      grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
       gap: 20px;
     }
 
@@ -117,14 +85,15 @@
       box-shadow: 0 10px 26px rgba(0,0,0,0.08);
     }
 
-    .product-card img {
+    .product-image {
       width: 100%;
-      height: 200px;
+      height: 210px;
       object-fit: cover;
       display: block;
+      background: #f3f3f3;
     }
 
-    .product-card-body {
+    .product-body {
       padding: 16px;
     }
 
@@ -135,40 +104,43 @@
     }
 
     .product-name {
-      font-size: 20px;
+      font-size: 21px;
       font-weight: 700;
       margin-bottom: 8px;
-    }
-
-    .product-desc {
-      color: #555;
-      font-size: 14px;
-      min-height: 42px;
-      margin-bottom: 12px;
+      line-height: 1.4;
     }
 
     .product-price {
       color: #d62828;
       font-size: 20px;
       font-weight: bold;
+      margin-bottom: 10px;
+    }
+
+    .product-desc {
+      color: #555;
+      font-size: 14px;
+      line-height: 1.5;
+      min-height: 44px;
       margin-bottom: 14px;
     }
 
-    .card-actions {
+    .actions {
       display: flex;
       gap: 10px;
     }
 
-    .card-actions button,
-    .card-actions a {
+    .actions button,
+    .actions a {
       flex: 1;
-      border: none;
-      border-radius: 10px;
       padding: 11px 12px;
-      cursor: pointer;
-      text-decoration: none;
+      border-radius: 10px;
       text-align: center;
+      text-decoration: none;
+      cursor: pointer;
+      border: none;
       font-weight: 600;
+      font-size: 14px;
     }
 
     .btn-dark {
@@ -176,35 +148,28 @@
       color: white;
     }
 
-    .btn-light {
-      background: #f3f3f3;
+    .btn-soft {
+      background: #f1f1f1;
       color: #111;
     }
 
-    .features {
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
-      gap: 18px;
-    }
-
-    .feature-box {
+    .empty {
+      color: #666;
+      font-size: 18px;
+      padding: 24px 0;
+      text-align: center;
       background: white;
-      border: 1px solid #e5e5e5;
+      border: 1px dashed #ccc;
       border-radius: 16px;
-      padding: 20px;
-    }
-
-    .feature-box h3 {
-      margin-bottom: 10px;
     }
 
     @media (max-width: 900px) {
-      .hero-inner {
+      .filter-box {
         grid-template-columns: 1fr;
       }
 
-      .hero h1 {
-        font-size: 36px;
+      .page-header h1 {
+        font-size: 28px;
       }
     }
   </style>
@@ -212,61 +177,33 @@
 <body>
   <div id="header"></div>
 
-  <section class="hero">
-    <div class="hero-inner">
-      <div>
-        <h1>Bước đi phong cách cùng ShoeShop</h1>
-        <p>
-          Khám phá bộ sưu tập giày sneaker, running và casual hiện đại.
-          Giao diện đẹp, dễ dùng và sẵn sàng tích hợp backend sau này.
-        </p>
-        <div class="hero-actions">
-          <a class="btn-main" href="/Frontend/pages/products.html">Mua ngay</a>
-          <a class="btn-outline" href="/Frontend/pages/register.html">Tạo tài khoản</a>
-        </div>
-      </div>
+  <main class="page">
+    <div class="page-header">
+      <h1>Danh sách sản phẩm</h1>
+      <p>Tìm kiếm và chọn đôi giày phù hợp với phong cách của bạn.</p>
+    </div>
 
-      <div class="hero-card">
-        <h3>Ưu điểm nổi bật</h3>
-        <p>✔ Tìm kiếm và lọc sản phẩm nhanh</p>
-        <p>✔ Giỏ hàng trực quan, dễ thao tác</p>
-        <p>✔ Đăng nhập / đăng ký đơn giản</p>
-        <p>✔ Dễ nâng cấp thành hệ thống fullstack</p>
-      </div>
+    <div class="filter-box">
+      <input type="text" id="searchInput" placeholder="Tìm theo tên sản phẩm..." />
+      <select id="categoryFilter">
+        <option value="">Tất cả danh mục</option>
+        <option value="Sneaker">Sneaker</option>
+        <option value="Running">Running</option>
+        <option value="Casual">Casual</option>
+      </select>
+      <select id="priceFilter">
+        <option value="">Tất cả mức giá</option>
+        <option value="under-2000000">Dưới 2 triệu</option>
+        <option value="2000000-3000000">Từ 2 đến 3 triệu</option>
+        <option value="over-3000000">Trên 3 triệu</option>
+      </select>
+      <button onclick="applyFilters()">Lọc</button>
+      <button class="secondary" onclick="resetFilters()">Đặt lại</button>
     </div>
-  </section>
 
-  <section class="section">
-    <div class="section-head">
-      <h2>Sản phẩm nổi bật</h2>
-      <a href="/Frontend/pages/products.html">Xem tất cả</a>
-    </div>
-    <div id="featuredProducts" class="product-grid"></div>
-  </section>
-
-  <section class="section">
-    <div class="section-head">
-      <h2>Tại sao chọn ShoeShop?</h2>
-    </div>
-    <div class="features">
-      <div class="feature-box">
-        <h3>Mẫu mã đa dạng</h3>
-        <p>Từ sneaker, running đến casual, phù hợp nhiều phong cách.</p>
-      </div>
-      <div class="feature-box">
-        <h3>Giao diện thân thiện</h3>
-        <p>Dễ thao tác cho khách hàng, staff và admin khi mở rộng hệ thống.</p>
-      </div>
-      <div class="feature-box">
-        <h3>Dễ tích hợp API</h3>
-        <p>Có thể thay mock data bằng RESTful API backend bất cứ lúc nào.</p>
-      </div>
-      <div class="feature-box">
-        <h3>Sẵn sàng mở rộng</h3>
-        <p>Dễ bổ sung checkout, orders, phân quyền và realtime sau này.</p>
-      </div>
-    </div>
-  </section>
+    <div id="resultInfo" class="result-info"></div>
+    <div id="productList" class="product-grid"></div>
+  </main>
 
   <div id="footer"></div>
 
@@ -308,6 +245,22 @@
         category: "Sneaker",
         image: "https://images.unsplash.com/photo-1608231387042-66d1773070a5?auto=format&fit=crop&w=900&q=80",
         description: "Kiểu dáng thể thao hiện đại."
+      },
+      {
+        id: 5,
+        name: "New Balance 530",
+        price: 2600000,
+        category: "Sneaker",
+        image: "https://images.unsplash.com/photo-1543508282-6319a3e2621f?auto=format&fit=crop&w=900&q=80",
+        description: "Nhẹ, êm chân, hợp dùng hằng ngày."
+      },
+      {
+        id: 6,
+        name: "Vans Old Skool",
+        price: 1800000,
+        category: "Casual",
+        image: "https://images.unsplash.com/photo-1491553895911-0055eca6402d?auto=format&fit=crop&w=900&q=80",
+        description: "Phong cách basic năng động."
       }
     ];
 
@@ -405,31 +358,77 @@
       window.location.href = "/Frontend/index.html";
     }
 
-    function renderFeaturedProducts() {
-      const products = getProducts().slice(0, 4);
-      const container = document.getElementById("featuredProducts");
+    function renderProducts(items) {
+      const list = document.getElementById("productList");
+      const resultInfo = document.getElementById("resultInfo");
 
-      container.innerHTML = products.map(product => `
+      resultInfo.textContent = `Tìm thấy ${items.length} sản phẩm`;
+
+      if (!items.length) {
+        list.innerHTML = `<div class="empty">Không tìm thấy sản phẩm phù hợp.</div>`;
+        return;
+      }
+
+      list.innerHTML = items.map(product => `
         <div class="product-card">
-          <img src="${product.image}" alt="${product.name}">
-          <div class="product-card-body">
-            <p class="product-category">${product.category}</p>
-            <h3 class="product-name">${product.name}</h3>
-            <p class="product-desc">${product.description}</p>
-            <p class="product-price">${product.price.toLocaleString("vi-VN")}đ</p>
-            <div class="card-actions">
-              <button class="btn-dark" onclick="addToCart(${product.id})">Thêm vào giỏ</button>
-              <a class="btn-light" href="/Frontend/pages/products.html">Xem thêm</a>
+          <img class="product-image" src="${product.image}" alt="${product.name}">
+          <div class="product-body">
+            <div class="product-category">${product.category}</div>
+            <div class="product-name">${product.name}</div>
+            <div class="product-price">${product.price.toLocaleString("vi-VN")}đ</div>
+            <div class="product-desc">${product.description}</div>
+            <div class="actions">
+                <button class="btn-dark" onclick="addToCart(${product.id})">Thêm vào giỏ</button>
+                <a class="btn-soft" href="/Frontend/pages/product-detail.html?id=${product.id}">Chi tiết</a>
             </div>
           </div>
         </div>
       `).join("");
     }
 
+    function applyFilters() {
+      const searchValue = document.getElementById("searchInput").value.trim().toLowerCase();
+      const categoryValue = document.getElementById("categoryFilter").value;
+      const priceValue = document.getElementById("priceFilter").value;
+
+      let items = [...getProducts()];
+
+      if (searchValue) {
+        items = items.filter(product =>
+          product.name.toLowerCase().includes(searchValue)
+        );
+      }
+
+      if (categoryValue) {
+        items = items.filter(product => product.category === categoryValue);
+      }
+
+      if (priceValue === "under-2000000") {
+        items = items.filter(product => product.price < 2000000);
+      }
+
+      if (priceValue === "2000000-3000000") {
+        items = items.filter(product => product.price >= 2000000 && product.price <= 3000000);
+      }
+
+      if (priceValue === "over-3000000") {
+        items = items.filter(product => product.price > 3000000);
+      }
+
+      renderProducts(items);
+    }
+
+    function resetFilters() {
+      document.getElementById("searchInput").value = "";
+      document.getElementById("categoryFilter").value = "";
+      document.getElementById("priceFilter").value = "";
+      renderProducts(getProducts());
+    }
+
     seedData();
     loadComponent("header", "/Frontend/components/header.html");
     loadComponent("footer", "/Frontend/components/footer.html");
-    renderFeaturedProducts();
+    renderProducts(getProducts());
   </script>
 </body>
 </html>
