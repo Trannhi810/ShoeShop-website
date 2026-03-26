@@ -6,6 +6,7 @@ const connectDB = require("./config/database");
 const productRoutes  = require("./routes/productRoutes");
 const userRoutes     = require("./routes/userRoutes");
 const categoryRoutes = require("./routes/categoryRoutes");
+const cartRoutes     = require("./routes/cartRoutes");
 
 const app = express();
 
@@ -19,6 +20,7 @@ connectDB();
 app.use("/api/products",   productRoutes);
 app.use("/api/users",      userRoutes);
 app.use("/api/categories", categoryRoutes);
+app.use("/api/cart",       cartRoutes);
 
 // Serve frontend
 app.use(express.static(path.join(__dirname, "../Frontend")));
