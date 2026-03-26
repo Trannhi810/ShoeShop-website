@@ -102,5 +102,35 @@ const categoryApi = {
     /** Xóa danh mục */
     delete(id) {
         return apiFetch(`/api/categories/${id}`, { method: 'DELETE' });
+    }
+};
+
+// ===== CART API =====
+const cartApi = {
+    /** Lấy giỏ hàng của user hiện tại */
+    getCart() {
+        return apiFetch('/api/cart');
     },
+    /** Thêm sản phẩm vào giỏ hàng */
+    addToCart(variantId, quantity = 1) {
+        return apiFetch('/api/cart/add', {
+            method: 'POST',
+            body: JSON.stringify({ variantId, quantity })
+        });
+    },
+    /** Cập nhật số lượng item */
+    updateQuantity(itemId, quantity) {
+        return apiFetch(`/api/cart/update/${itemId}`, {
+            method: 'PUT',
+            body: JSON.stringify({ quantity })
+        });
+    },
+    /** Xóa 1 item khỏi giỏ hàng */
+    removeItem(itemId) {
+        return apiFetch(`/api/cart/remove/${itemId}`, { method: 'DELETE' });
+    },
+    /** Xóa toàn bộ giỏ hàng */
+    clearCart() {
+        return apiFetch('/api/cart/clear', { method: 'DELETE' });
+    }
 };

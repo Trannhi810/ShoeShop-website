@@ -205,10 +205,13 @@
 
   <div id="footer"></div>
 
+  <!-- Thêm các file JS gọi API -->
+  <script src="/js/admin-utils.js"></script>
+  <script src="/js/api-client.js"></script>
   <script>
     const PRODUCTS_KEY = "shoeshop_products_v1";
     const USERS_KEY = "shoeshop_users_v1";
-    const USER_KEY = "shoeshop_current_user_v1";
+    const USER_KEY = "shoeshop_user";
     const CART_KEY = "shoeshop_cart_v1";
 
     const defaultProducts = [
@@ -280,34 +283,30 @@
       }
     }
 
-    function getProducts() {
-      return JSON.parse(localStorage.getItem(PRODUCTS_KEY)) || [];
+    async function loadProductsAPI() {
+      try {
+        const res = await productApi.getAll();
+        return res.products || res;
+      } catch (err) {
+        console.error("Lỗi load products:", err);
+        return [];
+      }
     }
 
-    function getCart() {
-      return JSON.parse(localStorage.getItem(CART_KEY)) || [];
-    }
-
-    function saveCart(cart) {
-      localStorage.setItem(CART_KEY, JSON.stringify(cart));
-    }
-
-    function addToCart(productId) {
-      const products = getProducts();
-      const product = products.find(item => item.id === productId);
-      if (!product) return;
-
-      const cart = getCart();
-      const existing = cart.find(item => item.id === productId);
-
-      if (existing) {
-        existing.quantity += 1;
-      } else {
-        cart.push({ ...product, quantity: 1 });
+    async function addToCart(productId) {
+      const currentUser = JSON.parse(localStorage.getItem(USER_KEY));
+      if (!currentUser) {
+        alert("Vui lòng đăng nhập để thêm vào giỏ hàng");
+        window.location.href = "/Frontend/pages/auth.html";
+        return;
       }
 
-      saveCart(cart);
-      alert("Đã thêm sản phẩm vào giỏ hàng");
+      try {
+        await cartApi.addToCart(productId, 1);
+        alert("Đã thêm sản phẩm vào giỏ hàng");
+      } catch (error) {
+        alert("Lỗi: " + error.message);
+      }
     }
 
     async function loadComponent(id, file) {
@@ -356,41 +355,14 @@
       window.location.href = "/Frontend/index.html";
     }
 
-    function renderProducts(items) {
-      const list = document.getElementById("productList");
-      const resultInfo = document.getElementById("resultInfo");
+    async function renderProducts() {
+      let items = await loadProductsAPI();
+      
+      const searchValue = document.getElementById("searchInput")?.value.trim().toLowerCase() || "";
+      const categoryValue = document.getElementById("categoryFilter")?.value || "";
+      const priceValue = document.getElementById("priceFilter")?.value || "";
 
-      resultInfo.textContent = `Tìm thấy ${items.length} sản phẩm`;
-
-      if (!items.length) {
-        list.innerHTML = `<div class="empty">Không tìm thấy sản phẩm phù hợp.</div>`;
-        return;
-      }
-
-      list.innerHTML = items.map(product => `
-        <div class="product-card">
-          <img class="product-image" src="${product.image}" alt="${product.name}">
-          <div class="product-body">
-            <div class="product-category">${product.category}</div>
-            <div class="product-name">${product.name}</div>
-            <div class="product-price">${product.price.toLocaleString("vi-VN")}đ</div>
-            <div class="product-desc">${product.description}</div>
-            <div class="product-actions">
-                <button class="btn-dark" onclick="addToCart(${product.id})">Thêm vào giỏ</button>
-                <a class="btn-soft" href="/Frontend/pages/product-detail.html?id=${product.id}">Chi tiết</a>
-            </div>
-          </div>
-        </div>
-      `).join("");
-    }
-
-    function applyFilters() {
-      const searchValue = document.getElementById("searchInput").value.trim().toLowerCase();
-      const categoryValue = document.getElementById("categoryFilter").value;
-      const priceValue = document.getElementById("priceFilter").value;
-
-      let items = [...getProducts()];
-
+      // Client-side filtering (tạm thời, tốt nhất nên làm ở API)
       if (searchValue) {
         items = items.filter(product =>
           product.name.toLowerCase().includes(searchValue)
@@ -398,35 +370,68 @@
       }
 
       if (categoryValue) {
-        items = items.filter(product => product.category === categoryValue);
+        items = items.filter(product => product.category?._id === categoryValue || product.category?.name === categoryValue);
       }
 
       if (priceValue === "under-2000000") {
         items = items.filter(product => product.price < 2000000);
-      }
-
-      if (priceValue === "2000000-3000000") {
+      } else if (priceValue === "2000000-3000000") {
         items = items.filter(product => product.price >= 2000000 && product.price <= 3000000);
-      }
-
-      if (priceValue === "over-3000000") {
+      } else if (priceValue === "over-3000000") {
         items = items.filter(product => product.price > 3000000);
       }
 
-      renderProducts(items);
+      const list = document.getElementById("productList");
+      const resultInfo = document.getElementById("resultInfo");
+
+      if (resultInfo) resultInfo.textContent = `Tìm thấy ${items.length} sản phẩm`;
+
+      if (!items.length) {
+        if (list) list.innerHTML = `<div class="empty">Không tìm thấy sản phẩm phù hợp.</div>`;
+        return;
+      }
+
+      if (list) {
+        list.innerHTML = items.map(product => `
+          <div class="product-card">
+            <img class="product-image" src="${product.image || product.images?.[0] || '/images/placeholder.jpg'}" alt="${product.name}">
+            <div class="product-body">
+              <div class="product-category">${product.category?.name || 'Chưa phân loại'}</div>
+              <div class="product-name">${product.name}</div>
+              <div class="product-price">${(product.price || 0).toLocaleString("vi-VN")}đ</div>
+              <div class="product-desc">${product.description || ''}</div>
+              <div class="product-actions">
+                  <button class="btn-dark" onclick="addToCart('${product._id}')">Thêm vào giỏ</button>
+                  <a class="btn-soft" href="/Frontend/pages/product-detail.html?id=${product._id}">Chi tiết</a>
+              </div>
+            </div>
+          </div>
+        `).join("");
+      }
+    }
+
+    function applyFilters() {
+      renderProducts();
     }
 
     function resetFilters() {
-      document.getElementById("searchInput").value = "";
-      document.getElementById("categoryFilter").value = "";
-      document.getElementById("priceFilter").value = "";
-      renderProducts(getProducts());
+      const search = document.getElementById("searchInput");
+      const cat = document.getElementById("categoryFilter");
+      const price = document.getElementById("priceFilter");
+      
+      if (search) search.value = "";
+      if (cat) cat.value = "";
+      if (price) price.value = "";
+      
+      renderProducts();
     }
 
     seedData();
     loadComponent("header", "/components/header.html");
     loadComponent("footer", "/components/footer.html");
-    renderProducts(getProducts());
+    
+    // Khởi tạo lấy dữ liệu
+    renderProducts();
   </script>
 </body>
 </html>
