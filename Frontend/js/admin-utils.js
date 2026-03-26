@@ -28,15 +28,18 @@ function initAdminPage() {
 }
 
 // ===== API CORE =====
-function authHeaders() {
-    return {
-        'Content-Type': 'application/json',
-        'Authorization': 'Bearer ' + getToken()
-    };
-}
-
 async function apiFetch(url, opts = {}) {
-    const res  = await fetch(url, { headers: authHeaders(), ...opts });
+    const headers = { 'Authorization': 'Bearer ' + getToken(), ...(opts.headers || {}) };
+    
+    // Kiểm tra xem body có phải FormData không
+    const isFormData = opts.body && (opts.body instanceof FormData || (opts.body.constructor && opts.body.constructor.name === 'FormData'));
+
+    // Nếu body không phải FormData thì mặc định là JSON
+    if (opts.body && !isFormData) {
+        headers['Content-Type'] = 'application/json';
+    }
+
+    const res  = await fetch(url, { ...opts, headers });
     const data = await res.json();
     if (!res.ok) throw new Error(data.message || 'Lỗi không xác định');
     return data;

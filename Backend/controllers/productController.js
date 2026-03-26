@@ -48,10 +48,35 @@ const getProductById = async (req, res) => {
 // POST /api/products — Tạo mới (Admin only)
 const createProduct = async (req, res) => {
     try {
-        const { name, description, price, stock, isActive, categoryId } = req.body;
+        console.log('--- CREATE PRODUCT DEBUG ---');
+        console.log('req.body:', req.body);
+        console.log('req.files:', req.files);
+        
+        if (!req.body) {
+            return res.status(400).json({ message: 'Request body is missing (req.body is undefined)' });
+        }
+        
+        const { name, description, price, stock, isActive, categoryId, images: bodyImages } = req.body;
         if (!name) return res.status(400).json({ message: 'Tên sản phẩm là bắt buộc' });
 
-        const product = await Product.create({ name, description, price, stock, isActive, categoryId });
+        let finalImages = [];
+        // Xử lý ảnh từ upload file
+        if (req.files && req.files.length > 0) {
+            finalImages = req.files.map(file => ({
+                url: `/uploads/${file.filename}`,
+                publicId: file.filename
+            }));
+        } 
+        // Nếu không có file upload thì xem request có gửi URL ko
+        else if (bodyImages) {
+            // bodyImages có thể là string (nếu gửi bằng FormData) hoặc array
+            finalImages = typeof bodyImages === 'string' ? JSON.parse(bodyImages) : bodyImages;
+        }
+
+        const product = await Product.create({ 
+            name, description, price, stock, isActive, categoryId, 
+            images: finalImages 
+        });
         res.status(201).json(product);
     } catch (error) {
         res.status(500).json({ message: error.message });
@@ -61,7 +86,15 @@ const createProduct = async (req, res) => {
 // PUT /api/products/:id — Cập nhật (Admin only)
 const updateProduct = async (req, res) => {
     try {
-        const { name, description, price, stock, isActive, categoryId } = req.body;
+        console.log('--- UPDATE PRODUCT DEBUG ---');
+        console.log('req.body:', req.body);
+        console.log('req.files:', req.files);
+        
+        if (!req.body) {
+            return res.status(400).json({ message: 'Request body is missing (req.body is undefined)' });
+        }
+        
+        const { name, description, price, stock, isActive, categoryId, images: bodyImages } = req.body;
         const product = await Product.findById(req.params.id);
         if (!product) return res.status(404).json({ message: 'Không tìm thấy sản phẩm' });
 
@@ -71,6 +104,16 @@ const updateProduct = async (req, res) => {
         if (stock       !== undefined) product.stock       = stock;
         if (isActive    !== undefined) product.isActive    = isActive;
         if (categoryId  !== undefined) product.categoryId  = categoryId;
+
+        // Xử lý ảnh
+        if (req.files && req.files.length > 0) {
+            product.images = req.files.map(file => ({
+                url: `/uploads/${file.filename}`,
+                publicId: file.filename
+            }));
+        } else if (bodyImages !== undefined) {
+             product.images = typeof bodyImages === 'string' ? JSON.parse(bodyImages) : bodyImages;
+        }
 
         const updated = await product.save();
         res.status(200).json(updated);

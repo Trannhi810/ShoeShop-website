@@ -73,12 +73,17 @@ function renderTable(products) {
         const catName  = catObj
             ? `<span class="badge badge-staff" style="font-size:0.72rem;"><i class="fa-solid fa-tag"></i> ${catObj.name}</span>`
             : `<span style="color:var(--text-muted)">—</span>`;
+        const mainImage = (p.images && p.images.length > 0) ? p.images[0].url : '';
+        const imgHtml  = mainImage 
+            ? `<img src="${mainImage}" class="product-img-mini" onerror="this.src='https://placehold.co/40x40?text=Shoe'">`
+            : `<div class="product-icon"><i class="fa-solid fa-shoe-prints"></i></div>`;
+
         return `
         <tr class="${!p.isActive ? 'row-inactive' : ''}">
             <td class="td-num">${(currentPage - 1) * PAGE_LIMIT + idx + 1}</td>
             <td>
                 <div class="product-cell">
-                    <div class="product-icon"><i class="fa-solid fa-shoe-prints"></i></div>
+                    ${imgHtml}
                     <div>
                         <p class="product-name">${p.name}</p>
                         <p class="product-desc">${p.description || '—'}</p>
@@ -150,6 +155,10 @@ function openAddModal() {
     document.getElementById('product-form').reset();
     document.getElementById('form-product-id').value = '';
     document.getElementById('form-isActive').value = 'true';
+    document.getElementById('form-image-file').value = '';
+    document.getElementById('form-image-url').value = '';
+    document.getElementById('image-preview-container').style.display = 'none';
+    document.getElementById('form-image-preview').src = '';
     populateCategorySelect('');
     openModal('modal-product');
 }
@@ -168,6 +177,19 @@ async function openEditModal(id) {
         document.getElementById('form-price').value       = p.price || 0;
         document.getElementById('form-stock').value       = p.stock || 0;
         document.getElementById('form-isActive').value    = p.isActive ? 'true' : 'false';
+        
+        // Populate existing image URL
+        const imageUrl = (p.images && p.images.length > 0) ? p.images[0].url : '';
+        document.getElementById('form-image-url').value = imageUrl;
+        document.getElementById('form-image-file').value = ''; // Reset file input
+        
+        if (imageUrl) {
+            document.getElementById('form-image-preview').src = imageUrl;
+            document.getElementById('image-preview-container').style.display = 'block';
+        } else {
+            document.getElementById('image-preview-container').style.display = 'none';
+        }
+
         populateCategorySelect(p.categoryId?._id || p.categoryId || '');
     } catch (err) { showToast(err.message, 'error'); closeModal('modal-product'); }
 }
@@ -178,21 +200,32 @@ async function submitProductForm(e) {
     const btn    = document.getElementById('btn-submit-product');
     setButtonLoading(btn, true);
     const catVal = document.getElementById('form-category').value;
-    const payload = {
-        name:        document.getElementById('form-name').value.trim(),
-        description: document.getElementById('form-description').value.trim(),
-        price:       parseFloat(document.getElementById('form-price').value) || 0,
-        stock:       parseInt(document.getElementById('form-stock').value)   || 0,
-        isActive:    document.getElementById('form-isActive').value === 'true',
-        categoryId:  catVal || null,
-    };
+    const imageFile = document.getElementById('form-image-file').files[0];
+    const existingUrl = document.getElementById('form-image-url').value;
+
+    const fd = new FormData();
+    fd.append('name', document.getElementById('form-name').value.trim());
+    fd.append('description', document.getElementById('form-description').value.trim());
+    fd.append('price', parseFloat(document.getElementById('form-price').value) || 0);
+    fd.append('stock', parseInt(document.getElementById('form-stock').value) || 0);
+    fd.append('isActive', document.getElementById('form-isActive').value === 'true');
+    fd.append('categoryId', catVal || '');
+
+    if (imageFile) {
+        // Nếu có chọn file mới → upload file (backend xử lý req.files)
+        fd.append('images', imageFile);
+    } else if (existingUrl) {
+        // Nếu không có file mới nhưng có ảnh cũ → gửi lại list ảnh (JSON string)
+        fd.append('images', JSON.stringify([{ url: existingUrl }]));
+    }
+
     const id = document.getElementById('form-product-id').value;
     try {
         if (isEditMode) {
-            await productApi.update(id, payload);
+            await productApi.update(id, fd);
             showToast('Cập nhật sản phẩm thành công!', 'success');
         } else {
-            await productApi.create(payload);
+            await productApi.create(fd);
             showToast('Thêm sản phẩm thành công!', 'success');
         }
         closeModal('modal-product');
@@ -238,6 +271,29 @@ function showLoading(show) {
 function debounceSearch() {
     clearTimeout(searchTimeout);
     searchTimeout = setTimeout(() => loadProducts(1), 400);
+}
+
+function handleFileSelect(input) {
+    const file = input.files[0];
+    const preview = document.getElementById('form-image-preview');
+    const container = document.getElementById('image-preview-container');
+
+    if (file) {
+        const reader = new FileReader();
+        reader.onload = function(e) {
+            preview.src = e.target.result;
+            container.style.display = 'block';
+        }
+        reader.readAsDataURL(file);
+    } else {
+        const existingUrl = document.getElementById('form-image-url').value;
+        if (existingUrl) {
+            preview.src = existingUrl;
+            container.style.display = 'block';
+        } else {
+            container.style.display = 'none';
+        }
+    }
 }
 
 // ===== INIT =====

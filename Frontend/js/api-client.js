@@ -59,14 +59,14 @@ const productApi = {
     create(data) {
         return apiFetch('/api/products', {
             method: 'POST',
-            body: JSON.stringify(data)
+            body: (data instanceof FormData) ? data : JSON.stringify(data)
         });
     },
     /** Cập nhật sản phẩm */
     update(id, data) {
         return apiFetch(`/api/products/${id}`, {
             method: 'PUT',
-            body: JSON.stringify(data)
+            body: (data instanceof FormData) ? data : JSON.stringify(data)
         });
     },
     /** Xóa sản phẩm */
