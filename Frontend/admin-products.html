@@ -14,8 +14,13 @@
     <!-- Sidebar -->
     <aside class="sidebar" id="sidebar">
         <div class="sidebar-logo">
-            <i class="fa-solid fa-shoe-prints"></i>
-            <span>ShoeShop</span>
+            <div class="sidebar-logo-content">
+                <i class="fa-solid fa-shoe-prints"></i>
+                <span>ShoeShop</span>
+            </div>
+            <button class="btn-menu-toggle" onclick="toggleSidebar()">
+                <i class="fa-solid fa-bars-staggered"></i>
+            </button>
         </div>
         <nav class="sidebar-nav">
             <p class="nav-label">Quản trị</p>
@@ -53,9 +58,6 @@
     <main class="main-content">
         <header class="page-header">
             <div class="header-left">
-                <button class="btn-menu-toggle" onclick="toggleSidebar()">
-                    <i class="fa-solid fa-bars"></i>
-                </button>
                 <div>
                     <h1 class="page-title">Quản Lý Sản Phẩm</h1>
                     <p class="page-subtitle">Thêm, sửa, xóa và quản lý toàn bộ sản phẩm</p>
@@ -136,7 +138,7 @@
 
     <!-- ===== MODAL: Thêm / Sửa sản phẩm ===== -->
     <div class="modal-overlay" id="modal-product" onclick="closeModalOnOverlay(event,'modal-product')">
-        <div class="modal">
+        <div class="modal modal-lg">
             <div class="modal-header">
                 <h2 id="modal-title">Thêm sản phẩm</h2>
                 <button class="btn-close" onclick="closeModal('modal-product')"><i class="fa-solid fa-xmark"></i></button>
@@ -145,75 +147,112 @@
                 <form id="product-form" onsubmit="submitProductForm(event)">
                     <input type="hidden" id="form-product-id">
 
-                    <div class="form-group">
-                        <label>Tên sản phẩm <span class="required">*</span></label>
-                        <div class="input-wrap">
-                            <i class="fa-solid fa-box-open"></i>
-                            <input type="text" id="form-name" placeholder="VD: Nike Air Max 270" required>
+                    <div class="form-grid">
+                        <!-- CỘT TRÁI: THÔNG TIN CƠ BẢN & ẢNH -->
+                        <div class="form-left">
+                            <div class="form-group">
+                                <label>Tên sản phẩm <span class="required">*</span></label>
+                                <div class="input-wrap">
+                                    <i class="fa-solid fa-box-open"></i>
+                                    <input type="text" id="form-name" placeholder="VD: Nike Air Max 270" required>
+                                </div>
+                            </div>
+
+                            <div class="form-group">
+                                <label>Danh mục</label>
+                                <div class="input-wrap">
+                                    <i class="fa-solid fa-tags"></i>
+                                    <select id="form-category">
+                                        <option value="">— Không thuộc danh mục —</option>
+                                    </select>
+                                </div>
+                            </div>
+
+                            <div class="form-group">
+                                <label>Hình ảnh sản phẩm <span class="required">*</span></label>
+                                <div class="input-wrap">
+                                    <i class="fa-solid fa-cloud-arrow-up"></i>
+                                    <input type="file" id="form-image-file" accept="image/*" onchange="handleFileSelect(this)">
+                                    <input type="hidden" id="form-image-url">
+                                </div>
+                                <p class="hint-tiny">Chọn ảnh từ máy tính (JPG, PNG...)</p>
+                            </div>
+
+                            <div id="image-preview-container" style="display:none; margin-bottom: 14px;">
+                                <label>Xem trước ảnh:</label>
+                                <div class="product-icon" style="width: 100%; height: 180px; margin-top: 8px;">
+                                    <img id="form-image-preview" src="" alt="Preview" style="width: 100%; height: 100%; object-fit: contain; border-radius: 12px; background: rgba(0,0,0,0.2);">
+                                </div>
+                            </div>
+
+                        </div>
+
+                        <!-- CỘT PHẢI: GIÁ, KHO, TRẠNG THÁI & VARIANTS -->
+                        <div class="form-right">
+                            <div class="form-row">
+                                <div class="form-group">
+                                    <label>Giá bán (VNĐ) <span class="required">*</span></label>
+                                    <div class="input-wrap">
+                                        <i class="fa-solid fa-tag"></i>
+                                        <input type="number" id="form-price" placeholder="0" min="0" required>
+                                    </div>
+                                </div>
+                                <div class="form-group">
+                                    <label>Tồn kho <span class="required">*</span></label>
+                                    <div class="input-wrap">
+                                        <i class="fa-solid fa-warehouse"></i>
+                                        <input type="number" id="form-stock" placeholder="0" min="0" required>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="form-group">
+                                <label>Trạng thái</label>
+                                <div class="input-wrap">
+                                    <i class="fa-solid fa-toggle-on"></i>
+                                    <select id="form-isActive">
+                                        <option value="true">Đang bán</option>
+                                        <option value="false">Ngừng bán / Ẩn</option>
+                                    </select>
+                                </div>
+                            </div>
+
+                            <div class="form-group" style="margin-top: 10px; border-top: 1px solid var(--border); padding-top: 15px;">
+                                <label style="font-size: 1rem; color: var(--text); margin-bottom: 12px; display: flex; align-items: center; gap: 8px;">
+                                    <i class="fa-solid fa-layer-group"></i> Phân loại sản phẩm (Variants)
+                                </label>
+                                
+                                <div class="variant-controls" style="display: grid; grid-template-columns: 1fr 1fr 1fr 1fr auto; gap: 6px; margin-bottom: 10px;">
+                                    <input type="text" id="variant-size" placeholder="Size" style="padding: 7px; font-size: 0.82rem; border-radius: 6px; background: var(--surface2); border: 1px solid var(--border); color: var(--text);">
+                                    <input type="text" id="variant-color" placeholder="Màu" style="padding: 7px; font-size: 0.82rem; border-radius: 6px; background: var(--surface2); border: 1px solid var(--border); color: var(--text);">
+                                    <input type="number" id="variant-price" placeholder="Giá" style="padding: 7px; font-size: 0.82rem; border-radius: 6px; background: var(--surface2); border: 1px solid var(--border); color: var(--text);">
+                                    <input type="number" id="variant-stock" placeholder="Kho" style="padding: 7px; font-size: 0.82rem; border-radius: 6px; background: var(--surface2); border: 1px solid var(--border); color: var(--text);">
+                                    <button type="button" class="btn-primary" onclick="addVariantRow()" style="padding: 7px 10px; width: 34px;"><i class="fa-solid fa-plus"></i></button>
+                                </div>
+
+                                <div class="table-wrapper" style="max-height: 220px; overflow-y: auto; background: rgba(0,0,0,0.15);">
+                                    <table class="data-table" id="variant-table" style="font-size: 0.8rem;">
+                                        <thead style="position: sticky; top: 0; z-index: 1;">
+                                            <tr>
+                                                <th>Size</th>
+                                                <th>Màu</th>
+                                                <th>Giá</th>
+                                                <th>Kho</th>
+                                                <th></th>
+                                            </tr>
+                                        </thead>
+                                        <tbody id="variant-tbody"></tbody>
+                                    </table>
+                                </div>
+                            </div>
                         </div>
                     </div>
 
-                    <div class="form-group">
-                        <label>Danh mục</label>
-                        <div class="input-wrap">
-                            <i class="fa-solid fa-tags"></i>
-                            <select id="form-category">
-                                <option value="">— Không thuộc danh mục —</option>
-                            </select>
-                        </div>
-                    </div>
-
-                    <div class="form-group">
-                        <label>Hình ảnh sản phẩm <span class="required">*</span></label>
-                        <div class="input-wrap">
-                            <i class="fa-solid fa-cloud-arrow-up"></i>
-                            <input type="file" id="form-image-file" accept="image/*" onchange="handleFileSelect(this)">
-                            <!-- Hidden input for existing image URL when editing -->
-                            <input type="hidden" id="form-image-url">
-                        </div>
-                        <p class="hint-tiny">Chọn ảnh từ máy tính (JPG, PNG...)</p>
-                    </div>
-
-                    <div id="image-preview-container" style="display:none; margin-bottom: 14px;">
-                        <label>Xem trước ảnh:</label>
-                        <div class="product-icon" style="width: 120px; height: 120px; margin-top: 8px;">
-                            <img id="form-image-preview" src="" alt="Preview" style="width: 100%; height: 100%; object-fit: cover; border-radius: 12px;">
-                        </div>
-                    </div>
-
-                    <div class="form-group">
-                        <label>Mô tả</label>
+                    <div class="form-group" style="margin-top: 15px; border-top: 1px solid var(--border); padding-top: 15px;">
+                        <label>Mô tả sản phẩm</label>
                         <div class="input-wrap">
                             <i class="fa-solid fa-align-left"></i>
-                            <textarea id="form-description" placeholder="Mô tả ngắn về sản phẩm..."></textarea>
-                        </div>
-                    </div>
-
-                    <div class="form-row">
-                        <div class="form-group">
-                            <label>Giá bán (VNĐ) <span class="required">*</span></label>
-                            <div class="input-wrap">
-                                <i class="fa-solid fa-tag"></i>
-                                <input type="number" id="form-price" placeholder="0" min="0" required>
-                            </div>
-                        </div>
-                        <div class="form-group">
-                            <label>Tồn kho <span class="required">*</span></label>
-                            <div class="input-wrap">
-                                <i class="fa-solid fa-warehouse"></i>
-                                <input type="number" id="form-stock" placeholder="0" min="0" required>
-                            </div>
-                        </div>
-                    </div>
-
-                    <div class="form-group">
-                        <label>Trạng thái</label>
-                        <div class="input-wrap">
-                            <i class="fa-solid fa-toggle-on"></i>
-                            <select id="form-isActive">
-                                <option value="true">Đang bán</option>
-                                <option value="false">Ngừng bán / Ẩn</option>
-                            </select>
+                            <textarea id="form-description" placeholder="Nhập mô tả chi tiết sản phẩm..." style="min-height: 100px;"></textarea>
                         </div>
                     </div>
 

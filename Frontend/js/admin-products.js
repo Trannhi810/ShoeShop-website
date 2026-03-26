@@ -159,6 +159,7 @@ function openAddModal() {
     document.getElementById('form-image-url').value = '';
     document.getElementById('image-preview-container').style.display = 'none';
     document.getElementById('form-image-preview').src = '';
+    document.getElementById('variant-tbody').innerHTML = '';
     populateCategorySelect('');
     openModal('modal-product');
 }
@@ -190,6 +191,15 @@ async function openEditModal(id) {
             document.getElementById('image-preview-container').style.display = 'none';
         }
 
+        // Populate Variants
+        const vTbody = document.getElementById('variant-tbody');
+        vTbody.innerHTML = '';
+        if (p.variants && p.variants.length > 0) {
+            p.variants.forEach(v => {
+                addVariantToTable(v.size, v.color, v.price, v.stock);
+            });
+        }
+
         populateCategorySelect(p.categoryId?._id || p.categoryId || '');
     } catch (err) { showToast(err.message, 'error'); closeModal('modal-product'); }
 }
@@ -218,6 +228,19 @@ async function submitProductForm(e) {
         // Nếu không có file mới nhưng có ảnh cũ → gửi lại list ảnh (JSON string)
         fd.append('images', JSON.stringify([{ url: existingUrl }]));
     }
+
+    // Collect Variants
+    const variants = [];
+    const vRows = document.querySelectorAll('#variant-tbody tr');
+    vRows.forEach(row => {
+        variants.push({
+            size: row.dataset.size,
+            color: row.dataset.color,
+            price: parseFloat(row.dataset.price) || 0,
+            stock: parseInt(row.dataset.stock) || 0
+        });
+    });
+    fd.append('variants', JSON.stringify(variants));
 
     const id = document.getElementById('form-product-id').value;
     try {
@@ -294,6 +317,48 @@ function handleFileSelect(input) {
             container.style.display = 'none';
         }
     }
+}
+
+// ===== VARIANTS HELPERS =====
+function addVariantRow() {
+    const size = document.getElementById('variant-size').value.trim();
+    const color = document.getElementById('variant-color').value.trim();
+    const price = document.getElementById('variant-price').value || '';
+    const stock = document.getElementById('variant-stock').value || '0';
+
+    if (!size && !color) {
+        showToast('Vui lòng nhập Size hoặc Màu!', 'error');
+        return;
+    }
+
+    addVariantToTable(size, color, price, stock);
+
+    // Reset inputs
+    document.getElementById('variant-size').value = '';
+    document.getElementById('variant-color').value = '';
+    document.getElementById('variant-price').value = '';
+    document.getElementById('variant-stock').value = '';
+}
+
+function addVariantToTable(size, color, price, stock) {
+    const tbody = document.getElementById('variant-tbody');
+    const tr = document.createElement('tr');
+    tr.dataset.size = size || '';
+    tr.dataset.color = color || '';
+    tr.dataset.price = price || '0';
+    tr.dataset.stock = stock || '0';
+    tr.innerHTML = `
+        <td>${size || '—'}</td>
+        <td>${color || '—'}</td>
+        <td>${price ? parseFloat(price).toLocaleString('vi-VN') + ' ₫' : '—'}</td>
+        <td>${stock}</td>
+        <td style="text-align: right;">
+            <button type="button" class="btn-icon delete" onclick="this.closest('tr').remove()" style="width: 28px; height: 28px;">
+                <i class="fa-solid fa-trash"></i>
+            </button>
+        </td>
+    `;
+    tbody.appendChild(tr);
 }
 
 // ===== INIT =====

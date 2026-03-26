@@ -1,3 +1,4 @@
+const mongoose = require('mongoose');
 const productVariantSchema = new mongoose.Schema({
   productId: {
     type: mongoose.Schema.Types.ObjectId,
