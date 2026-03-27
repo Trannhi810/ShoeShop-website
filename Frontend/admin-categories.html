@@ -1,4 +1,4 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="vi">
 <head>
     <meta charset="UTF-8">
@@ -14,8 +14,13 @@
     <!-- Sidebar -->
     <aside class="sidebar" id="sidebar">
         <div class="sidebar-logo">
-            <i class="fa-solid fa-shoe-prints"></i>
-            <span>ShoeShop</span>
+            <div class="sidebar-logo-content">
+                <i class="fa-solid fa-shoe-prints"></i>
+                <span>ShoeShop</span>
+            </div>
+            <button class="btn-menu-toggle" onclick="toggleSidebar()">
+                <i class="fa-solid fa-bars-staggered"></i>
+            </button>
         </div>
         <nav class="sidebar-nav">
             <p class="nav-label">Quản trị</p>
@@ -53,9 +58,6 @@
     <main class="main-content">
         <header class="page-header">
             <div class="header-left">
-                <button class="btn-menu-toggle" onclick="toggleSidebar()">
-                    <i class="fa-solid fa-bars"></i>
-                </button>
                 <div>
                     <h1 class="page-title">Quản Lý Danh Mục</h1>
                     <p class="page-subtitle">Thêm, sửa, xóa danh mục sản phẩm</p>

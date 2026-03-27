@@ -11,6 +11,7 @@ const cartRoutes     = require("./routes/cartRoutes");
 const app = express();
 
 app.use(express.json());
+app.use(express.urlencoded({ extended: true }));
 
 // Gọi hàm kết nối database
 connectDB();
@@ -23,6 +24,7 @@ app.use("/api/cart",       cartRoutes);
 
 // Serve frontend
 app.use(express.static(path.join(__dirname, "../Frontend")));
+app.use('/uploads', express.static(path.join(__dirname, 'public/uploads')));
 
 app.get("/", (req, res) => {
     res.sendFile(path.join(__dirname, "../Frontend/index.html"));
