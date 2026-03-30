@@ -20,24 +20,44 @@
 </header>
 
 <script>
+  function performSearch() {
+    const searchInput = document.getElementById('searchInput');
+    const searchTerm = searchInput.value.trim();
+    if (searchTerm) {
+      window.location.href = `/pages/products.html?search=${encodeURIComponent(searchTerm)}`;
+    }
+  }
+
+  function updateCartCount() {
+    const cart = JSON.parse(localStorage.getItem('shoeshop_cart_v1') || '[]');
+    const cartCount = document.getElementById('cartCount');
+    if (cartCount) {
+      const totalItems = cart.reduce((sum, item) => sum + (item.quantity || 1), 0);
+      cartCount.textContent = totalItems;
+      cartCount.style.display = totalItems > 0 ? 'flex' : 'none';
+    }
+  }
+
   function renderHeaderAuth() {
     const headerRight = document.getElementById("headerRight");
-    const user = JSON.parse(localStorage.getItem("shoeshop_current_user_v1"));
+    // Đọc user từ cả 2 key để đảm bảo tương thích
+    let user = JSON.parse(localStorage.getItem("shoeshop_user")) || 
+              JSON.parse(localStorage.getItem("shoeshop_current_user_v1"));
 
     if (!headerRight) return;
 
     if (user) {
       let extra = "";
 
-      if (user.role === "admin") {
-        extra += `<a class="header-link" href="/pages/admin-dashboard.html">Admin</a>`;
+      if (user.role === "admin" || user.role === "ADMIN") {
+        extra += `<a class="header-link" href="/admin-dashboard.html">Admin</a>`;
       }
 
-      if (user.role === "staff") {
+      if (user.role === "staff" || user.role === "STAFF") {
         extra += `<a class="header-link" href="/pages/staff-dashboard.html">Staff</a>`;
       }
 
-      if (user.role === "customer") {
+      if (user.role === "customer" || user.role === "CUSTOMER") {
         extra += `<a class="header-link" href="/pages/orders.html">Đơn hàng</a>`;
       }
 
@@ -61,6 +81,31 @@
 
   function logout() {
     localStorage.removeItem("shoeshop_current_user_v1");
+    localStorage.removeItem("shoeshop_user");
+    localStorage.removeItem("shoeshop_token");
+    localStorage.removeItem("user");
+    localStorage.removeItem("token");
     window.location.href = "/index.html";
   }
+
+  document.addEventListener('DOMContentLoaded', function() {
+    // Add enter key support for search
+    const searchInput = document.getElementById('searchInput');
+    if (searchInput) {
+      searchInput.addEventListener('keypress', function(e) {
+        if (e.key === 'Enter') {
+          performSearch();
+        }
+      });
+    }
+
+    // Update cart count on load
+    updateCartCount();
+
+    // Update cart count periodically (in case it changes from other pages)
+    setInterval(updateCartCount, 1000);
+    
+    // Update header auth on load
+    renderHeaderAuth();
+  });
 </script>
