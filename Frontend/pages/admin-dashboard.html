@@ -1,0 +1,513 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Admin Dashboard - ShoeShop</title>
+  <link rel="stylesheet" href="/css/layout.css" />
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <style>
+    .page {
+      width: 1200px;
+      max-width: calc(100% - 40px);
+      margin: 32px auto;
+    }
+
+    .page h1 {
+      font-size: 34px;
+      margin-bottom: 10px;
+    }
+
+    .page-subtitle {
+      color: #666;
+      margin-bottom: 24px;
+      line-height: 1.6;
+    }
+
+    .stats-grid {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 18px;
+      margin-bottom: 28px;
+    }
+
+    .stat-card,
+    .panel,
+    .quick-card {
+      background: white;
+      border: 1px solid #e5e5e5;
+      border-radius: 18px;
+      padding: 20px;
+      box-shadow: 0 6px 20px rgba(0,0,0,0.04);
+    }
+
+    .stat-card h3 {
+      color: #666;
+      font-size: 15px;
+      margin-bottom: 8px;
+    }
+
+    .stat-card .value {
+      font-size: 30px;
+      font-weight: bold;
+      color: #111;
+    }
+
+    .stat-card .sub {
+      margin-top: 8px;
+      font-size: 14px;
+      color: #666;
+    }
+
+    .quick-grid {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 16px;
+      margin-bottom: 28px;
+    }
+
+    .quick-card h3 {
+      margin-bottom: 8px;
+      font-size: 18px;
+    }
+
+    .quick-card p {
+      color: #666;
+      font-size: 14px;
+      line-height: 1.6;
+      margin-bottom: 14px;
+    }
+
+    .quick-card a {
+      display: inline-block;
+      background: #111;
+      color: white;
+      text-decoration: none;
+      padding: 10px 14px;
+      border-radius: 10px;
+      font-weight: 600;
+    }
+
+    .panel {
+      margin-bottom: 24px;
+    }
+
+    .panel h2 {
+      margin-bottom: 16px;
+      font-size: 24px;
+    }
+
+    .chart-wrap {
+      width: 100%;
+      max-width: 100%;
+      overflow-x: auto;
+    }
+
+    .status-overview {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 16px;
+    }
+
+    .mini-box {
+      border-radius: 14px;
+      padding: 16px;
+      border: 1px solid #eee;
+      background: #fafafa;
+    }
+
+    .mini-box .label {
+      font-size: 14px;
+      color: #666;
+      margin-bottom: 8px;
+    }
+
+    .mini-box .number {
+      font-size: 24px;
+      font-weight: bold;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+    }
+
+    table th,
+    table td {
+      text-align: left;
+      padding: 12px 10px;
+      border-bottom: 1px solid #eee;
+      vertical-align: top;
+    }
+
+    table th {
+      background: #f7f7f7;
+    }
+
+    .status-badge {
+      display: inline-block;
+      padding: 7px 10px;
+      border-radius: 16px;
+      font-size: 13px;
+      font-weight: 600;
+    }
+
+    .pending {
+      background: #fff3cd;
+      color: #856404;
+    }
+
+    .shipping {
+      background: #d1ecf1;
+      color: #0c5460;
+    }
+
+    .completed {
+      background: #d4edda;
+      color: #155724;
+    }
+
+    .cancelled {
+      background: #f8d7da;
+      color: #721c24;
+    }
+
+    .active-user {
+      color: green;
+      font-weight: 600;
+    }
+
+    .blocked-user {
+      color: red;
+      font-weight: 600;
+    }
+
+    .empty-box {
+      background: white;
+      border: 1px dashed #ccc;
+      border-radius: 16px;
+      padding: 30px;
+      text-align: center;
+      color: #666;
+      font-size: 18px;
+    }
+
+    .btn-dark {
+      display: inline-block;
+      background: #111;
+      color: white;
+      text-decoration: none;
+      padding: 12px 18px;
+      border-radius: 10px;
+      font-weight: 600;
+      margin-top: 16px;
+    }
+
+    @media (max-width: 1000px) {
+      .stats-grid,
+      .quick-grid,
+      .status-overview {
+        grid-template-columns: 1fr 1fr;
+      }
+    }
+
+    @media (max-width: 700px) {
+      .stats-grid,
+      .quick-grid,
+      .status-overview {
+        grid-template-columns: 1fr;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div id="header"></div>
+
+  <main class="page" id="adminContent">
+    <div style="padding: 20px; background: #f0f0f0; border-radius: 8px; margin: 20px;">
+      <p id="loadingMessage">Đang tải...</p>
+    </div>
+  </main>
+
+  <div id="footer"></div>
+
+  <script src="/js/notify.js"></script>
+  <script>
+    const USER_KEY = "user";
+    const USERS_KEY = "shoeshop_users_v1";
+    const PRODUCTS_KEY = "shoeshop_products_v1";
+    const ORDERS_KEY = "shoeshop_orders_v1";
+    const CATEGORIES_KEY = "shoeshop_categories_v1";
+
+    async function loadComponent(id, file) {
+      try {
+        const res = await fetch(file);
+        const html = await res.text();
+        document.getElementById(id).innerHTML = html;
+
+        if (id === "header") {
+          setTimeout(() => renderHeaderAuth(), 100);
+        }
+      } catch (error) {
+        console.error("Lỗi load component:", error);
+      }
+    }
+
+    function renderHeaderAuth() {
+      const headerRight = document.getElementById("headerRight");
+      if (!headerRight) return;
+
+      const currentUser = JSON.parse(localStorage.getItem(USER_KEY));
+
+      if (currentUser) {
+        let extraLink = "";
+
+        if (currentUser.role === "ADMIN") {
+          extraLink += `<a class="header-link" href="/pages/admin-dashboard.html">Admin</a>`;
+        }
+        if (currentUser.role === "STAFF") {
+          extraLink += `<a class="header-link" href="/pages/staff-dashboard.html">Staff</a>`;
+        }
+
+        headerRight.innerHTML = `
+          <div id="notificationBellArea"></div>
+          ${extraLink}
+          <span class="user-text">Xin chào, ${currentUser.fullName || currentUser.email}</span>
+          <button class="header-btn" onclick="logout()">Đăng xuất</button>
+        `;
+
+        if (typeof renderNotificationBell === "function") {
+          renderNotificationBell();
+        }
+      } else {
+        headerRight.innerHTML = `
+          <a class="header-link" href="/pages/auth.html">Đăng nhập</a>
+          <a class="header-link" href="/pages/auth.html?tab=register">Đăng ký</a>
+        `;
+      }
+    }
+
+    function logout() {
+      localStorage.removeItem(USER_KEY);
+      window.location.href = "/";
+    }
+
+    function getUsers() {
+      const users = JSON.parse(localStorage.getItem(USERS_KEY)) || [];
+      return users.map(user => ({
+        ...user,
+        isBlocked: user.isBlocked ?? false,
+        loginProvider: user.loginProvider || "email"
+      }));
+    }
+
+    function getProducts() {
+      return JSON.parse(localStorage.getItem(PRODUCTS_KEY)) || [];
+    }
+
+    function getOrders() {
+      return JSON.parse(localStorage.getItem(ORDERS_KEY)) || [];
+    }
+
+    function getCategories() {
+      return JSON.parse(localStorage.getItem(CATEGORIES_KEY)) || ["Sneaker", "Running", "Casual"];
+    }
+
+    function getStatusClass(status) {
+      if (status === "Chờ xử lý") return "pending";
+      if (status === "Đang giao") return "shipping";
+      if (status === "Hoàn tất") return "completed";
+      if (status === "Hủy") return "cancelled";
+      return "pending";
+    }
+
+    function renderAdminDashboard() {
+      try {
+        console.log("renderAdminDashboard called");
+        const currentUser = JSON.parse(localStorage.getItem(USER_KEY));
+        const container = document.getElementById("adminContent");
+        
+        console.log("Container found:", !!container);
+        console.log("Current user:", currentUser);
+
+        if (!currentUser || currentUser.role !== "ADMIN") {
+          console.log("Permission check failed");
+          container.innerHTML = `<div class="empty-box">Bạn không có quyền truy cập.</div>`;
+          return;
+        }
+
+        // Get data
+        const users = getUsers();
+        const products = getProducts();
+        const orders = getOrders();
+        const categories = getCategories();
+        
+        console.log("Data fetched - Users:", users.length, "Products:", products.length, "Orders:", orders.length);
+
+        // Calculate stats
+        const totalRevenue = orders.reduce((sum, order) => sum + (order.total || 0), 0);
+        const pendingOrders = orders.filter(order => order.status === "Chờ xử lý").length;
+        const shippingOrders = orders.filter(order => order.status === "Đang giao").length;
+        const completedOrders = orders.filter(order => order.status === "Hoàn tất").length;
+        const cancelledOrders = orders.filter(order => order.status === "Hủy").length;
+
+        const totalAdmins = users.filter(user => user.role === "ADMIN").length;
+        const totalStaffs = users.filter(user => user.role === "STAFF").length;
+        const totalCustomers = users.filter(user => user.role === "CUSTOMER").length;
+
+        // Build minimal HTML
+        const html = `
+          <h1>Admin Dashboard</h1>
+          <p>Xin chào, ${currentUser.fullName || currentUser.email}</p>
+          
+          <div class="stats-grid">
+            <div class="stat-card">
+              <h3>Tổng người dùng</h3>
+              <div class="value">${users.length}</div>
+            </div>
+            <div class="stat-card">
+              <h3>Tổng sản phẩm</h3>
+              <div class="value">${products.length}</div>
+            </div>
+            <div class="stat-card">
+              <h3>Tổng đơn hàng</h3>
+              <div class="value">${orders.length}</div>
+            </div>
+            <div class="stat-card">
+              <h3>Tổng doanh thu</h3>
+              <div class="value">${totalRevenue.toLocaleString("vi-VN")} VND</div>
+            </div>
+          </div>
+          
+          <div class="quick-grid">
+            <div class="quick-card">
+              <h3>Quản lý sản phẩm</h3>
+              <a href="/pages/admin-products.html">Mở trang</a>
+            </div>
+            <div class="quick-card">
+              <h3>Quản lý người dùng</h3>
+              <a href="/pages/admin-users.html">Mở trang</a>
+            </div>
+            <div class="quick-card">
+              <h3>Quản lý đơn hàng</h3>
+              <a href="/pages/admin-orders.html">Mở trang</a>
+            </div>
+            <div class="quick-card">
+              <h3>Quản lý danh mục</h3>
+              <a href="/pages/admin-categories.html">Mở trang</a>
+            </div>
+          </div>
+        `;
+        
+        console.log("Setting innerHTML");
+        container.innerHTML = html;
+        console.log("innerHTML set successfully");
+        
+        // Try to render chart if available
+        try {
+          renderOrdersChart(pendingOrders, shippingOrders, completedOrders, cancelledOrders);
+        } catch (e) {
+          console.warn("Chart error:", e);
+        }
+        
+      } catch (error) {
+        console.error("Dashboard rendering error:", error);
+        console.error("Stack:", error.stack);
+        const container = document.getElementById("adminContent");
+        container.innerHTML = `
+          <div class="empty-box">
+            Lỗi: ${error.message}
+            <pre>${error.stack}</pre>
+          </div>
+        `;
+      }
+    }
+
+    function renderOrdersChart(pending, shipping, completed, cancelled) {
+      const canvas = document.getElementById("ordersChart");
+      if (!canvas) return;
+
+      new Chart(canvas, {
+        type: "bar",
+        data: {
+          labels: ["Chờ xử lý", "Đang giao", "Hoàn tất", "Đã hủy"],
+          datasets: [{
+            label: "Số lượng đơn hàng",
+            data: [pending, shipping, completed, cancelled]
+          }]
+        },
+        options: {
+          responsive: true,
+          plugins: {
+            legend: {
+              display: true
+            }
+          },
+          scales: {
+            y: {
+              beginAtZero: true,
+              ticks: {
+                precision: 0
+              }
+            }
+          }
+        }
+      });
+    }
+
+    // Check user permission first
+    const currentUser = JSON.parse(localStorage.getItem(USER_KEY));
+    
+    console.log("=== Admin Dashboard Init ===");
+    console.log("Current user:", currentUser);
+    console.log("USER_KEY:", USER_KEY);
+    
+    if (!currentUser || currentUser.role !== "ADMIN") {
+      console.log("User not ADMIN, showing error message");
+      document.getElementById("adminContent").innerHTML = `
+        <div class="empty-box">
+          Bạn không có quyền truy cập trang quản trị.<br>
+          <a class="btn-dark" href="/pages/auth.html">Đăng nhập bằng tài khoản admin</a>
+        </div>
+      `;
+    } else {
+      console.log("User is ADMIN, loading dashboard");
+      
+      // Load header
+      fetch("/components/header.html")
+        .then(r => {
+          console.log("Header fetch status:", r.status);
+          return r.text();
+        })
+        .then(html => {
+          console.log("Header HTML loaded, length:", html.length);
+          document.getElementById("header").innerHTML = html;
+        })
+        .catch(err => {
+          console.error("Error loading header:", err);
+          document.getElementById("header").innerHTML = "<header>Error loading header</header>";
+        });
+      
+      // Load footer
+      fetch("/components/footer.html")
+        .then(r => {
+          console.log("Footer fetch status:", r.status);
+          return r.text();
+        })
+        .then(html => {
+          console.log("Footer HTML loaded, length:", html.length);
+          document.getElementById("footer").innerHTML = html;
+        })
+        .catch(err => {
+          console.error("Error loading footer:", err);
+          document.getElementById("footer").innerHTML = "<footer>Error loading footer</footer>";
+        });
+      
+      // Render dashboard immediately
+      console.log("Starting to render admin dashboard");
+      renderAdminDashboard();
+    }
+  </script>
+</body>
+</html>

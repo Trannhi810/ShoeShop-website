@@ -1,0 +1,45 @@
+<div class="sidebar">
+
+  <h2>Dashboard</h2>
+
+  <ul id="menuList">
+    <!-- render bằng JS -->
+  </ul>
+
+</div>
+
+<script>
+  const user = JSON.parse(localStorage.getItem("user"));
+  const menu = document.getElementById("menuList");
+
+  if (!user) {
+    menu.innerHTML = "<li>Không có quyền</li>";
+  } else {
+
+    // ADMIN
+    if (user.role === "admin") {
+      menu.innerHTML = `
+        <li><a href="/Frontend/pages/admin-dashboard.html">Tổng quan</a></li>
+        <li><a href="/Frontend/pages/admin-products.html">Sản phẩm</a></li>
+        <li><a href="/Frontend/pages/admin-users.html">Người dùng</a></li>
+        <li><a href="/Frontend/pages/admin-orders.html">Đơn hàng</a></li>
+      `;
+    }
+
+    // STAFF
+    if (user.role === "staff") {
+      menu.innerHTML = `
+        <li><a href="/Frontend/pages/staff-dashboard.html">Dashboard</a></li>
+        <li><a href="/Frontend/pages/staff-orders.html">Đơn hàng</a></li>
+      `;
+    }
+
+    // CUSTOMER
+    if (user.role === "customer") {
+      menu.innerHTML = `
+        <li><a href="/Frontend/index.html">Trang chủ</a></li>
+        <li><a href="/Frontend/pages/orders.html">Đơn hàng</a></li>
+      `;
+    }
+  }
+</script>

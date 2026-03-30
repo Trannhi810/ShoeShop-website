@@ -1,0 +1,115 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Admin Dashboard - ShoeShop</title>
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <link rel="stylesheet" href="css/admin-shared.css">
+</head>
+<body>
+  <!-- Sidebar -->
+  <aside class="sidebar" id="sidebar">
+    <div class="sidebar-logo">
+      <i class="fa-solid fa-shoe-prints"></i>
+      <span>ShoeShop</span>
+    </div>
+    <nav class="sidebar-nav">
+      <p class="nav-label">Quản trị</p>
+      <a href="/admin-dashboard.html" class="nav-item active">
+        <i class="fa-solid fa-chart-pie"></i>
+        <span>Tổng quan</span>
+      </a>
+      <a href="/admin-products.html" class="nav-item">
+        <i class="fa-solid fa-box-open"></i>
+        <span>Sản phẩm</span>
+      </a>
+      <a href="/admin-categories.html" class="nav-item">
+        <i class="fa-solid fa-tags"></i>
+        <span>Danh mục</span>
+      </a>
+      <a href="/admin-users.html" class="nav-item">
+        <i class="fa-solid fa-users"></i>
+        <span>Người dùng</span>
+      </a>
+      <p class="nav-label">Hệ thống</p>
+      <a href="/index.html" class="nav-item">
+        <i class="fa-solid fa-house"></i>
+        <span>Trang chủ</span>
+      </a>
+    </nav>
+    <div class="sidebar-footer">
+      <div class="admin-avatar" id="admin-avatar">A</div>
+      <div class="admin-info">
+        <p class="admin-name" id="admin-name">Admin</p>
+        <p class="admin-role">Quản trị viên</p>
+      </div>
+      <button class="btn-logout" onclick="logout()" title="Đăng xuất">
+        <i class="fa-solid fa-right-from-bracket"></i>
+      </button>
+    </div>
+  </aside>
+
+  <!-- Main Content -->
+  <main class="main-content">
+    <header class="page-header">
+      <div class="header-left">
+        <div>
+          <h1 class="page-title">Tổng quan quản trị</h1>
+          <p class="page-subtitle">Thống kê nhanh theo dữ liệu trong MongoDB</p>
+        </div>
+      </div>
+    </header>
+
+    <!-- Stats -->
+    <div class="stats-bar">
+      <div class="stat-card">
+        <div class="stat-icon purple"><i class="fa-solid fa-users"></i></div>
+        <div>
+          <p class="stat-label">Tổng người dùng</p>
+          <p class="stat-value" id="stat-users-total">—</p>
+        </div>
+      </div>
+
+      <div class="stat-card">
+        <div class="stat-icon green"><i class="fa-solid fa-circle-check"></i></div>
+        <div>
+          <p class="stat-label">Đang hoạt động</p>
+          <p class="stat-value" id="stat-users-active">—</p>
+        </div>
+      </div>
+
+      <div class="stat-card">
+        <div class="stat-icon orange"><i class="fa-solid fa-box-open"></i></div>
+        <div>
+          <p class="stat-label">Tổng sản phẩm</p>
+          <p class="stat-value" id="stat-products-total">—</p>
+        </div>
+      </div>
+
+      <div class="stat-card">
+        <div class="stat-icon blue"><i class="fa-solid fa-tags"></i></div>
+        <div>
+          <p class="stat-label">Tổng danh mục</p>
+          <p class="stat-value" id="stat-categories-total">—</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- Quick Links -->
+    <div style="display:flex;gap:12px;flex-wrap:wrap;margin-top:16px;">
+      <a class="btn-secondary" href="/admin-products.html"><i class="fa-solid fa-box-open"></i>&nbsp;Quản lý sản phẩm</a>
+      <a class="btn-secondary" href="/admin-users.html"><i class="fa-solid fa-users"></i>&nbsp;Quản lý người dùng</a>
+      <a class="btn-secondary" href="/admin-categories.html"><i class="fa-solid fa-tags"></i>&nbsp;Quản lý danh mục</a>
+    </div>
+  </main>
+
+  <div class="toast-container" id="toast-container"></div>
+
+  <script src="js/admin-utils.js"></script>
+  <script src="js/api-client.js"></script>
+  <script src="js/admin-dashboard.js"></script>
+</body>
+</html>
+

@@ -1,0 +1,66 @@
+<header class="site-header">
+  <div class="header-inner">
+
+    <!-- LOGO -->
+    <div class="logo">
+      <a href="/index.html">ShoeShop</a>
+    </div>
+
+    <!-- MENU -->
+    <nav class="main-nav">
+      <a href="/index.html">Trang chủ</a>
+      <a href="/pages/products.html">Sản phẩm</a>
+      <a href="/pages/cart.html">Giỏ hàng</a>
+    </nav>
+
+    <!-- RIGHT -->
+    <div class="header-right" id="headerRight"></div>
+
+  </div>
+</header>
+
+<script>
+  function renderHeaderAuth() {
+    const headerRight = document.getElementById("headerRight");
+    const user = JSON.parse(localStorage.getItem("shoeshop_current_user_v1"));
+
+    if (!headerRight) return;
+
+    if (user) {
+      let extra = "";
+
+      if (user.role === "admin") {
+        extra += `<a class="header-link" href="/pages/admin-dashboard.html">Admin</a>`;
+      }
+
+      if (user.role === "staff") {
+        extra += `<a class="header-link" href="/pages/staff-dashboard.html">Staff</a>`;
+      }
+
+      if (user.role === "customer") {
+        extra += `<a class="header-link" href="/pages/orders.html">Đơn hàng</a>`;
+      }
+
+      headerRight.innerHTML = `
+      <div id="notificationBellArea"></div>
+      ${extra}
+      <span class="user-text">Xin chào, ${user.fullName || user.email}</span>
+      <button class="header-btn" onclick="logout()">Đăng xuất</button>
+    `;
+
+      if (typeof renderNotificationBell === "function") {
+        renderNotificationBell();
+      }
+    } else {
+      headerRight.innerHTML = `
+      <a class="header-link" href="/pages/auth.html">Đăng nhập</a>
+      <a class="header-link" href="/pages/auth.html?tab=register">Đăng ký</a>
+    `;
+    }
+  }
+
+  function logout() {
+    localStorage.removeItem("shoeshop_current_user_v1");
+    window.location.href = "/index.html";
+  }
+</script>

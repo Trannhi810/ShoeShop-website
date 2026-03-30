@@ -1,0 +1,500 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Quản lý người dùng - ShoeShop</title>
+  <link rel="stylesheet" href="/Frontend/css/layout.css" />
+  <style>
+    .page {
+      width: 1200px;
+      max-width: calc(100% - 40px);
+      margin: 32px auto;
+    }
+
+    .panel {
+      background: white;
+      border: 1px solid #e5e5e5;
+      border-radius: 18px;
+      padding: 20px;
+      box-shadow: 0 6px 20px rgba(0,0,0,0.04);
+      margin-bottom: 24px;
+    }
+
+    .panel h1,
+    .panel h2 {
+      margin-bottom: 16px;
+    }
+
+    .form-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 14px;
+    }
+
+    .form-group {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    .form-group input,
+    .form-group select {
+      padding: 12px 14px;
+      border: 1px solid #ccc;
+      border-radius: 10px;
+    }
+
+    .form-actions {
+      margin-top: 16px;
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+    }
+
+    .btn-dark,
+    .btn-danger,
+    .btn-warning,
+    .btn-edit,
+    .btn-light {
+      padding: 10px 14px;
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+      font-weight: 600;
+      text-decoration: none;
+    }
+
+    .btn-dark {
+      background: #111;
+      color: white;
+    }
+
+    .btn-danger {
+      background: #e63946;
+      color: white;
+    }
+
+    .btn-warning {
+      background: #f4a261;
+      color: white;
+    }
+
+    .btn-edit {
+      background: #1d3557;
+      color: white;
+    }
+
+    .btn-light {
+      background: #ececec;
+      color: #111;
+    }
+
+    .status-active {
+      color: green;
+      font-weight: bold;
+    }
+
+    .status-blocked {
+      color: red;
+      font-weight: bold;
+    }
+
+    .msg {
+      margin-top: 12px;
+      min-height: 20px;
+      font-size: 14px;
+      color: green;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+    }
+
+    th, td {
+      text-align: left;
+      padding: 12px 10px;
+      border-bottom: 1px solid #eee;
+      vertical-align: top;
+    }
+
+    th {
+      background: #f7f7f7;
+    }
+
+    .empty-box {
+      background: white;
+      border: 1px dashed #ccc;
+      border-radius: 16px;
+      padding: 30px;
+      text-align: center;
+      color: #666;
+      font-size: 18px;
+    }
+
+    @media (max-width: 900px) {
+      .form-grid {
+        grid-template-columns: 1fr;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div id="header"></div>
+
+  <main class="page" id="adminUsersContent"></main>
+
+  <div id="footer"></div>
+
+  <script src="/Frontend/js/notify.js"></script>
+  <script>
+    const USERS_KEY = "shoeshop_users_v1";
+
+    let editingUserId = null;
+
+    async function loadComponent(id, file) {
+      try {
+        const res = await fetch(file);
+        const html = await res.text();
+        document.getElementById(id).innerHTML = html;
+        if (id === "header") renderHeaderAuth();
+      } catch (error) {
+        console.log("Lỗi load component:", error);
+      }
+    }
+
+    function renderHeaderAuth() {
+      const headerRight = document.getElementById("headerRight");
+      if (!headerRight) return;
+
+      const currentUser = JSON.parse(localStorage.getItem(USER_KEY));
+
+      if (currentUser) {
+        headerRight.innerHTML = `
+          <div id="notificationBellArea"></div>
+          <a class="header-link" href="/Frontend/pages/admin-dashboard.html">Admin</a>
+          <span class="user-text">Xin chào, ${currentUser.fullName || currentUser.email}</span>
+          <button class="header-btn" onclick="logout()">Đăng xuất</button>
+        `;
+
+        if (typeof renderNotificationBell === "function") {
+          renderNotificationBell();
+        }
+      } else {
+        headerRight.innerHTML = `
+          <a class="header-link" href="/Frontend/pages/auth.html">Đăng nhập</a>
+          <a class="header-link" href="/Frontend/pages/auth.html?tab=register">Đăng ký</a>
+        `;
+      }
+    }
+
+    function logout() {
+      localStorage.removeItem(USER_KEY);
+      window.location.href = "/Frontend/index.html";
+    }
+
+    function getUsers() {
+      const users = JSON.parse(localStorage.getItem(USERS_KEY)) || [];
+      return users.map(user => ({
+        ...user,
+        isBlocked: user.isBlocked ?? false,
+        loginProvider: user.loginProvider || "email"
+      }));
+    }
+
+    function saveUsers(users) {
+      localStorage.setItem(USERS_KEY, JSON.stringify(users));
+    }
+
+    function renderAdminUsers() {
+      const currentUser = JSON.parse(localStorage.getItem(USER_KEY));
+      const container = document.getElementById("adminUsersContent");
+
+      if (!currentUser || currentUser.role !== "admin") {
+        container.innerHTML = `
+          <div class="empty-box">
+            Bạn không có quyền truy cập trang này.
+          </div>
+        `;
+        return;
+      }
+
+      const users = getUsers();
+
+      container.innerHTML = `
+        <div class="panel">
+          <h1>Quản lý người dùng</h1>
+
+          <form id="userForm">
+            <div class="form-grid">
+              <div class="form-group">
+                <label>Họ tên</label>
+                <input type="text" id="userFullName" required />
+              </div>
+
+              <div class="form-group">
+                <label>Email</label>
+                <input type="email" id="userEmail" required />
+              </div>
+
+              <div class="form-group">
+                <label>Mật khẩu</label>
+                <input type="text" id="userPassword" required />
+              </div>
+
+              <div class="form-group">
+                <label>Vai trò</label>
+                <select id="userRole" required>
+                  <option value="customer">Customer</option>
+                  <option value="staff">Staff</option>
+                  <option value="admin">Admin</option>
+                </select>
+              </div>
+
+              <div class="form-group">
+                <label>Provider đăng nhập</label>
+                <select id="userProvider" required>
+                  <option value="email">email</option>
+                  <option value="google">google</option>
+                </select>
+              </div>
+
+              <div class="form-group">
+                <label>Trạng thái tài khoản</label>
+                <select id="userBlocked" required>
+                  <option value="false">Hoạt động</option>
+                  <option value="true">Đã khóa</option>
+                </select>
+              </div>
+            </div>
+
+            <div class="form-actions">
+              <button type="submit" class="btn-dark" id="submitBtn">Thêm user</button>
+              <button type="button" class="btn-light" onclick="resetUserForm()">Làm mới</button>
+            </div>
+
+            <div id="userMsg" class="msg"></div>
+          </form>
+        </div>
+
+        <div class="panel">
+          <h2>Danh sách người dùng</h2>
+
+          ${
+            users.length
+              ? `
+                <table>
+                  <thead>
+                    <tr>
+                      <th>ID</th>
+                      <th>Họ tên</th>
+                      <th>Email</th>
+                      <th>Vai trò</th>
+                      <th>Provider</th>
+                      <th>Trạng thái</th>
+                      <th>Thao tác</th>
+                      <th>Provider</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    ${users.map(user => `
+                      <tr>
+                        <td>${user.id}</td>
+                        <td>${user.fullName}</td>
+                        <td>${user.email}</td>
+                        <td>${user.role}</td>
+                        <td>${user.loginProvider}</td>
+                        <td class="${user.isBlocked ? "status-blocked" : "status-active"}">
+                          ${user.isBlocked ? "Đã khóa" : "Hoạt động"}
+                        <td>${user.loginProvider || "email"}</td>
+                        </td>
+                        <td>
+                          <button class="btn-edit" onclick="editUser(${user.id})">Sửa</button>
+                          <button class="${user.isBlocked ? "btn-dark" : "btn-warning"}" onclick="toggleBlockUser(${user.id})">
+                            ${user.isBlocked ? "Mở khóa" : "Khóa"}
+                          </button>
+                          <button class="btn-danger" onclick="deleteUser(${user.id})">Xóa</button>
+                        </td>
+                      </tr>
+                    `).join("")}
+                  </tbody>
+                </table>
+              `
+              : `<div>Chưa có người dùng.</div>`
+          }
+        </div>
+      `;
+
+      document.getElementById("userForm").addEventListener("submit", handleUserSubmit);
+    }
+
+    function handleUserSubmit(event) {
+      event.preventDefault();
+
+      const fullName = document.getElementById("userFullName").value.trim();
+      const email = document.getElementById("userEmail").value.trim();
+      const password = document.getElementById("userPassword").value.trim();
+      const role = document.getElementById("userRole").value;
+      const loginProvider = document.getElementById("userProvider").value;
+      const isBlocked = document.getElementById("userBlocked").value === "true";
+      const msg = document.getElementById("userMsg");
+
+      const users = getUsers();
+
+      if (editingUserId) {
+        const existedEmail = users.find(user => user.email === email && user.id !== editingUserId);
+        if (existedEmail) {
+          msg.style.color = "red";
+          msg.textContent = "Email đã tồn tại.";
+          return;
+        }
+
+        const user = users.find(item => item.id === editingUserId);
+        if (!user) return;
+
+        user.fullName = fullName;
+        user.email = email;
+        user.password = password;
+        user.role = role;
+        user.loginProvider = loginProvider;
+        user.isBlocked = isBlocked;
+
+        saveUsers(users);
+
+        msg.style.color = "green";
+        msg.textContent = "Cập nhật user thành công.";
+
+        addNotification({
+          title: "Cập nhật người dùng",
+          message: `Admin vừa cập nhật tài khoản ${user.email}.`,
+          role: "admin",
+          type: "success"
+        });
+      } else {
+        const existedEmail = users.find(user => user.email === email);
+        if (existedEmail) {
+          msg.style.color = "red";
+          msg.textContent = "Email đã tồn tại.";
+          return;
+        }
+
+        const newUser = {
+          id: generateUserId(users),
+          fullName,
+          email,
+          password,
+          role,
+          loginProvider,
+          isBlocked
+        };
+
+        users.unshift(newUser);
+        saveUsers(users);
+
+        msg.style.color = "green";
+        msg.textContent = "Thêm user thành công.";
+
+        addNotification({
+          title: "Người dùng mới",
+          message: `Admin vừa thêm tài khoản ${newUser.email}.`,
+          role: "admin",
+          type: "success"
+        });
+      }
+
+      resetUserForm(false);
+      setTimeout(() => renderAdminUsers(), 400);
+    }
+
+    function editUser(userId) {
+      const users = getUsers();
+      const user = users.find(item => item.id === userId);
+      if (!user) return;
+
+      editingUserId = userId;
+
+      document.getElementById("userFullName").value = user.fullName;
+      document.getElementById("userEmail").value = user.email;
+      document.getElementById("userPassword").value = user.password;
+      document.getElementById("userRole").value = user.role;
+      document.getElementById("userProvider").value = user.loginProvider;
+      document.getElementById("userBlocked").value = String(user.isBlocked);
+
+      document.getElementById("submitBtn").textContent = "Cập nhật user";
+      document.getElementById("userMsg").style.color = "#1d3557";
+      document.getElementById("userMsg").textContent = "Đang chỉnh sửa người dùng.";
+
+      window.scrollTo({ top: 0, behavior: "smooth" });
+    }
+
+    function resetUserForm(reload = true) {
+      editingUserId = null;
+
+      const form = document.getElementById("userForm");
+      if (form) form.reset();
+
+      const submitBtn = document.getElementById("submitBtn");
+      if (submitBtn) submitBtn.textContent = "Thêm user";
+
+      const msg = document.getElementById("userMsg");
+      if (msg) msg.textContent = "";
+
+      if (reload) renderAdminUsers();
+    }
+
+    function toggleBlockUser(userId) {
+      const currentUser = JSON.parse(localStorage.getItem(USER_KEY));
+      if (currentUser && currentUser.id === userId) {
+        alert("Bạn không thể tự khóa tài khoản đang đăng nhập.");
+        return;
+      }
+
+      const users = getUsers();
+      const user = users.find(item => item.id === userId);
+      if (!user) return;
+
+      user.isBlocked = !user.isBlocked;
+      saveUsers(users);
+
+      addNotification({
+        title: user.isBlocked ? "Tài khoản bị khóa" : "Tài khoản được mở khóa",
+        message: `Admin vừa ${user.isBlocked ? "khóa" : "mở khóa"} tài khoản ${user.email}.`,
+        role: "admin",
+        type: user.isBlocked ? "warning" : "success"
+      });
+
+      renderAdminUsers();
+    }
+
+    function deleteUser(userId) {
+      const currentUser = JSON.parse(localStorage.getItem(USER_KEY));
+      if (currentUser && currentUser.id === userId) {
+        alert("Bạn không thể xóa chính tài khoản đang đăng nhập.");
+        return;
+      }
+
+      if (!confirm("Bạn có chắc muốn xóa người dùng này?")) return;
+
+      let users = getUsers();
+      const user = users.find(item => item.id === userId);
+      users = users.filter(item => item.id !== userId);
+      saveUsers(users);
+
+      addNotification({
+        title: "Xóa người dùng",
+        message: `Admin vừa xóa tài khoản ${user?.email || userId}.`,
+        role: "admin",
+        type: "warning"
+      });
+
+      renderAdminUsers();
+    }
+
+    seedNotifications();
+    loadComponent("header", "/components/header.html");
+    loadComponent("footer", "/components/footer.html");
+    renderAdminUsers();
+  </script>
+</body>
+</html>
