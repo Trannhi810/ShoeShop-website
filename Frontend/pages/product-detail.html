@@ -160,7 +160,10 @@
 
     async function loadProductAPI(id) {
       try {
-        return await productApi.getById(id);
+        // Dùng fetch trực tiếp không cần token
+        const res = await fetch(`http://localhost:3000/api/products/${id}`);
+        const product = await res.json();
+        return product;
       } catch (err) {
         console.error("Lỗi load product detail:", err);
         return null;
@@ -176,7 +179,22 @@
       }
 
       try {
-        await cartApi.addToCart(productId, 1);
+        // Dùng fetch trực tiếp với token
+        const token = localStorage.getItem("shoeshop_token") || localStorage.getItem("token");
+        const res = await fetch("http://localhost:3000/api/cart/add", {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': 'Bearer ' + token
+          },
+          body: JSON.stringify({ variantId: productId, quantity: 1 })
+        });
+        
+        if (!res.ok) {
+          const error = await res.json();
+          throw new Error(error.message || 'Lỗi khi thêm vào giỏ hàng');
+        }
+        
         alert("Đã thêm sản phẩm vào giỏ hàng");
       } catch (error) {
         alert("Lỗi: " + error.message);
@@ -209,7 +227,7 @@
       container.innerHTML = `
         <div class="detail-box">
           <div class="detail-image">
-            <img src="${product.image || product.images?.[0] || '/images/placeholder.jpg'}" alt="${product.name}">
+            <img src="${product.images && product.images.length > 0 ? product.images[0].url : '/images/placeholder.jpg'}" alt="${product.name}">
           </div>
 
           <div class="detail-info">

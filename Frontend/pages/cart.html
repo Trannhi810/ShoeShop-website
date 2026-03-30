@@ -200,8 +200,13 @@
         const html = await res.text();
         document.getElementById(id).innerHTML = html;
 
+        // Nếu là header, gọi renderHeaderAuth để cập nhật UI
         if (id === "header") {
-          renderHeaderAuth();
+          setTimeout(() => {
+            if (typeof renderHeaderAuth === "function") {
+              renderHeaderAuth();
+            }
+          }, 100);
         }
       } catch (error) {
         console.error("Lỗi tải component:", error);
@@ -218,9 +223,9 @@
         let extraLink = "";
 
         if (currentUser.role === "ADMIN") {
-          extraLink = `<a class="header-link" href="/Frontend/pages/admin-dashboard.html">Admin</a>`;
+          extraLink = `<a class="header-link" href="/admin-dashboard.html">Admin</a>`;
         } else if (currentUser.role === "STAFF") {
-          extraLink = `<a class="header-link" href="/Frontend/pages/staff-dashboard.html">Staff</a>`;
+          extraLink = `<a class="header-link" href="/pages/staff-dashboard.html">Staff</a>`;
         }
 
         headerRight.innerHTML = `
@@ -233,8 +238,8 @@
         // renderNotificationBell(); // Nếu có hàm này
       } else {
         headerRight.innerHTML = `
-          <a class="header-link" href="/Frontend/pages/auth.html">Đăng nhập</a>
-          <a class="header-link" href="/Frontend/pages/auth.html?tab=register">Đăng ký</a>
+          <a class="header-link" href="/pages/auth.html">Đăng nhập</a>
+          <a class="header-link" href="/pages/auth.html?tab=register">Đăng ký</a>
         `;
       }
     }
@@ -242,12 +247,27 @@
     function logout() {
       localStorage.removeItem(USER_KEY);
       localStorage.removeItem("shoeshop_token");
-      window.location.href = "/Frontend/index.html";
+      window.location.href = "/index.html";
     }
 
     async function increaseQty(itemId, currentQty) {
       try {
-        await cartApi.updateQuantity(itemId, currentQty + 1);
+        // Dùng fetch trực tiếp với token
+        const token = localStorage.getItem("shoeshop_token") || localStorage.getItem("token");
+        const res = await fetch(`http://localhost:3000/api/cart/update/${itemId}`, {
+          method: 'PUT',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': 'Bearer ' + token
+          },
+          body: JSON.stringify({ quantity: currentQty + 1 })
+        });
+        
+        if (!res.ok) {
+          const error = await res.json();
+          throw new Error(error.message || 'Lỗi cập nhật số lượng');
+        }
+        
         renderCart();
       } catch (error) {
         alert(error.message);
@@ -259,7 +279,22 @@
         return removeItem(itemId);
       }
       try {
-        await cartApi.updateQuantity(itemId, currentQty - 1);
+        // Dùng fetch trực tiếp với token
+        const token = localStorage.getItem("shoeshop_token") || localStorage.getItem("token");
+        const res = await fetch(`http://localhost:3000/api/cart/update/${itemId}`, {
+          method: 'PUT',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': 'Bearer ' + token
+          },
+          body: JSON.stringify({ quantity: currentQty - 1 })
+        });
+        
+        if (!res.ok) {
+          const error = await res.json();
+          throw new Error(error.message || 'Lỗi cập nhật số lượng');
+        }
+        
         renderCart();
       } catch (error) {
         alert(error.message);
@@ -269,7 +304,20 @@
     async function removeItem(itemId) {
       if (!confirm("Bạn có chắc muốn xóa sản phẩm này khỏi giỏ hàng?")) return;
       try {
-        await cartApi.removeItem(itemId);
+        // Dùng fetch trực tiếp với token
+        const token = localStorage.getItem("shoeshop_token") || localStorage.getItem("token");
+        const res = await fetch(`http://localhost:3000/api/cart/remove/${itemId}`, {
+          method: 'DELETE',
+          headers: {
+            'Authorization': 'Bearer ' + token
+          }
+        });
+        
+        if (!res.ok) {
+          const error = await res.json();
+          throw new Error(error.message || 'Lỗi xóa sản phẩm');
+        }
+        
         renderCart();
       } catch (error) {
         alert(error.message);
@@ -285,7 +333,7 @@
         list.innerHTML = `
           <div class="empty-cart">
             Bạn cần đăng nhập để xem giỏ hàng.<br><br>
-            <a class="btn-dark" style="display:inline-block; padding:12px 18px; border-radius:10px; text-decoration:none; color:white;" href="/Frontend/pages/auth.html">
+            <a class="btn-dark" style="display:inline-block; padding:12px 18px; border-radius:10px; text-decoration:none; color:white;" href="/pages/auth.html">
               Đăng nhập ngay
             </a>
           </div>
@@ -295,7 +343,19 @@
       }
 
       try {
-        const cartData = await cartApi.getCart();
+        // Dùng fetch trực tiếp với token
+        const token = localStorage.getItem("shoeshop_token") || localStorage.getItem("token");
+        const res = await fetch("http://localhost:3000/api/cart", {
+          headers: {
+            'Authorization': 'Bearer ' + token
+          }
+        });
+        
+        if (!res.ok) {
+          throw new Error('Không thể tải giỏ hàng');
+        }
+        
+        const cartData = await res.json();
         const cartItems = cartData.items || [];
 
         if (!cartItems.length) {
@@ -322,11 +382,11 @@
 
         list.innerHTML = cartItems.map(item => `
           <div class="cart-item">
-            <img src="${item.image || '/images/placeholder.jpg'}" alt="${item.name}">
+            <img src="${item.image && item.image.url ? item.image.url : '/images/placeholder.jpg'}" alt="${item.name}">
             <div class="cart-info">
               <h3>${item.name}</h3>
-              <p>Phân loại: ${item.color} - ${item.size}</p>
-              <p>Giá: ${item.price.toLocaleString("vi-VN")}đ</p>
+              <p>Phân loại: ${item.color || 'N/A'} - ${item.size || 'N/A'}</p>
+              <p>Giá: ${(item.price || 0).toLocaleString("vi-VN")}đ</p>
             </div>
             <div class="cart-actions">
               <div class="qty-box">
@@ -334,14 +394,14 @@
                 <span>${item.quantity}</span>
                 <button onclick="increaseQty('${item.id}', ${item.quantity})">+</button>
               </div>
-              <div class="item-total">${(item.price * item.quantity).toLocaleString("vi-VN")}đ</div>
+              <div class="item-total">${((item.price || 0) * item.quantity).toLocaleString("vi-VN")}đ</div>
               <button class="remove-btn" onclick="removeItem('${item.id}')">Xóa</button>
             </div>
           </div>
         `).join("");
 
         const totalLines = cartItems.length;
-        const totalAmount = cartItems.reduce((sum, item) => sum + item.price * item.quantity, 0);
+        const totalAmount = cartItems.reduce((sum, item) => sum + ((item.price || 0) * item.quantity), 0);
 
         summary.innerHTML = `
           <h3>Tóm tắt đơn hàng</h3>
@@ -358,7 +418,7 @@
     }
 
     function checkout() {
-        window.location.href = "/Frontend/pages/checkout.html";
+        window.location.href = "/pages/checkout.html";
     }
 
     loadComponent("header", "/components/header.html");
