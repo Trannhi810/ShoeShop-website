@@ -1,0 +1,296 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Shoe Shop Admin - Quản Lý Kho Hàng</title>
+    <meta name="description" content="Trang quản lý kho hàng hệ thống Shoe Shop">
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="css/admin-shared.css">
+    <link rel="stylesheet" href="css/admin-inventory.css">
+</head>
+<body>
+    <aside class="sidebar" id="sidebar">
+        <div class="sidebar-logo">
+            <div class="sidebar-logo-content">
+                <i class="fa-solid fa-shoe-prints"></i>
+                <span>ShoeShop</span>
+            </div>
+            <button class="btn-menu-toggle" onclick="toggleSidebar()">
+                <i class="fa-solid fa-bars-staggered"></i>
+            </button>
+        </div>
+        <nav class="sidebar-nav">
+            <p class="nav-label">Quản trị</p>
+            <a href="/admin-users.html" class="nav-item">
+                <i class="fa-solid fa-users"></i>
+                <span>Người dùng</span>
+            </a>
+            <a href="/admin-products.html" class="nav-item">
+                <i class="fa-solid fa-box-open"></i>
+                <span>Sản phẩm</span>
+            </a>
+            <a href="/admin-categories.html" class="nav-item">
+                <i class="fa-solid fa-tags"></i>
+                <span>Danh mục</span>
+            </a>
+            <a href="/admin-inventory.html" class="nav-item active">
+                <i class="fa-solid fa-warehouse"></i>
+                <span>Kho hàng</span>
+            </a>
+            <p class="nav-label">Hệ thống</p>
+            <a href="/index.html" class="nav-item">
+                <i class="fa-solid fa-house"></i>
+                <span>Trang chủ</span>
+            </a>
+        </nav>
+        <div class="sidebar-footer">
+            <div class="admin-avatar" id="admin-avatar">A</div>
+            <div class="admin-info">
+                <p class="admin-name" id="admin-name">Admin</p>
+                <p class="admin-role">Quản trị viên</p>
+            </div>
+            <button class="btn-logout" onclick="logout()" title="Đăng xuất">
+                <i class="fa-solid fa-right-from-bracket"></i>
+            </button>
+        </div>
+    </aside>
+
+    <main class="main-content">
+        <header class="page-header inventory-header">
+            <div class="header-left">
+                <div>
+                    <h1 class="page-title">Quản Lý Kho Hàng</h1>
+                    <p class="page-subtitle">Theo dõi tồn kho, nhập xuất hàng và xem lịch sử điều chỉnh kho</p>
+                </div>
+            </div>
+            <div class="header-actions">
+                <button class="btn-secondary" onclick="refreshAll()">
+                    <i class="fa-solid fa-rotate"></i>
+                    <span>Làm mới</span>
+                </button>
+                <button class="btn-primary" onclick="openQuickGuide()">
+                    <i class="fa-solid fa-circle-info"></i>
+                    <span>Hướng dẫn nhanh</span>
+                </button>
+            </div>
+        </header>
+
+        <div class="stats-bar inventory-stats">
+            <div class="stat-card">
+                <div class="stat-icon purple"><i class="fa-solid fa-cubes-stacked"></i></div>
+                <div><p class="stat-label">Mặt hàng trong kho</p><p class="stat-value" id="stat-total-items">—</p></div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-icon green"><i class="fa-solid fa-boxes-stacked"></i></div>
+                <div><p class="stat-label">Tổng số lượng tồn</p><p class="stat-value" id="stat-total-units">—</p></div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-icon orange"><i class="fa-solid fa-triangle-exclamation"></i></div>
+                <div><p class="stat-label">Sắp hết hàng</p><p class="stat-value" id="stat-low-stock">—</p></div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-icon red"><i class="fa-solid fa-circle-xmark"></i></div>
+                <div><p class="stat-label">Hết hàng</p><p class="stat-value" id="stat-out-stock">—</p></div>
+            </div>
+        </div>
+
+        <section class="inventory-hero-card">
+            <div class="hero-block">
+                <div class="hero-icon"><i class="fa-solid fa-warehouse"></i></div>
+                <div>
+                    <h2>Kho được đồng bộ trực tiếp từ sản phẩm hiện có</h2>
+                    <p>Mỗi lần nhập kho, xuất kho hoặc kiểm kê, hệ thống sẽ cập nhật tồn kho ngay và lưu lịch sử thao tác để bạn dễ kiểm tra lại.</p>
+                </div>
+            </div>
+            <div class="hero-tags">
+                <span class="hero-tag"><i class="fa-solid fa-check"></i> Giữ nguyên dữ liệu cũ</span>
+                <span class="hero-tag"><i class="fa-solid fa-clock-rotate-left"></i> Có lịch sử kho</span>
+                <span class="hero-tag"><i class="fa-solid fa-layer-group"></i> Hỗ trợ sản phẩm & biến thể</span>
+            </div>
+        </section>
+
+        <div class="filter-bar inventory-filter-bar">
+            <div class="search-box">
+                <i class="fa-solid fa-magnifying-glass"></i>
+                <input type="text" id="search-input" placeholder="Tìm theo tên sản phẩm, mô tả, size, màu..." oninput="debounceSearch()">
+            </div>
+            <div class="filter-group">
+                <select id="filter-category" onchange="loadInventoryItems(1)">
+                    <option value="">Tất cả danh mục</option>
+                </select>
+                <select id="filter-stock-state" onchange="loadInventoryItems(1)">
+                    <option value="">Tất cả mức tồn</option>
+                    <option value="instock">Còn nhiều hàng</option>
+                    <option value="low">Sắp hết hàng</option>
+                    <option value="out">Hết hàng</option>
+                    <option value="variant">Chỉ biến thể</option>
+                    <option value="product">Chỉ kho sản phẩm chính</option>
+                </select>
+                <select id="filter-status" onchange="loadInventoryItems(1)">
+                    <option value="">Tất cả trạng thái bán</option>
+                    <option value="active">Đang bán</option>
+                    <option value="inactive">Ngừng bán</option>
+                </select>
+            </div>
+        </div>
+
+        <section class="table-wrapper inventory-table-wrap">
+            <div class="table-loading" id="table-loading">
+                <div class="spinner"></div>
+                <p>Đang tải dữ liệu kho...</p>
+            </div>
+            <table class="data-table" id="inventory-table">
+                <thead>
+                    <tr>
+                        <th>#</th>
+                        <th>Mặt hàng</th>
+                        <th>Danh mục</th>
+                        <th>SKU / Loại kho</th>
+                        <th>Giá</th>
+                        <th>Tồn kho</th>
+                        <th>Cập nhật</th>
+                        <th>Thao tác</th>
+                    </tr>
+                </thead>
+                <tbody id="inventory-tbody"></tbody>
+            </table>
+            <div class="empty-state" id="empty-state" style="display:none;">
+                <i class="fa-solid fa-warehouse"></i>
+                <p>Chưa có dữ liệu kho phù hợp</p>
+            </div>
+        </section>
+        <div class="pagination" id="inventory-pagination"></div>
+
+        <section class="inventory-history-panel">
+            <div class="panel-header">
+                <div>
+                    <h2 class="panel-title">Lịch sử nhập xuất kho</h2>
+                    <p class="panel-subtitle">Theo dõi các lần thao tác gần đây trên kho hàng</p>
+                </div>
+                <div class="history-tools">
+                    <div class="search-box search-box-compact">
+                        <i class="fa-solid fa-magnifying-glass"></i>
+                        <input type="text" id="log-search-input" placeholder="Tìm ghi chú, mã phiếu, sản phẩm..." oninput="debounceLogSearch()">
+                    </div>
+                    <div class="filter-group">
+                        <select id="filter-log-type" onchange="loadInventoryLogs(1)">
+                            <option value="">Tất cả thao tác</option>
+                            <option value="IMPORT">Nhập kho</option>
+                            <option value="EXPORT">Xuất kho</option>
+                            <option value="ADJUST">Kiểm kê / Điều chỉnh</option>
+                        </select>
+                    </div>
+                </div>
+            </div>
+
+            <div class="history-list" id="history-list"></div>
+            <div class="empty-state empty-state-small" id="history-empty" style="display:none;">
+                <i class="fa-solid fa-box-archive"></i>
+                <p>Chưa có lịch sử kho</p>
+            </div>
+            <div class="pagination" id="history-pagination"></div>
+        </section>
+    </main>
+
+    <div class="modal-overlay" id="modal-stock" onclick="closeModalOnOverlay(event,'modal-stock')">
+        <div class="modal modal-sm modal-stock-form">
+            <div class="modal-header">
+                <h2><i class="fa-solid fa-warehouse"></i> Cập nhật kho hàng</h2>
+                <button class="btn-close" onclick="closeModal('modal-stock')"><i class="fa-solid fa-xmark"></i></button>
+            </div>
+            <div class="modal-body">
+                <div class="stock-focus-card">
+                    <p class="stock-focus-title" id="stock-modal-item-name">—</p>
+                    <p class="stock-focus-sub" id="stock-modal-item-sub">—</p>
+                    <div class="stock-focus-meta">
+                        <span>Hiện tại: <strong id="stock-modal-current">0</strong></span>
+                        <span id="stock-modal-sku">SKU: —</span>
+                    </div>
+                </div>
+
+                <form id="stock-form" onsubmit="submitStockAdjustment(event)">
+                    <input type="hidden" id="stock-product-id">
+                    <input type="hidden" id="stock-variant-id">
+                    <input type="hidden" id="stock-current-value">
+
+                    <div class="form-group">
+                        <label for="stock-action-type">Loại thao tác</label>
+                        <div class="input-wrap no-icon">
+                            <select id="stock-action-type" onchange="syncStockActionHint()" required>
+                                <option value="IMPORT">Nhập thêm hàng</option>
+                                <option value="EXPORT">Xuất bớt hàng</option>
+                                <option value="ADJUST">Kiểm kê / đặt lại tồn</option>
+                            </select>
+                        </div>
+                        <p class="form-helper" id="stock-action-hint">Nhập thêm số lượng mới vào kho.</p>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="stock-quantity" id="stock-quantity-label">Số lượng</label>
+                        <div class="input-wrap">
+                            <i class="fa-solid fa-hashtag"></i>
+                            <input type="number" id="stock-quantity" min="0" step="1" placeholder="Nhập số lượng" required>
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="stock-reference">Mã phiếu / mã tham chiếu</label>
+                        <div class="input-wrap">
+                            <i class="fa-solid fa-file-invoice"></i>
+                            <input type="text" id="stock-reference" placeholder="Ví dụ: NK-2026-001">
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="stock-note">Ghi chú</label>
+                        <div class="input-wrap no-icon">
+                            <textarea id="stock-note" rows="4" placeholder="Nhập nội dung mô tả thao tác kho"></textarea>
+                        </div>
+                    </div>
+
+                    <div class="inventory-preview" id="stock-preview-box">
+                        <div class="preview-line"><span>Tồn hiện tại</span><strong id="preview-before">0</strong></div>
+                        <div class="preview-line"><span>Tồn sau cập nhật</span><strong id="preview-after">0</strong></div>
+                    </div>
+
+                    <div class="modal-actions">
+                        <button type="button" class="btn-secondary" onclick="closeModal('modal-stock')">Hủy</button>
+                        <button type="submit" class="btn-primary" id="btn-submit-stock">
+                            <span class="btn-text">Lưu thay đổi</span>
+                            <div class="mini-spinner" style="display:none;"></div>
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal-overlay" id="modal-guide" onclick="closeModalOnOverlay(event,'modal-guide')">
+        <div class="modal modal-sm">
+            <div class="modal-header">
+                <h2><i class="fa-solid fa-lightbulb"></i> Hướng dẫn nhanh</h2>
+                <button class="btn-close" onclick="closeModal('modal-guide')"><i class="fa-solid fa-xmark"></i></button>
+            </div>
+            <div class="modal-body">
+                <div class="guide-list">
+                    <div class="guide-item"><span class="guide-badge">1</span><p><strong>Nhập kho:</strong> tăng thêm số lượng tồn của sản phẩm hoặc biến thể.</p></div>
+                    <div class="guide-item"><span class="guide-badge">2</span><p><strong>Xuất kho:</strong> giảm số lượng tồn nhưng không cho nhỏ hơn 0.</p></div>
+                    <div class="guide-item"><span class="guide-badge">3</span><p><strong>Kiểm kê:</strong> đặt lại số lượng tồn thực tế sau khi kiểm kho.</p></div>
+                    <div class="guide-item"><span class="guide-badge">4</span><p>Tất cả thao tác đều được lưu vào <strong>lịch sử kho</strong> ngay bên dưới.</p></div>
+                </div>
+                <div class="modal-actions">
+                    <button type="button" class="btn-primary" onclick="closeModal('modal-guide')">Đã hiểu</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="toast-container" id="toast-container"></div>
+
+    <script src="js/admin-utils.js"></script>
+    <script src="js/api-client.js"></script>
+    <script src="js/admin-inventory.js"></script>
+</body>
+</html>

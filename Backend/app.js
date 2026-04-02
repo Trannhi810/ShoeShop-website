@@ -7,6 +7,7 @@ const productRoutes  = require("./routes/productRoutes");
 const userRoutes     = require("./routes/userRoutes");
 const categoryRoutes = require("./routes/categoryRoutes");
 const cartRoutes     = require("./routes/cartRoutes");
+const inventoryRoutes = require("./routes/inventoryRoutes");
 
 const app = express();
 
@@ -21,6 +22,7 @@ app.use("/api/products",   productRoutes);
 app.use("/api/users",      userRoutes);
 app.use("/api/categories", categoryRoutes);
 app.use("/api/cart",       cartRoutes);
+app.use("/api/inventory",  inventoryRoutes);
 
 // Serve frontend
 app.use(express.static(path.join(__dirname, "../Frontend")));
@@ -40,6 +42,10 @@ app.get("/admin-products", (req, res) => {
 
 app.get("/admin-categories", (req, res) => {
     res.sendFile(path.join(__dirname, "../Frontend/admin-categories.html"));
+});
+
+app.get("/admin-inventory", (req, res) => {
+    res.sendFile(path.join(__dirname, "../Frontend/admin-inventory.html"));
 });
 
 app.get("/pages/products.html", (req, res) => {
@@ -64,6 +70,10 @@ app.get("/pages/admin-orders.html", (req, res) => {
 
 app.get("/pages/admin-categories.html", (req, res) => {
     res.sendFile(path.join(__dirname, "../Frontend/pages/admin-categories.html"));
+});
+
+app.get("/pages/admin-inventory.html", (req, res) => {
+    res.sendFile(path.join(__dirname, "../Frontend/admin-inventory.html"));
 });
 
 app.get("/pages/staff-dashboard.html", (req, res) => {
