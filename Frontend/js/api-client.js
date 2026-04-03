@@ -134,3 +134,22 @@ const cartApi = {
         return apiFetch('/api/cart/clear', { method: 'DELETE' });
     }
 };
+
+// ===== INVENTORY API =====
+const inventoryApi = {
+    overview() {
+        return apiFetch('/api/inventory/overview');
+    },
+    getItems(params = '') {
+        return apiFetch(`/api/inventory/items?${params}`);
+    },
+    getLogs(params = '') {
+        return apiFetch(`/api/inventory/logs?${params}`);
+    },
+    adjust(data) {
+        return apiFetch('/api/inventory/adjust', {
+            method: 'POST',
+            body: JSON.stringify(data)
+        });
+    }
+};
