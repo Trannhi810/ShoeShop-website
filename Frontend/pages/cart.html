@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="vi">
+
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
@@ -37,7 +38,7 @@
       border: 1px solid #e5e5e5;
       border-radius: 18px;
       padding: 16px;
-      box-shadow: 0 6px 20px rgba(0,0,0,0.04);
+      box-shadow: 0 6px 20px rgba(0, 0, 0, 0.04);
     }
 
     .cart-item img {
@@ -103,7 +104,7 @@
       border: 1px solid #e5e5e5;
       border-radius: 18px;
       padding: 20px;
-      box-shadow: 0 6px 20px rgba(0,0,0,0.04);
+      box-shadow: 0 6px 20px rgba(0, 0, 0, 0.04);
     }
 
     .cart-summary h3 {
@@ -175,6 +176,7 @@
     }
   </style>
 </head>
+
 <body>
   <div id="header"></div>
 
@@ -262,12 +264,12 @@
           },
           body: JSON.stringify({ quantity: currentQty + 1 })
         });
-        
+
         if (!res.ok) {
           const error = await res.json();
           throw new Error(error.message || 'Lỗi cập nhật số lượng');
         }
-        
+
         renderCart();
       } catch (error) {
         alert(error.message);
@@ -289,12 +291,12 @@
           },
           body: JSON.stringify({ quantity: currentQty - 1 })
         });
-        
+
         if (!res.ok) {
           const error = await res.json();
           throw new Error(error.message || 'Lỗi cập nhật số lượng');
         }
-        
+
         renderCart();
       } catch (error) {
         alert(error.message);
@@ -312,12 +314,12 @@
             'Authorization': 'Bearer ' + token
           }
         });
-        
+
         if (!res.ok) {
           const error = await res.json();
           throw new Error(error.message || 'Lỗi xóa sản phẩm');
         }
-        
+
         renderCart();
       } catch (error) {
         alert(error.message);
@@ -350,13 +352,14 @@
             'Authorization': 'Bearer ' + token
           }
         });
-        
+
         if (!res.ok) {
           throw new Error('Không thể tải giỏ hàng');
         }
-        
+
         const cartData = await res.json();
-        const cartItems = cartData.items || [];
+        // Backend trả về { success, data: { cartId, items } }
+        const cartItems = (cartData.data && cartData.data.items) || [];
 
         if (!cartItems.length) {
           list.innerHTML = `
@@ -382,7 +385,7 @@
 
         list.innerHTML = cartItems.map(item => `
           <div class="cart-item">
-            <img src="${item.image && item.image.url ? item.image.url : '/images/placeholder.jpg'}" alt="${item.name}">
+            <img src="${item.image || '/images/placeholder.jpg'}" alt="${item.name}">
             <div class="cart-info">
               <h3>${item.name}</h3>
               <p>Phân loại: ${item.color || 'N/A'} - ${item.size || 'N/A'}</p>
@@ -418,7 +421,7 @@
     }
 
     function checkout() {
-        window.location.href = "/pages/checkout.html";
+      window.location.href = "/pages/checkout.html";
     }
 
     loadComponent("header", "/components/header.html");
@@ -426,4 +429,5 @@
     renderCart();
   </script>
 </body>
+
 </html>
