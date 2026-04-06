@@ -95,4 +95,8 @@ build/
 *.tmp
 *.temp
 
+#Rules
+.antigravityrules
+
+# Uploads
 public/uploads/
