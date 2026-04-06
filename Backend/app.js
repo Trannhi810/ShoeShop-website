@@ -103,6 +103,15 @@ app.get("/pages/notifications.html", (req, res) => {
 // Ưu tiên dùng PORT trong file .env, nếu không có thì chạy port 5000
 const PORT = process.env.PORT || 5000;
 
+app.use((err, req, res, next) => {
+    console.error(err.stack);
+    res.status(500).json({
+        success: false,
+        message: "Server bị lỗi rồi, đợi xíu nhé!",
+        error: err.message
+    });
+});
+
 app.listen(PORT, () => {
     console.log(`Server running at http://localhost:${PORT}`);
 });
