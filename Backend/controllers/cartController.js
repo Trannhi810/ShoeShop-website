@@ -31,41 +31,37 @@ const getCart = async (req, res) => {
 const addToCart = async (req, res) => {
     try {
         const userId = req.user.id;
-        // Frontend gửi productId dưới tên trường "variantId"
-        const { variantId: productId, quantity } = req.body;
+        const { variantId, quantity } = req.body;
 
-        if (!productId) {
-            return sendError(res, 'Thiếu productId', 400);
+        if (!variantId) {
+            return sendError(res, 'Thiếu variantId', 400);
         }
         const qty = parseInt(quantity, 10);
         if (!qty || qty <= 0) {
             return sendError(res, 'Số lượng phải là số nguyên dương', 400);
         }
 
-        const product = await Product.findById(productId);
+        // 1. Tìm Variant trước
+        const variant = await ProductVariant.findById(variantId);
+        if (!variant) {
+            return sendError(res, 'Không tìm thấy biến thể sản phẩm (variantId không hợp lệ)', 404);
+        }
+
+        // 2. Từ variant suy ra Product cha
+        const product = await Product.findById(variant.productId);
         if (!product) {
-            return sendError(res, 'Không tìm thấy sản phẩm', 404);
+            return sendError(res, 'Không tìm thấy sản phẩm gốc', 404);
         }
         if (!product.isActive) {
             return sendError(res, 'Sản phẩm hiện không hoạt động', 400);
         }
 
-        // Tìm hoặc tạo Variant mặc định nếu chưa có
-        let variant = await ProductVariant.findOne({ productId });
-        if (!variant) {
-            variant = await ProductVariant.create({
-                productId,
-                size: 'Mặc định',
-                color: 'Mặc định',
-                price: product.price,
-                stock: product.stock > 0 ? product.stock : 100
-            });
-        }
-
+        // 3. Kiểm tra tồn kho
         if (variant.stock <= 0) {
             return sendError(res, 'Sản phẩm đã hết hàng', 400);
         }
 
+        // 4. Lấy hoặc tạo giỏ hàng
         const cart = await getOrCreateCart(userId);
         let cartItem = await CartItem.findOne({ cartId: cart._id, variantId: variant._id });
 
