@@ -88,6 +88,16 @@ const createProduct = async (req, res) => {
             images: finalImages 
         });
 
+        // Tự động tạo một biến thể mặc định
+        await ProductVariant.create({
+            productId: product._id,
+            size: 'Mặc định',
+            // colorId để trống -> 'Màu chuẩn' cho những backend ko tìm thấy colorId
+            price: price || 0,
+            stock: 0,
+            image: finalImages.length > 0 ? finalImages[0].url : ''
+        });
+
         res.status(201).json(product);
     } catch (error) {
         res.status(500).json({ message: error.message });
