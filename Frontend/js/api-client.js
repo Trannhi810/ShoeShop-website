@@ -4,6 +4,15 @@
  * Yêu cầu admin-utils.js được load trước (để có apiFetch).
  */
 
+// ===== COLOR API =====
+const colorApi = {
+    getAll() { return apiFetch('/api/colors'); },
+    create(data) {
+        return apiFetch('/api/colors', { method: 'POST', body: JSON.stringify(data) });
+    },
+    delete(id) { return apiFetch(`/api/colors/${id}`, { method: 'DELETE' }); }
+};
+
 // ===== USER API =====
 const userApi = {
     /** Lấy danh sách users (admin). params: URLSearchParams hoặc string */
@@ -73,6 +82,49 @@ const productApi = {
     delete(id) {
         return apiFetch(`/api/products/${id}`, { method: 'DELETE' });
     },
+    uploadColorImage(id, colorId, data) {
+        return apiFetch(`/api/products/${id}/colors/${colorId}/images`, {
+            method: 'POST',
+            body: data
+        });
+    },
+    updateImageOrder(id, imageId, order) {
+        return apiFetch(`/api/products/${id}/images/order`, {
+            method: 'PATCH',
+            body: JSON.stringify({ imageId, order })
+        });
+    },
+    deleteColorImage(id, imageId) {
+        return apiFetch(`/api/products/${id}/images/${imageId}`, { method: 'DELETE' });
+    }
+};
+
+// ===== VARIANT API =====
+const variantApi = {
+    getAll(productId, params = '') {
+        return apiFetch(`/api/products/${productId}/variants?${params}`);
+    },
+    add(productId, data) {
+        return apiFetch(`/api/products/${productId}/variants`, {
+            method: 'POST',
+            body: data // FormData
+        });
+    },
+    update(variantId, data) {
+        return apiFetch(`/api/products/variants/${variantId}`, {
+            method: 'PUT',
+            body: data // FormData
+        });
+    },
+    delete(variantId) {
+        return apiFetch(`/api/products/variants/${variantId}`, { method: 'DELETE' });
+    },
+    batchUpdatePrice(productId, colorId, price) {
+        return apiFetch(`/api/products/${productId}/variants/batch-price`, {
+            method: 'PATCH',
+            body: JSON.stringify({ colorId, price })
+        });
+    }
 };
 
 // ===== CATEGORY API =====

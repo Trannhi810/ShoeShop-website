@@ -8,7 +8,12 @@ const productSchema = new mongoose.Schema({
   isActive:    { type: Boolean, default: true },
   categoryId:  { type: mongoose.Schema.Types.ObjectId, ref: 'Category' },
   images: [
-    { url: String, publicId: String }
+    { 
+      url: String, 
+      publicId: String,
+      colorId: { type: mongoose.Schema.Types.ObjectId, ref: 'Color' },
+      order: { type: Number, default: 0 }
+    }
   ]
 }, { timestamps: true });
 

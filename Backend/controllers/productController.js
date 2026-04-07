@@ -30,12 +30,15 @@ const getAllProducts = async (req, res) => {
                 .limit(parseInt(limit))
                 .lean(); // Dùng lean để dễ dàng thêm virtual fields
         } else {
-            products = await Product.find(query).sort({ createdAt: -1 }).lean();
+            products = await Product.find(query).sort({ createdAt: -1 })
+                .populate('images.colorId')
+                .lean();
         }
 
-        // Đổ variants vào từng product
+        // Đổ variants vào từng product và tính tổng kho
         for (let p of products) {
-            p.variants = await ProductVariant.find({ productId: p._id });
+            p.variants = await ProductVariant.find({ productId: p._id }).populate('colorId').lean();
+            p.stock = p.variants.reduce((sum, v) => sum + (v.stock || 0), 0);
         }
 
         if (page && limit) {
@@ -50,21 +53,23 @@ const getAllProducts = async (req, res) => {
 // GET /api/products/:id — Chi tiết sản phẩm
 const getProductById = async (req, res) => {
     try {
-        const product = await Product.findById(req.params.id).lean();
+        const product = await Product.findById(req.params.id)
+            .populate('images.colorId')
+            .lean();
         if (!product) return res.status(404).json({ message: 'Không tìm thấy sản phẩm' });
         
-        // Lấy variants
-        product.variants = await ProductVariant.find({ productId: product._id });
+        // Lấy variants và tính tổng tồn
+        product.variants = await ProductVariant.find({ productId: product._id }).populate('colorId').lean();
+        product.stock = product.variants.reduce((sum, v) => sum + (v.stock || 0), 0);
         res.status(200).json(product);
     } catch (error) {
         res.status(500).json({ message: error.message });
     }
 };
 
-// POST /api/products — Tạo mới (Admin only)
 const createProduct = async (req, res) => {
     try {
-        const { name, description, price, stock, isActive, categoryId, images: bodyImages, variants } = req.body;
+        const { name, description, price, isActive, categoryId, images: bodyImages } = req.body;
         if (!name) return res.status(400).json({ message: 'Tên sản phẩm là bắt buộc' });
 
         let finalImages = [];
@@ -78,24 +83,20 @@ const createProduct = async (req, res) => {
         }
 
         const product = await Product.create({ 
-            name, description, price, stock, isActive, categoryId, 
+            name, description, price, isActive, categoryId, 
+            stock: 0, // Tồn kho ban đầu bằng 0, chỉ tăng qua quản lý kho
             images: finalImages 
         });
 
-        // Xử lý variants
-        if (variants) {
-            const variantArray = typeof variants === 'string' ? JSON.parse(variants) : variants;
-            if (Array.isArray(variantArray) && variantArray.length > 0) {
-                const variantsToCreate = variantArray.map(v => ({
-                    productId: product._id,
-                    size: v.size,
-                    color: v.color,
-                    price: v.price || price || 0,
-                    stock: v.stock || 0
-                }));
-                await ProductVariant.insertMany(variantsToCreate);
-            }
-        }
+        // Tự động tạo một biến thể mặc định
+        await ProductVariant.create({
+            productId: product._id,
+            size: 'Mặc định',
+            // colorId để trống -> 'Màu chuẩn' cho những backend ko tìm thấy colorId
+            price: price || 0,
+            stock: 0,
+            image: finalImages.length > 0 ? finalImages[0].url : ''
+        });
 
         res.status(201).json(product);
     } catch (error) {
@@ -103,17 +104,16 @@ const createProduct = async (req, res) => {
     }
 };
 
-// PUT /api/products/:id — Cập nhật (Admin only)
 const updateProduct = async (req, res) => {
     try {
-        const { name, description, price, stock, isActive, categoryId, images: bodyImages, variants } = req.body;
+        const { name, description, price, isActive, categoryId, images: bodyImages } = req.body;
         const product = await Product.findById(req.params.id);
         if (!product) return res.status(404).json({ message: 'Không tìm thấy sản phẩm' });
 
         if (name        !== undefined) product.name        = name;
         if (description !== undefined) product.description = description;
         if (price       !== undefined) product.price       = price;
-        if (stock       !== undefined) product.stock       = stock;
+        // Không nhận stock từ body nữa
         if (isActive    !== undefined) product.isActive    = isActive;
         if (categoryId  !== undefined) product.categoryId  = categoryId;
 
@@ -128,22 +128,6 @@ const updateProduct = async (req, res) => {
         }
 
         await product.save();
-
-        // Xử lý variants (Xóa hết tạo lại hoặc update cái cũ - ở mức đơn giản là xóa sạch tạo lại)
-        if (variants !== undefined) {
-            const variantArray = typeof variants === 'string' ? JSON.parse(variants) : variants;
-            await ProductVariant.deleteMany({ productId: product._id });
-            if (Array.isArray(variantArray) && variantArray.length > 0) {
-                const variantsToCreate = variantArray.map(v => ({
-                    productId: product._id,
-                    size: v.size,
-                    color: v.color,
-                    price: v.price || product.price,
-                    stock: v.stock || 0
-                }));
-                await ProductVariant.insertMany(variantsToCreate);
-            }
-        }
 
         res.status(200).json(product);
     } catch (error) {
@@ -162,5 +146,64 @@ const deleteProduct = async (req, res) => {
     }
 };
 
-module.exports = { getAllProducts, getProductById, createProduct, updateProduct, deleteProduct };
+// Upload ảnh riêng cho màu
+const uploadColorImage = async (req, res) => {
+    try {
+        const { id, colorId } = req.params;
+        const product = await Product.findById(id);
+        if (!product) return res.status(404).json({ message: 'Không tìm thấy sản phẩm' });
+
+        if (req.file) {
+            product.images.push({
+                url: `/uploads/${req.file.filename}`,
+                publicId: req.file.filename,
+                colorId,
+                order: product.images.length
+            });
+            await product.save();
+        }
+        res.status(200).json(product);
+    } catch (error) {
+         res.status(500).json({ message: error.message });
+    }
+};
+
+// Cập nhật thứ tự ảnh
+const updateImageOrder = async (req, res) => {
+    try {
+        const { id } = req.params;
+        const { imageId, order } = req.body;
+        
+        const product = await Product.findById(id);
+        if (!product) return res.status(404).json({ message: 'Không tìm thấy sản phẩm' });
+
+        const img = product.images.id(imageId);
+        if (img) {
+            img.order = order;
+            await product.save();
+            res.status(200).json(product);
+        } else {
+            res.status(404).json({ message: "Không tìm thấy ảnh" });
+        }
+    } catch (error) {
+        res.status(500).json({ message: error.message });
+    }
+};
+
+// Xóa ảnh
+const deleteColorImage = async (req, res) => {
+    try {
+        const { id, imageId } = req.params;
+        const product = await Product.findById(id);
+        if (!product) return res.status(404).json({ message: 'Không tìm thấy sản phẩm' });
+
+        product.images.pull(imageId);
+        await product.save();
+        res.status(200).json(product);
+    } catch (error) {
+        res.status(500).json({ message: error.message });
+    }
+};
+
+module.exports = { getAllProducts, getProductById, createProduct, updateProduct, deleteProduct, uploadColorImage, updateImageOrder, deleteColorImage };
 

@@ -5,9 +5,13 @@ const productVariantSchema = new mongoose.Schema({
     ref: "Product"
   },
   size: String,
-  color: String,
+  colorId: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: "Color"
+  },
   price: Number,
-  stock: Number
+  stock: Number,
+  image: String
 }, { timestamps: true });
 
 module.exports = mongoose.model("ProductVariant", productVariantSchema);
