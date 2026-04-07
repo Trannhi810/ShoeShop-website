@@ -198,7 +198,8 @@
 
     async function loadComponent(id, file) {
       try {
-        const res = await fetch(file);
+        // Them timestamp de chong cache components HTML
+        const res = await fetch(file + "?v=" + new Date().getTime());
         const html = await res.text();
         document.getElementById(id).innerHTML = html;
 
@@ -415,6 +416,15 @@
             <button class="btn-dark" onclick="checkout()">Thanh toán</button>
           </div>
         `;
+
+        // Đồng bộ lên header
+        if (typeof window.syncCartCountFromAPI === "function") {
+          window.syncCartCountFromAPI();
+        } else {
+          // Backup nếu header chưa kịp load
+          const totalCartVal = cartItems.reduce((sum, item) => sum + (item.quantity || 1), 0);
+          localStorage.setItem('shoeshop_cart_count', totalCartVal);
+        }
       } catch (error) {
         list.innerHTML = `<div class="empty-cart">Lỗi tải giỏ hàng: ${error.message}</div>`;
       }

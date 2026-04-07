@@ -180,29 +180,38 @@
     }
 
     .product-card {
-      background: white;
-      border: 1px solid #e5e5e5;
+      background: #ffffff;
+      border: 1px solid #f0f0f0;
       border-radius: 12px;
       overflow: hidden;
       transition: all 0.3s ease;
       position: relative;
+      cursor: pointer;
+      display: flex;
+      flex-direction: column;
     }
 
     .product-card:hover {
-      transform: translateY(-2px);
-      box-shadow: 0 8px 25px rgba(0,0,0,0.1);
+      box-shadow: 0 6px 20px rgba(0,0,0,0.06);
+      border-color: transparent;
     }
 
     .product-image-wrapper {
       position: relative;
-      overflow: hidden;
+      width: 100%;
+      padding-top: 100%;
+      background: #ffffff;
     }
 
     .product-image {
+      position: absolute;
+      top: 0;
+      left: 0;
       width: 100%;
-      height: 200px;
-      object-fit: cover;
-      transition: transform 0.3s ease;
+      height: 100%;
+      object-fit: contain;
+      padding: 16px;
+      transition: transform 0.4s ease;
     }
 
     .product-card:hover .product-image {
@@ -213,80 +222,46 @@
       position: absolute;
       top: 10px;
       left: 10px;
-      background: #ff6b6b;
+      background: #ff4b2b;
       color: white;
       padding: 4px 8px;
       border-radius: 4px;
-      font-size: 11px;
+      font-size: 10px;
       font-weight: 600;
-      text-transform: uppercase;
+      z-index: 2;
     }
 
-    .product-body {
-      padding: 15px;
+    .product-info {
+      padding: 0 16px 16px 16px;
+      display: flex;
+      flex-direction: column;
+      flex-grow: 1;
     }
 
-    .product-brand {
-      font-size: 12px;
-      color: #666;
-      margin-bottom: 4px;
-      text-transform: uppercase;
-      letter-spacing: 0.5px;
-    }
-
-    .product-name {
+    .product-info h3 {
       font-size: 14px;
       font-weight: 600;
-      color: #111;
-      margin-bottom: 8px;
+      color: #222;
+      margin: 0 0 6px 0;
       line-height: 1.4;
-      height: 40px;
-      overflow: hidden;
       display: -webkit-box;
       -webkit-line-clamp: 2;
       -webkit-box-orient: vertical;
+      overflow: hidden;
     }
 
-    .product-colors {
-      display: flex;
-      gap: 4px;
-      margin-bottom: 10px;
-    }
-
-    .color-dot {
-      width: 16px;
-      height: 16px;
-      border-radius: 50%;
-      border: 1px solid #ddd;
+    .product-desc {
+      font-size: 12px;
+      color: #888;
+      margin: 0 0 16px 0;
+      flex-grow: 1;
     }
 
     .product-price {
-      font-size: 16px;
+      font-size: 15px;
       font-weight: 700;
-      color: #d62828;
-      margin-bottom: 12px;
-    }
-
-    .product-actions {
-      display: flex;
-      gap: 8px;
-    }
-
-    .btn-add-cart {
-      flex: 1;
-      background: #111;
-      color: white;
-      border: none;
-      padding: 10px;
-      border-radius: 6px;
-      font-size: 13px;
-      font-weight: 600;
-      cursor: pointer;
-      transition: background 0.2s;
-    }
-
-    .btn-add-cart:hover {
-      background: #333;
+      color: #1a73e8; /* Blue price like in image */
+      margin: 0;
     }
 
     .btn-view-detail {
@@ -415,40 +390,10 @@
     <!-- Sidebar Filters -->
     <aside class="sidebar">
       
-      <!-- Brand Filter -->
-      <div class="filter-section">
-        <h3 class="filter-title">THƯƠNG HIỆU</h3>
-        <input type="text" class="filter-search" placeholder="Tùy chọn tìm kiếm" id="brandSearch">
-        <div id="brandFilters"></div>
-      </div>
-
       <!-- Size Filter -->
       <div class="filter-section">
         <h3 class="filter-title">KÍCH THƯỚC</h3>
-        <div class="filter-option">
-          <input type="checkbox" id="size-39" value="39">
-          <label for="size-39">39</label>
-        </div>
-        <div class="filter-option">
-          <input type="checkbox" id="size-40" value="40">
-          <label for="size-40">40</label>
-        </div>
-        <div class="filter-option">
-          <input type="checkbox" id="size-41" value="41">
-          <label for="size-41">41</label>
-        </div>
-        <div class="filter-option">
-          <input type="checkbox" id="size-42" value="42">
-          <label for="size-42">42</label>
-        </div>
-        <div class="filter-option">
-          <input type="checkbox" id="size-43" value="43">
-          <label for="size-43">43</label>
-        </div>
-        <div class="filter-option">
-          <input type="checkbox" id="size-44" value="44">
-          <label for="size-44">44</label>
-        </div>
+        <div id="sizeFilters"></div>
       </div>
 
       <!-- Color Filter -->
@@ -495,8 +440,9 @@
 let currentPage = 1;
 const productsPerPage = 12;
 let totalProducts = 0;
+let allProductsOrigin = [];
 let allProducts = [];
-let allBrands = [];
+let allSizes = [];
 let allColors = [];
 
 function renderHeaderAuth() {
@@ -560,25 +506,32 @@ async function loadComponent(id, file) {
 
 async function renderProducts(page = 1) {
   try {
-    // Lấy tất cả sản phẩm từ API - dùng fetch trực tiếp không cần token
-    const res = await fetch("http://localhost:3000/api/products");
-    const data = await res.json();
+    if (allProductsOrigin.length === 0) {
+      // Lấy tất cả sản phẩm
+      const res = await fetch("http://localhost:3000/api/products");
+      allProductsOrigin = await res.json();
+      allProducts = [...allProductsOrigin];
+      
+      totalProducts = allProducts.length;
+      
+      // Trích xuất kích thước và màu sắc từ database variants
+      allSizes = [...new Set(allProductsOrigin.flatMap(p => p.variants ? p.variants.map(v => v.size) : []).filter(Boolean))].sort((a,b)=>a.localeCompare(b, undefined, {numeric: true}));
+      allColors = [...new Set(allProductsOrigin.flatMap(p => p.variants ? p.variants.map(v => v.color) : []).filter(Boolean))];
+      
+      // Render filters
+      renderFilters();
+    }
     
-    allProducts = data;
-    totalProducts = allProducts.length;
+    renderProductsDisplay(page);
     
-    console.log("Total products:", totalProducts);
-    console.log("Products per page:", productsPerPage);
-    console.log("Total pages:", Math.ceil(totalProducts / productsPerPage));
-    
-    // Trích xuất thương hiệu và màu sắc từ database
-    allBrands = [...new Set(allProducts.map(p => p.brand).filter(Boolean))];
-    allColors = [...new Set(allProducts.flatMap(p => p.colors || []))];
-    
-    // Render filters
-    renderFilters();
-    
-    // Tính toán sản phẩm cho trang hiện tại
+  } catch (error) {
+    console.error("Lỗi load sản phẩm:", error);
+    const list = document.getElementById("productList");
+    if(list) list.innerHTML = `<div class="not-found">Không thể tải sản phẩm. Vui lòng thử lại sau.</div>`;
+  }
+}
+
+function renderProductsDisplay(page = 1) {
     const startIndex = (page - 1) * productsPerPage;
     const endIndex = startIndex + productsPerPage;
     const currentPageProducts = allProducts.slice(startIndex, endIndex);
@@ -586,115 +539,106 @@ async function renderProducts(page = 1) {
     const list = document.getElementById("productList");
     const productCount = document.getElementById("productCount");
     
-    // Cập nhật số lượng sản phẩm
     if (productCount) {
       productCount.textContent = `Hiển thị ${currentPageProducts.length} trong ${totalProducts} sản phẩm`;
     }
     
-    // Render sản phẩm
-    list.innerHTML = currentPageProducts.map(p => `
-      <div class="product-card">
+    if (!list) return;
+
+    list.innerHTML = currentPageProducts.map(p => {
+      const imgUrl = p.images && p.images.length > 0 ? p.images[0].url : 'https://images.unsplash.com/photo-1542291026-7eec264c27ff?auto=format&fit=crop&w=600&q=80';
+      return `
+      <div class="product-card" onclick="window.location.href='product-detail.html?id=${p._id}'">
         <div class="product-image-wrapper">
-          <img class="product-image" src="${p.images && p.images.length > 0 ? p.images[0].url : 'https://images.unsplash.com/photo-1542291026-7eec264c27ff'}" alt="${p.name}">
+          <img class="product-image" src="${imgUrl}" alt="${p.name}" onerror="this.onerror=null;this.src='https://images.unsplash.com/photo-1542291026-7eec264c27ff?auto=format&fit=crop&w=600&q=80';">
           ${p.isNew ? '<span class="new-badge">MỚI</span>' : ''}
         </div>
         <div class="product-info">
           <h3>${p.name}</h3>
-          <p class="product-price">${(p.price || 0).toLocaleString("vi-VN")}đ</p>
-          <div class="card-actions">
-            <button class="btn-dark" onclick="addToCart('${p._id}')">Thêm vào giỏ</button>
-            <a class="btn-light" href="product-detail.html?id=${p._id}">Chi tiết</a>
-          </div>
+          <p class="product-desc">${p.category?.name || p.brand || 'Khám phá sản phẩm'}</p>
+          <p class="product-price">${(p.price || 0).toLocaleString("vi-VN")} đ</p>
         </div>
       </div>
-    `).join("");
+      `
+    }).join("");
     
     // Render pagination
     renderPagination(page);
-    
-  } catch (error) {
-    console.error("Lỗi load sản phẩm:", error);
-    const list = document.getElementById("productList");
-    list.innerHTML = `<div class="not-found">Không thể tải sản phẩm. Vui lòng thử lại sau.</div>`;
-  }
 }
 
 function renderFilters() {
-  // Render brand filters
-  const brandContainer = document.getElementById('brandFilters');
-  const brandFiltersHTML = allBrands.map(brand => {
-    const count = allProducts.filter(p => p.brand === brand).length;
-    return `
-      <div class="filter-option">
-        <input type="checkbox" id="brand-${brand.toLowerCase()}" value="${brand}" onchange="applyFilters()">
-        <label for="brand-${brand.toLowerCase()}">${brand.toUpperCase()}</label>
-        <span class="filter-count">(${count})</span>
-      </div>
-    `;
-  }).join('');
-  
-  brandContainer.innerHTML = brandFiltersHTML;
+  // Render size filters
+  const sizeContainer = document.getElementById('sizeFilters');
+  if (sizeContainer) {
+    const sizeFiltersHTML = allSizes.map(size => {
+      const count = allProductsOrigin.filter(p => p.variants && p.variants.some(v => v.size === size)).length;
+      return `
+        <div class="filter-option">
+          <input type="checkbox" id="size-${size}" value="${size}" onchange="applyFilters()">
+          <label for="size-${size}">${size}</label>
+          <span class="filter-count">(${count})</span>
+        </div>
+      `;
+    }).join('');
+    sizeContainer.innerHTML = sizeFiltersHTML;
+  }
   
   // Render color filters
   const colorContainer = document.getElementById('colorFilters');
-  const colorFiltersHTML = allColors.map(color => {
-    const count = allProducts.filter(p => p.colors?.includes(color)).length;
-    const colorName = {
-      'black': 'Đen',
-      'white': 'Trắng', 
-      'blue': 'Xanh',
-      'red': 'Đỏ',
-      'gray': 'Xám',
-      'green': 'Xanh lá',
-      'yellow': 'Vàng',
-      'purple': 'Tím',
-      'orange': 'Cam',
-      'brown': 'Nâu'
-    }[color] || color;
-    
-    return `
-      <div class="filter-option">
-        <input type="checkbox" id="color-${color}" value="${color}" onchange="applyFilters()">
-        <label for="color-${color}">${colorName}</label>
-      </div>
-    `;
-  }).join('');
-  
-  colorContainer.innerHTML = colorFiltersHTML;
+  if (colorContainer) {
+    const colorFiltersHTML = allColors.map(color => {
+      const count = allProductsOrigin.filter(p => p.variants && p.variants.some(v => v.color === color)).length;
+      const colorName = {
+        'black': 'Đen',
+        'white': 'Trắng', 
+        'blue': 'Xanh',
+        'red': 'Đỏ',
+        'gray': 'Xám',
+        'green': 'Xanh lá',
+        'yellow': 'Vàng',
+        'purple': 'Tím',
+        'orange': 'Cam',
+        'brown': 'Nâu'
+      }[color.toLowerCase()] || color;
+      
+      return `
+        <div class="filter-option">
+          <input type="checkbox" id="color-${color}" value="${color}" onchange="applyFilters()">
+          <label for="color-${color}">${colorName}</label>
+          <span class="filter-count">(${count})</span>
+        </div>
+      `;
+    }).join('');
+    colorContainer.innerHTML = colorFiltersHTML;
+  }
 }
 
 function applyFilters() {
-  const selectedBrands = Array.from(document.querySelectorAll('#brandFilters input:checked'))
+  const selectedSizes = Array.from(document.querySelectorAll('#sizeFilters input:checked'))
     .map(input => input.value);
   const selectedColors = Array.from(document.querySelectorAll('#colorFilters input:checked'))
     .map(input => input.value);
   
-  let filteredProducts = allProducts;
+  let filteredProducts = [...allProductsOrigin];
   
-  // Apply brand filter
-  if (selectedBrands.length > 0) {
-    filteredProducts = filteredProducts.filter(p => selectedBrands.includes(p.brand));
+  // Apply size filter
+  if (selectedSizes.length > 0) {
+    filteredProducts = filteredProducts.filter(p => 
+      p.variants && p.variants.some(v => selectedSizes.includes(v.size))
+    );
   }
   
   // Apply color filter
   if (selectedColors.length > 0) {
     filteredProducts = filteredProducts.filter(p => 
-      p.colors && p.colors.some(color => selectedColors.includes(color))
+      p.variants && p.variants.some(v => selectedColors.includes(v.color))
     );
   }
   
-  // Update display
-  const tempProducts = allProducts;
+  // Update display without fetching again
   allProducts = filteredProducts;
-  totalProducts = filteredProducts.length;
-  renderProducts(1);
-  
-  // Reset to original products if no filters
-  if (selectedBrands.length === 0 && selectedColors.length === 0) {
-    allProducts = tempProducts;
-    totalProducts = tempProducts.length;
-    renderProducts(1);
-  }
+  totalProducts = allProducts.length;
+  renderProductsDisplay(1);
 }
 
 function renderPagination(currentPage) {

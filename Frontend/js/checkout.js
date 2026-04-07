@@ -153,6 +153,31 @@ async function handleOrderSubmit(e) {
 
         if (!res.ok) throw new Error(data.message || 'Lỗi đặt hàng');
 
+        const orderCreated = data.data;
+
+        // Nếu là VNPAY, gọi tiếp API tạo URL
+        if (method === 'VNPAY') {
+            submitBtn.textContent = '🔄 Đang chuyển hướng VNPAY...';
+            const vnpRes = await fetch('/api/payment/create_payment_url', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': 'Bearer ' + getCkToken()
+                },
+                body: JSON.stringify({ 
+                    amount: orderCreated.totalAmount, 
+                    language: 'vn' 
+                })
+            });
+            const vnpData = await vnpRes.json();
+            if (vnpData.success) {
+                window.location.href = vnpData.paymentUrl;
+                return;
+            } else {
+                throw new Error('Lỗi khởi tạo cổng thanh toán VNPAY');
+            }
+        }
+
         alert('🎉 Đặt hàng thành công!');
         window.location.href = '/pages/orders.html';
 
