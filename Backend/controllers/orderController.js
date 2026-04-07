@@ -78,7 +78,7 @@ const createOrder = async (req, res) => {
             await ProductVariant.findByIdAndUpdate(
                 variant._id,
                 { $inc: { stock: -qty } },
-                { session, new: true }
+                { session, returnDocument: 'after' }
             );
 
             // Tính giá từ DB (không tin Frontend)
