@@ -9,6 +9,7 @@ const categoryRoutes = require("./routes/categoryRoutes");
 const cartRoutes     = require("./routes/cartRoutes");
 const inventoryRoutes = require("./routes/inventoryRoutes");
 const orderRoutes    = require("./routes/orderRoutes");
+const colorRoutes    = require("./routes/colorRoutes");
 
 const app = express();
 
@@ -25,6 +26,7 @@ app.use("/api/categories", categoryRoutes);
 app.use("/api/cart",       cartRoutes);
 app.use("/api/inventory",  inventoryRoutes);
 app.use("/api/orders",     orderRoutes);
+app.use("/api/colors",     colorRoutes);
 
 // Serve frontend
 app.use(express.static(path.join(__dirname, "../Frontend")));

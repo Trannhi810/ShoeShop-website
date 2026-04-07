@@ -15,7 +15,7 @@ function matchesSearch(product, categoryMap, variants, search) {
     product.name,
     product.description,
     categoryName,
-    ...(variants || []).flatMap(v => [v.size, v.color])
+    ...(variants || []).flatMap(v => [v.size, v.colorId?.name])
   ].map(normalizeText);
   return texts.some(text => text.includes(needle));
 }
@@ -29,6 +29,17 @@ function buildStockRows(products, variantsByProduct, categoryMap) {
 
     if (variants.length > 0) {
       for (const variant of variants) {
+        let variantImageUrl = product.images?.[0]?.url || '';
+        if (variant.colorId) {
+            const variantColorIdStr = variant.colorId._id ? String(variant.colorId._id) : String(variant.colorId);
+            const colorImages = product.images?.filter(img => String(img.colorId) === variantColorIdStr);
+            if (colorImages && colorImages.length > 0) {
+                // Sắp xếp theo order hoặc lấy ảnh đầu tiên
+                colorImages.sort((a, b) => (a.order || 0) - (b.order || 0));
+                variantImageUrl = colorImages[0].url;
+            }
+        }
+
         rows.push({
           rowId: `${product._id}_${variant._id}`,
           itemType: 'variant',
@@ -38,14 +49,14 @@ function buildStockRows(products, variantsByProduct, categoryMap) {
           productDescription: product.description || '',
           categoryId: product.categoryId ? String(product.categoryId) : '',
           categoryName: category?.name || 'Chưa phân loại',
-          imageUrl: product.images?.[0]?.url || '',
+          imageUrl: variantImageUrl,
           price: Number(variant.price ?? product.price ?? 0),
           stock: Number(variant.stock ?? 0),
           isActive: !!product.isActive,
           createdAt: variant.createdAt || product.createdAt,
           updatedAt: variant.updatedAt || product.updatedAt,
-          label: `${product.name} - ${variant.color || 'Màu chuẩn'} / ${variant.size || 'Size chuẩn'}`,
-          variantLabel: `${variant.color || 'Màu chuẩn'} / ${variant.size || 'Size chuẩn'}`,
+          label: `${product.name} - ${variant.colorId?.name || 'Màu chuẩn'} / ${variant.size || 'Size chuẩn'}`,
+          variantLabel: `${variant.colorId?.name || 'Màu chuẩn'} / ${variant.size || 'Size chuẩn'}`,
           sku: `VAR-${String(variant._id).slice(-6).toUpperCase()}`
         });
       }
@@ -78,7 +89,7 @@ function buildStockRows(products, variantsByProduct, categoryMap) {
 async function getPreparedInventoryData() {
   const [products, variants, categories] = await Promise.all([
     Product.find({}).sort({ createdAt: -1 }).lean(),
-    ProductVariant.find({}).sort({ createdAt: -1 }).lean(),
+    ProductVariant.find({}).sort({ createdAt: -1 }).populate('colorId').lean(),
     Category.find({}).lean()
   ]);
 
@@ -124,7 +135,11 @@ const getInventoryOverview = async (req, res) => {
       .sort({ createdAt: -1 })
       .limit(8)
       .populate('productId', 'name')
-      .populate('variantId', 'size color');
+      .populate({
+        path: 'variantId',
+        select: 'size colorId',
+        populate: { path: 'colorId', select: 'name' }
+      });
 
     res.status(200).json({
       stats: {
@@ -144,7 +159,7 @@ const getInventoryOverview = async (req, res) => {
         referenceId: log.referenceId || '',
         note: log.note || '',
         productName: log.productId?.name || 'Sản phẩm không xác định',
-        variantLabel: log.variantId ? `${log.variantId.color || 'Màu chuẩn'} / ${log.variantId.size || 'Size chuẩn'}` : 'Kho sản phẩm chính',
+        variantLabel: log.variantId ? `${log.variantId.colorId?.name || 'Màu chuẩn'} / ${log.variantId.size || 'Size chuẩn'}` : 'Kho sản phẩm chính',
         createdAt: log.createdAt
       }))
     });
@@ -198,7 +213,11 @@ const getInventoryLogs = async (req, res) => {
     const logs = await InventoryLog.find(query)
       .sort({ createdAt: -1 })
       .populate('productId', 'name')
-      .populate('variantId', 'size color')
+      .populate({
+        path: 'variantId',
+        select: 'size colorId',
+        populate: { path: 'colorId', select: 'name' }
+      })
       .lean();
 
     let filtered = logs;
@@ -210,7 +229,7 @@ const getInventoryLogs = async (req, res) => {
           log.referenceId,
           log.note,
           log.variantId?.size,
-          log.variantId?.color,
+          log.variantId?.colorId?.name,
           log.type
         ].map(normalizeText);
         return texts.some(text => text.includes(needle));
@@ -229,7 +248,7 @@ const getInventoryLogs = async (req, res) => {
       productId: log.productId?._id || null,
       productName: log.productId?.name || 'Sản phẩm không xác định',
       variantId: log.variantId?._id || null,
-      variantLabel: log.variantId ? `${log.variantId.color || 'Màu chuẩn'} / ${log.variantId.size || 'Size chuẩn'}` : 'Kho sản phẩm chính',
+      variantLabel: log.variantId ? `${log.variantId.colorId?.name || 'Màu chuẩn'} / ${log.variantId.size || 'Size chuẩn'}` : 'Kho sản phẩm chính',
       createdAt: log.createdAt
     }));
 
