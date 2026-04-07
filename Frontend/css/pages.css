@@ -1,0 +1,231 @@
+/* pages.css - Shared styles for pages/ directory
+   Dùng cho: checkout.html, orders.html, notifications.html,
+             product-detail.html, staff-*.html, admin-orders.html
+*/
+
+/* ===== LAYOUT ===== */
+.page {
+  width: 1200px;
+  max-width: calc(100% - 40px);
+  margin: 32px auto;
+}
+
+.page h1 {
+  font-size: 34px;
+  margin-bottom: 10px;
+}
+
+.page-subtitle {
+  color: #666;
+  margin-bottom: 24px;
+  line-height: 1.6;
+}
+
+/* ===== PANEL ===== */
+.panel,
+.stat-card,
+.quick-card {
+  background: white;
+  border: 1px solid #e5e5e5;
+  border-radius: 18px;
+  padding: 20px;
+  box-shadow: 0 6px 20px rgba(0,0,0,0.04);
+}
+
+.panel { margin-bottom: 24px; }
+.panel h2 { margin-bottom: 16px; font-size: 24px; }
+
+/* ===== STATS GRID ===== */
+.stats-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 18px;
+  margin-bottom: 28px;
+}
+
+.stat-card h3 {
+  color: #666;
+  font-size: 15px;
+  margin-bottom: 8px;
+}
+
+.stat-card .value {
+  font-size: 30px;
+  font-weight: bold;
+  color: #111;
+}
+
+.stat-card .sub {
+  margin-top: 8px;
+  font-size: 14px;
+  color: #666;
+}
+
+/* ===== QUICK LINKS ===== */
+.quick-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 16px;
+  margin-bottom: 28px;
+}
+
+.quick-card h3 { margin-bottom: 8px; font-size: 18px; }
+.quick-card p  { color: #666; font-size: 14px; line-height: 1.6; margin-bottom: 14px; }
+
+.quick-links {
+  display: flex;
+  gap: 14px;
+  flex-wrap: wrap;
+}
+
+.quick-links a,
+.quick-card a {
+  display: inline-block;
+  background: #111;
+  color: white;
+  text-decoration: none;
+  padding: 10px 14px;
+  border-radius: 10px;
+  font-weight: 600;
+}
+
+/* ===== TABLE ===== */
+table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+table th,
+table td {
+  text-align: left;
+  padding: 12px 10px;
+  border-bottom: 1px solid #eee;
+  vertical-align: top;
+}
+
+table th { background: #f7f7f7; }
+
+/* ===== STATUS BADGES ===== */
+.status-badge {
+  display: inline-block;
+  padding: 7px 10px;
+  border-radius: 16px;
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.pending   { background: #fff3cd; color: #856404; }
+.shipping  { background: #d1ecf1; color: #0c5460; }
+.completed { background: #d4edda; color: #155724; }
+.cancelled { background: #f8d7da; color: #721c24; }
+
+.status-active   { color: green; font-weight: 600; }
+.status-blocked,
+.blocked-user    { color: red; font-weight: 600; }
+.active-user     { color: green; font-weight: 600; }
+
+/* ===== STATUS OVERVIEW ===== */
+.status-overview {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 16px;
+}
+
+.mini-box {
+  border-radius: 14px;
+  padding: 16px;
+  border: 1px solid #eee;
+  background: #fafafa;
+}
+
+.mini-box .label { font-size: 14px; color: #666; margin-bottom: 8px; }
+.mini-box .number { font-size: 24px; font-weight: bold; }
+
+/* ===== FORMS ===== */
+.form-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 14px;
+}
+
+.form-group {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.form-group input,
+.form-group select,
+.form-group textarea {
+  padding: 12px 14px;
+  border: 1px solid #ccc;
+  border-radius: 10px;
+}
+
+.form-group.full { grid-column: 1 / -1; }
+
+.form-actions {
+  margin-top: 16px;
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+/* ===== BUTTONS ===== */
+.btn-dark,
+.btn-danger,
+.btn-warning,
+.btn-edit,
+.btn-light {
+  padding: 10px 14px;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  font-weight: 600;
+  text-decoration: none;
+}
+
+.btn-dark    { background: #111;     color: white; }
+.btn-danger  { background: #e63946;  color: white; }
+.btn-warning { background: #f4a261;  color: white; }
+.btn-edit    { background: #1d3557;  color: white; }
+.btn-light   { background: #ececec;  color: #111;  }
+
+/* ===== CHART AREA ===== */
+.chart-wrap { width: 100%; max-width: 100%; overflow-x: auto; }
+
+/* ===== EMPTY STATE ===== */
+.empty-box {
+  background: white;
+  border: 1px dashed #ccc;
+  border-radius: 16px;
+  padding: 30px;
+  text-align: center;
+  color: #666;
+  font-size: 18px;
+}
+
+/* ===== MESSAGE ===== */
+.msg {
+  margin-top: 12px;
+  min-height: 20px;
+  font-size: 14px;
+  color: green;
+}
+
+/* ===== RESPONSIVE ===== */
+@media (max-width: 1000px) {
+  .stats-grid,
+  .quick-grid,
+  .status-overview { grid-template-columns: 1fr 1fr; }
+}
+
+@media (max-width: 900px) {
+  .form-grid { grid-template-columns: 1fr; }
+}
+
+@media (max-width: 700px) {
+  .stats-grid,
+  .quick-grid,
+  .status-overview { grid-template-columns: 1fr; }
+}

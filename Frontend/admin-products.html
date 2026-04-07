@@ -221,34 +221,7 @@
                                 </div>
                             </div>
 
-                            <div class="form-group" style="margin-top: 10px; border-top: 1px solid var(--border); padding-top: 15px;">
-                                <label style="font-size: 1rem; color: var(--text); margin-bottom: 12px; display: flex; align-items: center; gap: 8px;">
-                                    <i class="fa-solid fa-layer-group"></i> Phân loại sản phẩm (Variants)
-                                </label>
-                                
-                                <div class="variant-controls" style="display: grid; grid-template-columns: 1fr 1fr 1fr 1fr auto; gap: 6px; margin-bottom: 10px;">
-                                    <input type="text" id="variant-size" placeholder="Size" style="padding: 7px; font-size: 0.82rem; border-radius: 6px; background: var(--surface2); border: 1px solid var(--border); color: var(--text);">
-                                    <input type="text" id="variant-color" placeholder="Màu" style="padding: 7px; font-size: 0.82rem; border-radius: 6px; background: var(--surface2); border: 1px solid var(--border); color: var(--text);">
-                                    <input type="number" id="variant-price" placeholder="Giá" style="padding: 7px; font-size: 0.82rem; border-radius: 6px; background: var(--surface2); border: 1px solid var(--border); color: var(--text);">
-                                    <input type="number" id="variant-stock" placeholder="Kho" style="padding: 7px; font-size: 0.82rem; border-radius: 6px; background: var(--surface2); border: 1px solid var(--border); color: var(--text);">
-                                    <button type="button" class="btn-primary" onclick="addVariantRow()" style="padding: 7px 10px; width: 34px;"><i class="fa-solid fa-plus"></i></button>
-                                </div>
 
-                                <div class="table-wrapper" style="max-height: 220px; overflow-y: auto; background: rgba(0,0,0,0.15);">
-                                    <table class="data-table" id="variant-table" style="font-size: 0.8rem;">
-                                        <thead style="position: sticky; top: 0; z-index: 1;">
-                                            <tr>
-                                                <th>Size</th>
-                                                <th>Màu</th>
-                                                <th>Giá</th>
-                                                <th>Kho</th>
-                                                <th></th>
-                                            </tr>
-                                        </thead>
-                                        <tbody id="variant-tbody"></tbody>
-                                    </table>
-                                </div>
-                            </div>
                         </div>
                     </div>
 
@@ -272,7 +245,54 @@
         </div>
     </div>
 
-    <!-- ===== MODAL: Xác nhận xóa ===== -->
+    <!-- ===== MODAL: Quản lý Biến thể (Matrix View) ===== -->
+    <div class="modal-overlay" id="modal-variants" onclick="closeModalOnOverlay(event,'modal-variants')">
+        <div class="modal modal-xl">
+            <div class="modal-header">
+                <h2><i class="fa-solid fa-layer-group"></i> Ma trận Biến thể</h2>
+                <button class="btn-close" onclick="closeModal('modal-variants')"><i class="fa-solid fa-xmark"></i></button>
+            </div>
+            <div class="modal-body" style="background: var(--bg); padding: 20px; overflow-y: auto; max-height: 80vh;">
+                <!-- Toolbar Create -->
+                <div style="background: var(--surface); padding: 15px; border-radius: 12px; margin-bottom: 20px; box-shadow: 0 1px 3px rgba(0,0,0,0.05); border: 1px solid var(--border);">
+                    <div style="display: flex; flex-wrap: wrap; gap: 20px; align-items: flex-end;">
+                        <div style="flex: 1; min-width: 300px;">
+                            <label style="font-size: 0.85rem; font-weight: 500; display: block; margin-bottom: 8px; color: var(--text);">Tạo lô (Batch Create) theo Màu</label>
+                            <div style="display: flex; gap: 10px; align-items: center;">
+                                <select id="mat-color-select" style="padding: 8px 12px; border-radius: 6px; border: 1px solid var(--border); width: 140px; background: var(--surface2); color: var(--text);">
+                                    <option value="">-- Chọn Màu --</option>
+                                </select>
+                                <button class="btn-secondary" onclick="generateSizes('38-43')" style="padding: 8px 12px; font-size: 0.85rem;">EU 38-43</button>
+                                <button class="btn-secondary" onclick="generateSizes('36-40')" style="padding: 8px 12px; font-size: 0.85rem;">EU 36-40</button>
+                                <button class="btn-secondary" onclick="generateSizes('S-XL')" style="padding: 8px 12px; font-size: 0.85rem;">S - XL</button>
+                            </div>
+                        </div>
+                        <div style="flex: 1; min-width: 350px;">
+                            <label style="font-size: 0.85rem; font-weight: 500; display: block; margin-bottom: 8px; color: var(--text);">Thêm/Sửa thủ công</label>
+                            <form id="variant-form" onsubmit="submitVariantForm(event)" style="display: flex; gap: 8px;">
+                                <input type="hidden" id="form-variant-id">
+                                <select id="form-variant-color" required style="width: 120px; padding: 8px; border-radius: 6px; border: 1px solid var(--border); background: var(--surface2); color: var(--text);">
+                                    <option value="">-- Màu --</option>
+                                </select>
+                                <button type="button" class="btn-secondary" onclick="promptCreateColor()" style="padding: 8px; border-radius: 6px;" title="Thêm Màu Mới"><i class="fa-solid fa-plus"></i></button>
+                                <input type="text" id="form-variant-size" required placeholder="Size" style="width: 70px; padding: 8px; border-radius: 6px; border: 1px solid var(--border); background: var(--surface2); color: var(--text);">
+                                <input type="number" id="form-variant-price" placeholder="Giá" style="width: 110px; padding: 8px; border-radius: 6px; border: 1px solid var(--border); background: var(--surface2); color: var(--text);">
+                                <input type="number" id="form-variant-stock" placeholder="Kho" style="width: 70px; padding: 8px; border-radius: 6px; border: 1px solid var(--border); background: var(--surface2); color: var(--text);">
+                                <button type="submit" class="btn-primary" id="btn-submit-variant" style="padding: 8px 15px;">Lưu</button>
+                                <button type="button" class="btn-secondary" onclick="resetVariantForm()" style="padding: 8px 12px;"><i class="fa-solid fa-rotate-left"></i></button>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+
+                <div id="variant-matrix-container" style="display: flex; flex-direction: column; gap: 20px;">
+                    <!-- JS DOM Fill -->
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ===== MODAL: Xác nhận xóa (Chung) ===== -->
     <div class="modal-overlay" id="modal-delete" onclick="closeModalOnOverlay(event,'modal-delete')">
         <div class="modal modal-sm">
             <div class="modal-header danger">

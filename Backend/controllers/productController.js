@@ -30,7 +30,9 @@ const getAllProducts = async (req, res) => {
                 .limit(parseInt(limit))
                 .lean(); // Dùng lean để dễ dàng thêm virtual fields
         } else {
-            products = await Product.find(query).sort({ createdAt: -1 }).lean();
+            products = await Product.find(query).sort({ createdAt: -1 })
+                .populate('images.colorId')
+                .lean();
         }
 
         // Đổ variants vào từng product
@@ -50,7 +52,9 @@ const getAllProducts = async (req, res) => {
 // GET /api/products/:id — Chi tiết sản phẩm
 const getProductById = async (req, res) => {
     try {
-        const product = await Product.findById(req.params.id).lean();
+        const product = await Product.findById(req.params.id)
+            .populate('images.colorId')
+            .lean();
         if (!product) return res.status(404).json({ message: 'Không tìm thấy sản phẩm' });
         
         // Lấy variants
@@ -91,10 +95,29 @@ const createProduct = async (req, res) => {
                     size: v.size,
                     color: v.color,
                     price: v.price || price || 0,
-                    stock: v.stock || 0
+                    stock: v.stock || 0,
+                    image: v.image || ''
                 }));
                 await ProductVariant.insertMany(variantsToCreate);
+            } else {
+                await ProductVariant.create({
+                    productId: product._id,
+                    size: 'Mặc định',
+                    color: 'Mặc định',
+                    price: price || 0,
+                    stock: stock || 0,
+                    image: finalImages.length > 0 ? finalImages[0].url : ''
+                });
             }
+        } else {
+            await ProductVariant.create({
+                productId: product._id,
+                size: 'Mặc định',
+                color: 'Mặc định',
+                price: price || 0,
+                stock: stock || 0,
+                image: finalImages.length > 0 ? finalImages[0].url : ''
+            });
         }
 
         res.status(201).json(product);
@@ -139,9 +162,19 @@ const updateProduct = async (req, res) => {
                     size: v.size,
                     color: v.color,
                     price: v.price || product.price,
-                    stock: v.stock || 0
+                    stock: v.stock || 0,
+                    image: v.image || ''
                 }));
                 await ProductVariant.insertMany(variantsToCreate);
+            } else {
+                await ProductVariant.create({
+                    productId: product._id,
+                    size: 'Mặc định',
+                    color: 'Mặc định',
+                    price: product.price,
+                    stock: product.stock,
+                    image: product.images && product.images.length > 0 ? product.images[0].url : ''
+                });
             }
         }
 
@@ -162,5 +195,64 @@ const deleteProduct = async (req, res) => {
     }
 };
 
-module.exports = { getAllProducts, getProductById, createProduct, updateProduct, deleteProduct };
+// Upload ảnh riêng cho màu
+const uploadColorImage = async (req, res) => {
+    try {
+        const { id, colorId } = req.params;
+        const product = await Product.findById(id);
+        if (!product) return res.status(404).json({ message: 'Không tìm thấy sản phẩm' });
+
+        if (req.file) {
+            product.images.push({
+                url: `/uploads/${req.file.filename}`,
+                publicId: req.file.filename,
+                colorId,
+                order: product.images.length
+            });
+            await product.save();
+        }
+        res.status(200).json(product);
+    } catch (error) {
+         res.status(500).json({ message: error.message });
+    }
+};
+
+// Cập nhật thứ tự ảnh
+const updateImageOrder = async (req, res) => {
+    try {
+        const { id } = req.params;
+        const { imageId, order } = req.body;
+        
+        const product = await Product.findById(id);
+        if (!product) return res.status(404).json({ message: 'Không tìm thấy sản phẩm' });
+
+        const img = product.images.id(imageId);
+        if (img) {
+            img.order = order;
+            await product.save();
+            res.status(200).json(product);
+        } else {
+            res.status(404).json({ message: "Không tìm thấy ảnh" });
+        }
+    } catch (error) {
+        res.status(500).json({ message: error.message });
+    }
+};
+
+// Xóa ảnh
+const deleteColorImage = async (req, res) => {
+    try {
+        const { id, imageId } = req.params;
+        const product = await Product.findById(id);
+        if (!product) return res.status(404).json({ message: 'Không tìm thấy sản phẩm' });
+
+        product.images.pull(imageId);
+        await product.save();
+        res.status(200).json(product);
+    } catch (error) {
+        res.status(500).json({ message: error.message });
+    }
+};
+
+module.exports = { getAllProducts, getProductById, createProduct, updateProduct, deleteProduct, uploadColorImage, updateImageOrder, deleteColorImage };
 
