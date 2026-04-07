@@ -8,6 +8,7 @@ const userRoutes     = require("./routes/userRoutes");
 const categoryRoutes = require("./routes/categoryRoutes");
 const cartRoutes     = require("./routes/cartRoutes");
 const inventoryRoutes = require("./routes/inventoryRoutes");
+const orderRoutes    = require("./routes/orderRoutes");
 
 const app = express();
 
@@ -23,6 +24,7 @@ app.use("/api/users",      userRoutes);
 app.use("/api/categories", categoryRoutes);
 app.use("/api/cart",       cartRoutes);
 app.use("/api/inventory",  inventoryRoutes);
+app.use("/api/orders",     orderRoutes);
 
 // Serve frontend
 app.use(express.static(path.join(__dirname, "../Frontend")));

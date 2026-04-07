@@ -1,0 +1,351 @@
+/* orders.css - Trang đơn hàng của tôi */
+
+/* Đảm bảo attribute hidden luôn hoạt động dù CSS có display gì */
+[hidden] { display: none !important; }
+
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap');
+
+/* ===== PAGE WRAPPER ===== */
+.orders-page {
+  width: 1200px;
+  max-width: calc(100% - 40px);
+  margin: 40px auto 80px;
+}
+
+.orders-page h1 {
+  font-size: 32px;
+  font-weight: 800;
+  margin-bottom: 8px;
+  letter-spacing: -0.5px;
+}
+
+.orders-subtitle {
+  color: #666;
+  font-size: 15px;
+  margin-bottom: 32px;
+}
+
+/* ===== LOADING STATE ===== */
+.orders-loading {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 80px 0;
+  gap: 16px;
+  color: #888;
+}
+
+.spinner {
+  width: 40px;
+  height: 40px;
+  border: 3px solid #eee;
+  border-top-color: #111;
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+/* ===== EMPTY STATE ===== */
+.empty-orders {
+  background: white;
+  border: 2px dashed #e0e0e0;
+  border-radius: 20px;
+  padding: 60px 30px;
+  text-align: center;
+}
+
+.empty-orders .empty-icon {
+  font-size: 56px;
+  margin-bottom: 16px;
+}
+
+.empty-orders h3 {
+  font-size: 22px;
+  font-weight: 700;
+  margin-bottom: 8px;
+}
+
+.empty-orders p {
+  color: #888;
+  margin-bottom: 24px;
+}
+
+/* ===== ORDERS LIST ===== */
+.orders-list {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+/* ===== ORDER CARD ===== */
+.order-card {
+  background: white;
+  border: 1px solid #ebebeb;
+  border-radius: 20px;
+  overflow: hidden;
+  box-shadow: 0 4px 24px rgba(0, 0, 0, 0.05);
+  transition: box-shadow 0.25s ease, transform 0.25s ease;
+}
+
+.order-card:hover {
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+  transform: translateY(-2px);
+}
+
+/* ===== CARD HEADER ===== */
+.order-card-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 12px;
+  padding: 18px 24px;
+  border-bottom: 1px solid #f0f0f0;
+  background: #fafafa;
+}
+
+.order-card-header-left {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.order-number {
+  font-size: 17px;
+  font-weight: 700;
+  color: #111;
+  letter-spacing: -0.2px;
+}
+
+.order-date {
+  font-size: 13px;
+  color: #888;
+}
+
+/* ===== STATUS BADGE ===== */
+.order-status-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 14px;
+  border-radius: 20px;
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.status-PENDING {
+  background: #fff8e1;
+  color: #b45309;
+  border: 1px solid #fde68a;
+}
+
+.status-CONFIRMED {
+  background: #e0f2fe;
+  color: #0369a1;
+  border: 1px solid #bae6fd;
+}
+
+.status-SHIPPING {
+  background: #ede9fe;
+  color: #6d28d9;
+  border: 1px solid #ddd6fe;
+}
+
+.status-COMPLETED {
+  background: #dcfce7;
+  color: #15803d;
+  border: 1px solid #bbf7d0;
+}
+
+.status-CANCELLED {
+  background: #fee2e2;
+  color: #b91c1c;
+  border: 1px solid #fecaca;
+}
+
+/* ===== CARD BODY ===== */
+.order-card-body {
+  padding: 20px 24px;
+}
+
+/* ===== SHIPPING INFO ===== */
+.order-shipping-info {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  background: #f8f8f8;
+  border-radius: 12px;
+  padding: 14px 16px;
+  margin-bottom: 18px;
+  font-size: 14px;
+  color: #555;
+  line-height: 1.6;
+}
+
+.order-shipping-info .ship-icon {
+  font-size: 20px;
+  margin-top: 1px;
+  flex-shrink: 0;
+}
+
+.order-shipping-info strong {
+  display: block;
+  font-weight: 600;
+  color: #111;
+  margin-bottom: 2px;
+  font-size: 14px;
+}
+
+/* ===== ORDER ITEMS ===== */
+.order-items-label {
+  font-size: 13px;
+  font-weight: 600;
+  color: #888;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  margin-bottom: 12px;
+}
+
+.order-items-list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin-bottom: 18px;
+}
+
+.order-item-row {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 10px 0;
+  border-bottom: 1px solid #f5f5f5;
+}
+
+.order-item-row:last-child {
+  border-bottom: none;
+}
+
+.order-item-img {
+  width: 60px;
+  height: 60px;
+  border-radius: 12px;
+  object-fit: cover;
+  background: #f0f0f0;
+  flex-shrink: 0;
+}
+
+.order-item-img-placeholder {
+  width: 60px;
+  height: 60px;
+  border-radius: 12px;
+  background: linear-gradient(135deg, #f0f0f0 0%, #e0e0e0 100%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 24px;
+  flex-shrink: 0;
+}
+
+.order-item-info {
+  flex: 1;
+  min-width: 0;
+}
+
+.order-item-name {
+  font-size: 14px;
+  font-weight: 600;
+  color: #111;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.order-item-meta {
+  font-size: 12px;
+  color: #888;
+  margin-top: 2px;
+}
+
+.order-item-price {
+  font-size: 14px;
+  font-weight: 700;
+  color: #111;
+  text-align: right;
+  flex-shrink: 0;
+}
+
+/* ===== CARD FOOTER ===== */
+.order-card-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 16px 24px;
+  border-top: 1px solid #f0f0f0;
+  background: #fafafa;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+
+.order-payment-method {
+  font-size: 13px;
+  color: #777;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.order-total-amount {
+  font-size: 20px;
+  font-weight: 800;
+  color: #d62828;
+  letter-spacing: -0.3px;
+}
+
+/* ===== BUTTON ===== */
+.btn-shop {
+  display: inline-block;
+  background: #111;
+  color: white;
+  text-decoration: none;
+  padding: 12px 24px;
+  border-radius: 12px;
+  font-weight: 700;
+  font-size: 15px;
+  transition: background 0.2s, transform 0.2s;
+}
+
+.btn-shop:hover {
+  background: #333;
+  transform: translateY(-1px);
+}
+
+/* ===== ERROR STATE ===== */
+.orders-error {
+  background: #fff5f5;
+  border: 1px solid #fecaca;
+  border-radius: 16px;
+  padding: 24px;
+  text-align: center;
+  color: #b91c1c;
+}
+
+/* ===== RESPONSIVE ===== */
+@media (max-width: 600px) {
+  .order-card-header {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .order-card-footer {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .order-total-amount {
+    font-size: 18px;
+  }
+}
