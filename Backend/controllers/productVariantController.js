@@ -24,7 +24,7 @@ const getVariants = async (req, res) => {
 const addVariant = async (req, res) => {
     try {
         const { productId } = req.params;
-        const { size, colorId, price, stock } = req.body;
+        const { size, colorId, price } = req.body;
 
         const product = await Product.findById(productId);
         if (!product) return res.status(404).json({ message: 'Không tìm thấy sản phẩm' });
@@ -39,7 +39,7 @@ const addVariant = async (req, res) => {
             size,
             colorId,
             price: price || product.price,
-            stock: stock || 0,
+            stock: 0, // Tồn kho mặc định bằng 0
             image
         });
 
@@ -52,7 +52,7 @@ const addVariant = async (req, res) => {
 const updateVariant = async (req, res) => {
     try {
         const { variantId } = req.params;
-        const { size, colorId, price, stock } = req.body;
+        const { size, colorId, price } = req.body;
 
         const variant = await ProductVariant.findById(variantId);
         if (!variant) return res.status(404).json({ message: 'Không tìm thấy biến thể' });
@@ -60,7 +60,7 @@ const updateVariant = async (req, res) => {
         if (size !== undefined) variant.size = size;
         if (colorId !== undefined) variant.colorId = colorId;
         if (price !== undefined) variant.price = price;
-        if (stock !== undefined) variant.stock = stock;
+        // Không nhận stock từ form nữa
 
         if (req.file) {
             variant.image = `/uploads/${req.file.filename}`;

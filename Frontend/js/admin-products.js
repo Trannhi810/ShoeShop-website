@@ -178,7 +178,6 @@ async function openEditModal(id) {
         document.getElementById('form-name').value        = p.name;
         document.getElementById('form-description').value = p.description || '';
         document.getElementById('form-price').value       = p.price || 0;
-        document.getElementById('form-stock').value       = p.stock || 0;
         document.getElementById('form-isActive').value    = p.isActive ? 'true' : 'false';
         
         // Populate existing image URL
@@ -210,7 +209,6 @@ async function submitProductForm(e) {
     fd.append('name', document.getElementById('form-name').value.trim());
     fd.append('description', document.getElementById('form-description').value.trim());
     fd.append('price', parseFloat(document.getElementById('form-price').value) || 0);
-    fd.append('stock', parseInt(document.getElementById('form-stock').value) || 0);
     fd.append('isActive', document.getElementById('form-isActive').value === 'true');
     fd.append('categoryId', catVal || '');
 
@@ -455,7 +453,6 @@ async function generateSizes(range) {
              fd.append('size', sz);
              fd.append('colorId', cId);
              fd.append('price', prodPrice);
-             fd.append('stock', 0);
              return variantApi.add(currentProductIdForVariant, fd);
         });
         await Promise.all(promises);
@@ -516,7 +513,6 @@ function editVariant(v) {
     document.getElementById('form-variant-size').value = v.size || '';
     document.getElementById('form-variant-color').value = v.colorId?._id || v.colorId || '';
     document.getElementById('form-variant-price').value = v.price || 0;
-    document.getElementById('form-variant-stock').value = v.stock || 0;
     document.getElementById('btn-submit-variant').innerText = 'Cập nhật';
 }
 
@@ -540,7 +536,6 @@ async function submitVariantForm(e) {
         fd.append('size', document.getElementById('form-variant-size').value);
         fd.append('colorId', cId);
         fd.append('price', document.getElementById('form-variant-price').value || 0);
-        fd.append('stock', document.getElementById('form-variant-stock').value || 0);
         
         if (currentEditVariantId) {
             await variantApi.update(currentEditVariantId, fd);
