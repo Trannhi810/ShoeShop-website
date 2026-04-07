@@ -153,3 +153,49 @@ const inventoryApi = {
         });
     }
 };
+// ===== GLOBAL HEADER UI LOGIC =====
+window.syncCartCountFromAPI = async function() {
+    const token = localStorage.getItem("shoeshop_token") || localStorage.getItem("token");
+    if (!token) {
+        localStorage.removeItem('shoeshop_cart_count');
+        updateGlobalCartBadge();
+        return;
+    }
+    try {
+        const res = await fetch("http://localhost:3000/api/cart", {
+            headers: { 'Authorization': 'Bearer ' + token }
+        });
+        if (res.ok) {
+            const cartData = await res.json();
+            const items = (cartData.data && cartData.data.items) || [];
+            const totalItems = items.reduce((sum, item) => sum + (item.quantity || 1), 0);
+            localStorage.setItem('shoeshop_cart_count', totalItems);
+            updateGlobalCartBadge();
+        }
+    } catch (e) {
+        console.log("Lỗi đồng bộ số lượng giỏ hàng", e);
+    }
+};
+
+window.updateGlobalCartBadge = function() {
+    const cartCount = document.getElementById('cartCount');
+    if (cartCount) {
+        const totalItems = parseInt(localStorage.getItem('shoeshop_cart_count') || '0', 10);
+        cartCount.textContent = totalItems > 99 ? '99+' : totalItems;
+        cartCount.style.display = totalItems > 0 ? 'inline-block' : 'none';
+    }
+};
+
+// Initial sync on startup
+setTimeout(() => {
+    if (typeof window.syncCartCountFromAPI === 'function') {
+        window.syncCartCountFromAPI();
+    }
+}, 500);
+
+// Polling local storage to keep tabs in sync easily
+setInterval(() => {
+    if (typeof window.updateGlobalCartBadge === 'function') {
+        window.updateGlobalCartBadge();
+    }
+}, 1000);

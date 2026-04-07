@@ -10,7 +10,10 @@
     <nav class="main-nav">
       <a href="/index.html">Trang chủ</a>
       <a href="/pages/products.html">Sản phẩm</a>
-      <a href="/pages/cart.html">Giỏ hàng</a>
+      <a href="/pages/cart.html" style="position: relative; display: inline-flex; align-items: center; gap: 4px;">
+        Giỏ hàng
+        <span id="cartCount" style="display: none; background: #e63946; color: white; border-radius: 50%; padding: 2px 6px; font-size: 11px; font-weight: bold;">0</span>
+      </a>
     </nav>
 
     <!-- RIGHT -->
@@ -28,15 +31,41 @@
     }
   }
 
-  function updateCartCount() {
-    const cart = JSON.parse(localStorage.getItem('shoeshop_cart_v1') || '[]');
-    const cartCount = document.getElementById('cartCount');
-    if (cartCount) {
-      const totalItems = cart.reduce((sum, item) => sum + (item.quantity || 1), 0);
-      cartCount.textContent = totalItems;
-      cartCount.style.display = totalItems > 0 ? 'flex' : 'none';
+  async function fetchAndUpdateCartCount() {
+    const token = localStorage.getItem("shoeshop_token") || localStorage.getItem("token");
+    if (!token) {
+      localStorage.removeItem('shoeshop_cart_count');
+      updateCartBadge();
+      return;
+    }
+    try {
+      const res = await fetch("http://localhost:3000/api/cart", {
+        headers: { 'Authorization': 'Bearer ' + token }
+      });
+      if (res.ok) {
+        const cartData = await res.json();
+        const items = (cartData.data && cartData.data.items) || [];
+        const totalItems = items.reduce((sum, item) => sum + (item.quantity || 1), 0);
+        localStorage.setItem('shoeshop_cart_count', totalItems);
+        updateCartBadge();
+      }
+    } catch (e) {
+      console.log("Lỗi đồng bộ số lượng giỏ hàng", e);
     }
   }
+
+  function updateCartBadge() {
+    const cartCount = document.getElementById('cartCount');
+    if (cartCount) {
+      const totalItems = parseInt(localStorage.getItem('shoeshop_cart_count') || '0', 10);
+      cartCount.textContent = totalItems > 99 ? '99+' : totalItems;
+      cartCount.style.display = totalItems > 0 ? 'inline-block' : 'none';
+    }
+  }
+
+  // Thay thế các hàm updateCartCount cũ bằng updateCartBadge
+  window.updateCartCount = updateCartBadge;
+  window.syncCartCountFromAPI = fetchAndUpdateCartCount;
 
   function renderHeaderAuth() {
     const headerRight = document.getElementById("headerRight");
@@ -99,11 +128,11 @@
       });
     }
 
-    // Update cart count on load
-    updateCartCount();
+    // Call API exactly once on load to get true cart count
+    fetchAndUpdateCartCount();
 
-    // Update cart count periodically (in case it changes from other pages)
-    setInterval(updateCartCount, 1000);
+    // Update UI from purely lightweight localStorage polling
+    setInterval(updateCartBadge, 1000);
     
     // Update header auth on load
     renderHeaderAuth();
