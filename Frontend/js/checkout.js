@@ -85,7 +85,7 @@ async function initCheckout() {
     const token = getCkToken();
 
     if (!user || !token) {
-        showEmptyMessage('🔒', 'Bạn chưa đăng nhập', 'Vui lòng đăng nhập để thanh toán đơn hàng.', 'Đăng nhập ngay', '/pages/auth.html');
+        showEmptyMessage('🔒', 'Bạn chưa đăng nhập', 'Vui lòng đăng nhập để thanh toán đơn hàng.', 'Đăng nhập ngay', '/pages/customer/auth.html');
         return;
     }
 
@@ -101,7 +101,7 @@ async function initCheckout() {
 
         const cart = data.data || { items: [] };
         if (!cart.items || cart.items.length === 0) {
-            showEmptyMessage('🛒', 'Giỏ hàng trống', 'Hãy thêm sản phẩm vào giỏ trước khi thanh toán.', 'Đi mua sắm', '/pages/products.html');
+            showEmptyMessage('🛒', 'Giỏ hàng trống', 'Hãy thêm sản phẩm vào giỏ trước khi thanh toán.', 'Đi mua sắm', '/pages/customer/products.html');
             return;
         }
 
@@ -119,7 +119,7 @@ async function initCheckout() {
 
     } catch (err) {
         console.error(err);
-        showEmptyMessage('⚠️', 'Lỗi kết nối', err.message, 'Thử lại', '/pages/checkout.html');
+        showEmptyMessage('⚠️', 'Lỗi kết nối', err.message, 'Thử lại', '/pages/customer/checkout.html');
     }
 }
 
@@ -179,7 +179,7 @@ async function handleOrderSubmit(e) {
         }
 
         alert('🎉 Đặt hàng thành công!');
-        window.location.href = '/pages/orders.html';
+        window.location.href = '/pages/customer/orders.html';
 
     } catch (err) {
         alert('❌ ' + err.message);

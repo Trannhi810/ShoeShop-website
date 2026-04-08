@@ -336,6 +336,14 @@ function openStockModal(payload) {
     document.getElementById('stock-current-value').value = Number(item.stock || 0);
     document.getElementById('stock-modal-item-name').textContent = item.productName;
     document.getElementById('stock-modal-item-sub').textContent = `${item.variantLabel} · ${item.categoryName || 'Chưa phân loại'}`;
+    const modalImg = document.getElementById('stock-modal-image');
+    if (item.imageUrl) {
+        modalImg.src = item.imageUrl;
+        modalImg.style.display = 'block';
+    } else {
+        modalImg.src = '';
+        modalImg.style.display = 'none';
+    }
     document.getElementById('stock-modal-current').textContent = Number(item.stock || 0);
     document.getElementById('stock-modal-sku').textContent = `SKU: ${item.sku || '—'}`;
     document.getElementById('stock-action-type').value = actionType;

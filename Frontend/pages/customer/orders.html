@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Đơn hàng của tôi - ShoeShop</title>
+  <meta name="description" content="Xem lịch sử và trạng thái các đơn hàng của bạn tại ShoeShop." />
+  <link rel="stylesheet" href="../../css/layout.css" />
+  <link rel="stylesheet" href="../../css/orders.css" />
+</head>
+<body>
+  <div id="header"></div>
+
+  <main>
+    <div class="orders-page">
+      <h1>Đơn hàng của tôi</h1>
+      <p class="orders-subtitle">Theo dõi tất cả đơn hàng bạn đã đặt tại ShoeShop</p>
+
+      <!-- Loading -->
+      <div id="stateLoading" class="orders-loading" hidden>
+        <div class="spinner"></div>
+        <span>Đang tải đơn hàng...</span>
+      </div>
+
+      <!-- Empty / Error / Not logged in -->
+      <div id="stateEmpty" class="empty-orders" hidden>
+        <div class="empty-icon" id="emptyIcon">📦</div>
+        <h3 id="emptyTitle">Bạn chưa có đơn hàng nào</h3>
+        <p id="emptyDesc">Hãy chọn cho mình một đôi giày ưng ý nhé!</p>
+        <a id="emptyAction" class="btn-shop" href="/pages/customer/products.html">Mua sắm ngay</a>
+      </div>
+
+      <!-- Danh sách đơn hàng - JS sẽ thêm các .order-card vào đây -->
+      <div id="ordersList" class="orders-list" hidden></div>
+    </div>
+  </main>
+
+  <div id="footer"></div>
+
+  <script src="../../js/notify.js"></script>
+  <script src="../../js/orders.js"></script>
+</body>
+</html>

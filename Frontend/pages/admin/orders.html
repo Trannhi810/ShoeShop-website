@@ -1,0 +1,236 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <link rel="stylesheet" href="../../css/admin-shared.css">
+  <link rel="stylesheet" href="../../css/layout.css" />
+  <style>
+    .page {
+      width: 100%;
+      max-width: 100%;
+      margin: 0;
+    }
+    /* Adjustments for matching sidebar layout */
+    .main-content {
+      padding: 30px;
+    }
+    .panel {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 18px;
+      padding: 24px;
+      box-shadow: var(--shadow-sm);
+    }
+    /* Rest of the existing styles adjusted slightly */
+    .status-badge {
+      display: inline-block;
+      padding: 6px 12px;
+      border-radius: 20px;
+      font-size: 12px;
+      font-weight: 600;
+    }
+  </style>
+</head>
+<body>
+  <!-- Sidebar -->
+  <aside class="sidebar" id="sidebar">
+    <div class="sidebar-logo">
+      <div class="sidebar-logo-content">
+        <i class="fa-solid fa-shoe-prints"></i>
+        <span>ShoeShop</span>
+      </div>
+      <button class="btn-menu-toggle" onclick="toggleSidebar()">
+        <i class="fa-solid fa-bars-staggered"></i>
+      </button>
+    </div>
+    <nav class="sidebar-nav">
+      <p class="nav-label">Quản trị</p>
+      <a href="/pages/admin/dashboard.html" class="nav-item">
+        <i class="fa-solid fa-chart-pie"></i>
+        <span>Tổng quan</span>
+      </a>
+      <a href="/pages/admin/users.html" class="nav-item">
+        <i class="fa-solid fa-users"></i>
+        <span>Người dùng</span>
+      </a>
+      <a href="/pages/admin/products.html" class="nav-item">
+        <i class="fa-solid fa-box-open"></i>
+        <span>Sản phẩm</span>
+      </a>
+      <a href="/pages/admin/categories.html" class="nav-item">
+        <i class="fa-solid fa-tags"></i>
+        <span>Danh mục</span>
+      </a>
+      <a href="/pages/admin/inventory.html" class="nav-item">
+        <i class="fa-solid fa-warehouse"></i>
+        <span>Kho hàng</span>
+      </a>
+      <a href="/pages/admin/orders.html" class="nav-item active">
+        <i class="fa-solid fa-file-invoice-dollar"></i>
+        <span>Đơn hàng</span>
+      </a>
+      <p class="nav-label">Hệ thống</p>
+      <a href="/index.html" class="nav-item">
+        <i class="fa-solid fa-house"></i>
+        <span>Trang chủ</span>
+      </a>
+    </nav>
+    <div class="sidebar-footer">
+      <div class="admin-avatar" id="admin-avatar">A</div>
+      <div class="admin-info">
+        <p class="admin-name" id="admin-name">Admin</p>
+        <p class="admin-role">Quản trị viên</p>
+      </div>
+      <button class="btn-logout" onclick="logout()" title="Đăng xuất">
+        <i class="fa-solid fa-right-from-bracket"></i>
+      </button>
+    </div>
+  </aside>
+
+  <!-- Main Content -->
+  <main class="main-content">
+      <header class="page-header">
+          <div class="header-left">
+              <div>
+                  <h1 class="page-title">Quản Lý Đơn Hàng</h1>
+                  <p class="page-subtitle">Theo dõi và cập nhật trạng thái đơn hàng của khách hàng</p>
+              </div>
+          </div>
+      </header>
+      
+      <div id="adminOrdersContent"></div>
+  </main>
+
+  <div class="toast-container" id="toast-container"></div>
+  
+  <script src="../../js/admin-utils.js"></script>
+  <script>
+    const USER_KEY = "shoeshop_current_user_v1";
+    const ORDERS_KEY = "shoeshop_orders_v1";
+
+    function renderHeaderAuth() {
+        // Removed as unified sidebar handles auth display
+    }
+
+    function logout() {
+      localStorage.removeItem(USER_KEY);
+      window.location.href = "/Frontend/index.html";
+    }
+
+    function getOrders() {
+      return JSON.parse(localStorage.getItem(ORDERS_KEY)) || [];
+    }
+
+    function saveOrders(orders) {
+      localStorage.setItem(ORDERS_KEY, JSON.stringify(orders));
+    }
+
+    function getStatusClass(status) {
+      if (status === "Chờ xử lý") return "pending";
+      if (status === "Đang giao") return "shipping";
+      if (status === "Hoàn tất") return "completed";
+      if (status === "Hủy") return "cancelled";
+      return "pending";
+    }
+
+    function renderAdminOrders() {
+      const currentUser = JSON.parse(localStorage.getItem(USER_KEY));
+      const container = document.getElementById("adminOrdersContent");
+
+      if (!currentUser || currentUser.role !== "admin") {
+        container.innerHTML = `<div class="empty-box">Bạn không có quyền truy cập trang này.</div>`;
+        return;
+      }
+
+      const orders = getOrders();
+
+      container.innerHTML = `
+        <div class="panel">
+          <h1>Quản lý đơn hàng</h1>
+
+          ${
+            orders.length
+              ? `
+                <table>
+                  <thead>
+                    <tr>
+                      <th>Mã đơn</th>
+                      <th>Khách hàng</th>
+                      <th>Ngày đặt</th>
+                      <th>Trạng thái hiện tại</th>
+                      <th>Cập nhật trạng thái</th>
+                      <th>Tổng tiền</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    ${orders.map(order => `
+                      <tr>
+                        <td>#${order.id}</td>
+                        <td>${order.customerName}</td>
+                        <td>${order.createdAt}</td>
+                        <td><span class="status-badge ${getStatusClass(order.status)}">${order.status}</span></td>
+                        <td>
+                          <select onchange="changeOrderStatus(${order.id}, this.value)">
+                            <option value="Chờ xử lý" ${order.status === "Chờ xử lý" ? "selected" : ""}>Chờ xử lý</option>
+                            <option value="Đang giao" ${order.status === "Đang giao" ? "selected" : ""}>Đang giao</option>
+                            <option value="Hoàn tất" ${order.status === "Hoàn tất" ? "selected" : ""}>Hoàn tất</option>
+                            <option value="Hủy" ${order.status === "Hủy" ? "selected" : ""}>Hủy</option>
+                          </select>
+                        </td>
+                        <td>${order.total.toLocaleString("vi-VN")}đ</td>
+                      </tr>
+                    `).join("")}
+                  </tbody>
+                </table>
+              `
+              : `<div>Chưa có đơn hàng nào.</div>`
+          }
+        </div>
+      `;
+    }
+
+    function changeOrderStatus(orderId, newStatus) {
+  const orders = getOrders();
+  const order = orders.find(item => item.id === orderId);
+  if (!order) return;
+
+  const oldStatus = order.status;
+  order.status = newStatus;
+  saveOrders(orders);
+
+  if (oldStatus !== newStatus) {
+    addNotification({
+      title: "Đơn hàng được cập nhật",
+      message: `Đơn hàng #${order.id} đã chuyển từ "${oldStatus}" sang "${newStatus}".`,
+      role: "customer",
+      type: "info"
+    });
+
+    addNotification({
+      title: "Admin cập nhật đơn hàng",
+      message: `Đơn hàng #${order.id} của ${order.customerName} đã đổi sang "${newStatus}".`,
+      role: "staff",
+      type: "warning"
+    });
+
+    addNotification({
+      title: "Cập nhật trạng thái đơn",
+      message: `Bạn vừa đổi trạng thái đơn #${order.id} sang "${newStatus}".`,
+      role: "admin",
+      type: "success"
+    });
+  }
+
+  renderAdminOrders();
+}
+    
+
+    loadComponent("header", "components/header.html");
+    loadComponent("footer", "components/footer.html");
+    renderAdminOrders();
+  </script>
+</body>
+</html>

@@ -10,7 +10,7 @@ function matchesSearch(product, categoryMap, variants, search) {
         product.name,
         product.description,
         categoryName,
-        ...(variants || []).flatMap((v) => [v.size, v.color])
+        ...(variants || []).flatMap((v) => [v.size, v.colorId?.name])
     ].map(normalizeText);
     return texts.some((text) => text.includes(needle));
 }
@@ -22,24 +22,61 @@ function buildStockRows(products, variantsByProduct, categoryMap) {
         const category = categoryMap.get(String(product.categoryId));
 
         if (variants.length > 0) {
+            // Check if it's just one default variant
+            const isSingleDefault = variants.length === 1 && 
+                                   variants[0].size === 'Mặc định' && 
+                                   !variants[0].colorId;
+
             for (const variant of variants) {
+                const variantColorObj = variant.colorId;
+                const colorIdValue = (variantColorObj?._id || variantColorObj || '').toString();
+                const colorName = variantColorObj?.name;
+                const variantSize = variant.size;
+                
+                // Find images that match this variant's color
+                const colorImages = (product.images || []).filter(img => {
+                    const imgColorId = (img.colorId?._id || img.colorId || '').toString();
+                    return imgColorId && colorIdValue && imgColorId === colorIdValue;
+                });
+                
+                let variantImage = null;
+                if (colorImages.length > 0) {
+                    colorImages.sort((a, b) => (a.order || 0) - (b.order || 0));
+                    variantImage = colorImages[0].url;
+                }
+                
+                let variantLabel = '';
+                if (isSingleDefault) {
+                    variantLabel = 'Kho sản phẩm chính';
+                } else {
+                    if (colorName && variantSize) {
+                        variantLabel = `${colorName} / ${variantSize}`;
+                    } else if (colorName) {
+                        variantLabel = colorName;
+                    } else if (variantSize) {
+                        variantLabel = variantSize === 'Mặc định' ? 'Mặc định' : `Size: ${variantSize}`;
+                    } else {
+                        variantLabel = (variantColorObj ? 'Màu mặc định' : '') + (variantSize ? (variantColorObj ? ' / ' : '') + `Size: ${variantSize}` : 'Mặc định');
+                    }
+                }
+
                 rows.push({
                     rowId: `${product._id}_${variant._id}`,
-                    itemType: 'variant',
+                    itemType: isSingleDefault ? 'product' : 'variant',
                     productId: String(product._id),
                     variantId: String(variant._id),
                     productName: product.name,
                     productDescription: product.description || '',
                     categoryId: product.categoryId ? String(product.categoryId) : '',
                     categoryName: category?.name || 'Chưa phân loại',
-                    imageUrl: product.images?.[0]?.url || '',
+                    imageUrl: variantImage || variant.image || (product.images && product.images.length > 0 ? product.images[0].url : ''),
                     price: Number(variant.price ?? product.price ?? 0),
                     stock: Number(variant.stock ?? 0),
                     isActive: !!product.isActive,
                     createdAt: variant.createdAt || product.createdAt,
                     updatedAt: variant.updatedAt || product.updatedAt,
-                    label: `${product.name} - ${variant.color || 'Màu chuẩn'} / ${variant.size || 'Size chuẩn'}`,
-                    variantLabel: `${variant.color || 'Màu chuẩn'} / ${variant.size || 'Size chuẩn'}`,
+                    label: `${product.name} - ${variantLabel}`,
+                    variantLabel: variantLabel,
                     sku: `VAR-${String(variant._id).slice(-6).toUpperCase()}`
                 });
             }
@@ -98,7 +135,11 @@ function mapInventoryLog(log) {
         productId: log.productId?._id || null,
         productName: log.productId?.name || 'Sản phẩm không xác định',
         variantId: log.variantId?._id || null,
-        variantLabel: log.variantId ? `${log.variantId.color || 'Màu chuẩn'} / ${log.variantId.size || 'Size chuẩn'}` : 'Kho sản phẩm chính',
+        variantLabel: log.variantId ? (
+            (log.variantId.colorId?.name && log.variantId.size) 
+            ? `${log.variantId.colorId.name} / ${log.variantId.size}`
+            : (log.variantId.colorId?.name || log.variantId.size || 'Mặc định')
+        ) : 'Kho sản phẩm chính',
         createdAt: log.createdAt
     };
 }

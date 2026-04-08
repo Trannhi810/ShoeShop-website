@@ -14,7 +14,7 @@ const {
 async function getPreparedInventoryData() {
     const [products, variants, categories] = await Promise.all([
         Product.find({}).sort({ createdAt: -1 }).lean(),
-        ProductVariant.find({}).sort({ createdAt: -1 }).lean(),
+        ProductVariant.find({}).populate('colorId').sort({ createdAt: -1 }).lean(),
         Category.find({}).lean()
     ]);
 
@@ -40,7 +40,7 @@ const getOverview = async () => {
         .sort({ createdAt: -1 })
         .limit(8)
         .populate('productId', 'name')
-        .populate('variantId', 'size color');
+        .populate({ path: 'variantId', populate: { path: 'colorId', select: 'name hexCode' } });
 
     return {
         stats: {
@@ -60,7 +60,11 @@ const getOverview = async () => {
             referenceId: log.referenceId || '',
             note: log.note || '',
             productName: log.productId?.name || 'Sản phẩm không xác định',
-            variantLabel: log.variantId ? `${log.variantId.color || 'Màu chuẩn'} / ${log.variantId.size || 'Size chuẩn'}` : 'Kho sản phẩm chính',
+            variantLabel: log.variantId ? (
+                (log.variantId.colorId?.name && log.variantId.size)
+                ? `${log.variantId.colorId.name} / ${log.variantId.size}`
+                : (log.variantId.colorId?.name || log.variantId.size || 'Mặc định')
+            ) : 'Kho sản phẩm chính',
             createdAt: log.createdAt
         }))
     };
@@ -100,7 +104,7 @@ const getLogs = async (queryParams) => {
     const logs = await InventoryLog.find(query)
         .sort({ createdAt: -1 })
         .populate('productId', 'name')
-        .populate('variantId', 'size color')
+        .populate({ path: 'variantId', populate: { path: 'colorId', select: 'name hexCode' } })
         .lean();
 
     let filtered = logs;

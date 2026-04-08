@@ -160,6 +160,9 @@ function openAddModal() {
     document.getElementById('form-isActive').value = 'true';
     document.getElementById('form-image-file').value = '';
     document.getElementById('form-image-url').value = '';
+    document.getElementById('form-product-stock-display').value = '0';
+    document.getElementById('form-sizes').value = '';
+    document.getElementById('form-group-sizes').style.display = 'block';
     document.getElementById('image-preview-container').style.display = 'none';
     document.getElementById('form-image-preview').src = '';
     populateCategorySelect('');
@@ -178,7 +181,9 @@ async function openEditModal(id) {
         document.getElementById('form-name').value        = p.name;
         document.getElementById('form-description').value = p.description || '';
         document.getElementById('form-price').value       = p.price || 0;
+        document.getElementById('form-product-stock-display').value = p.stock || 0;
         document.getElementById('form-isActive').value    = p.isActive ? 'true' : 'false';
+        document.getElementById('form-group-sizes').style.display = 'none';
         
         // Populate existing image URL
         const imageUrl = (p.images && p.images.length > 0) ? p.images[0].url : '';
@@ -211,6 +216,10 @@ async function submitProductForm(e) {
     fd.append('price', parseFloat(document.getElementById('form-price').value) || 0);
     fd.append('isActive', document.getElementById('form-isActive').value === 'true');
     fd.append('categoryId', catVal || '');
+
+    if (!isEditMode) {
+        fd.append('sizes', document.getElementById('form-sizes').value.trim());
+    }
 
     if (imageFile) {
         // Nếu có chọn file mới → upload file (backend xử lý req.files)
@@ -513,6 +522,7 @@ function editVariant(v) {
     document.getElementById('form-variant-size').value = v.size || '';
     document.getElementById('form-variant-color').value = v.colorId?._id || v.colorId || '';
     document.getElementById('form-variant-price').value = v.price || 0;
+    document.getElementById('form-variant-stock-display').value = v.stock || 0;
     document.getElementById('btn-submit-variant').innerText = 'Cập nhật';
 }
 
@@ -520,6 +530,7 @@ function resetVariantForm() {
     currentEditVariantId = null;
     document.getElementById('variant-form').reset();
     document.getElementById('form-variant-id').value = '';
+    document.getElementById('form-variant-stock-display').value = '';
     document.getElementById('btn-submit-variant').innerText = 'Thêm';
 }
 

@@ -9,8 +9,8 @@
     <!-- MENU -->
     <nav class="main-nav">
       <a href="/index.html">Trang chủ</a>
-      <a href="/pages/products.html">Sản phẩm</a>
-      <a href="/pages/cart.html" style="position: relative; display: inline-flex; align-items: center; gap: 4px;">
+      <a href="/pages/customer/products.html">Sản phẩm</a>
+      <a href="/pages/customer/cart.html" style="position: relative; display: inline-flex; align-items: center; gap: 4px;">
         Giỏ hàng
         <span id="cartCount" style="display: none; background: #e63946; color: white; border-radius: 50%; padding: 2px 6px; font-size: 11px; font-weight: bold;">0</span>
       </a>
@@ -27,7 +27,7 @@
     const searchInput = document.getElementById('searchInput');
     const searchTerm = searchInput.value.trim();
     if (searchTerm) {
-      window.location.href = `/pages/products.html?search=${encodeURIComponent(searchTerm)}`;
+      window.location.href = `/pages/customer/products.html?search=${encodeURIComponent(searchTerm)}`;
     }
   }
 
@@ -79,15 +79,15 @@
       let extra = "";
 
       if (user.role === "admin" || user.role === "ADMIN") {
-        extra += `<a class="header-link" href="/admin-dashboard.html">Admin</a>`;
+        extra += `<a class="header-link" href="/pages/admin/dashboard.html">Admin</a>`;
       }
 
       if (user.role === "staff" || user.role === "STAFF") {
-        extra += `<a class="header-link" href="/pages/staff-dashboard.html">Staff</a>`;
+        extra += `<a class="header-link" href="/pages/staff/dashboard.html">Staff</a>`;
       }
 
       if (user.role === "customer" || user.role === "CUSTOMER") {
-        extra += `<a class="header-link" href="/pages/orders.html">Đơn hàng</a>`;
+        extra += `<a class="header-link" href="/pages/customer/orders.html">Đơn hàng</a>`;
       }
 
       headerRight.innerHTML = `
@@ -102,8 +102,8 @@
       }
     } else {
       headerRight.innerHTML = `
-      <a class="header-link" href="/pages/auth.html">Đăng nhập</a>
-      <a class="header-link" href="/pages/auth.html?tab=register">Đăng ký</a>
+      <a class="header-link" href="/pages/customer/auth.html">Đăng nhập</a>
+      <a class="header-link" href="/pages/customer/auth.html?tab=register">Đăng ký</a>
     `;
     }
   }

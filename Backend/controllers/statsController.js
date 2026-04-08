@@ -1,7 +1,8 @@
-const User     = require('../schemas/userSchema');
-const Product  = require('../schemas/productSchema');
-const Category = require('../schemas/categorySchema');
-const Order    = require('../schemas/orderSchema');
+const {
+    getDashboardStats: getDashboardStatsService,
+    getStaffStats: getStaffStatsService
+} = require('../services/statsService');
+const { handleServiceError } = require('../utils/serviceErrorHandler');
 
 // ─────────────────────────────────────────────
 // [ADMIN] GET /api/stats/dashboard
@@ -11,60 +12,10 @@ const Order    = require('../schemas/orderSchema');
 // ─────────────────────────────────────────────
 const getDashboardStats = async (req, res) => {
     try {
-        const [
-            totalUsers,
-            activeUsers,
-            totalProducts,
-            totalCategories,
-            totalOrders,
-            pendingOrders,
-            shippingOrders,
-            completedOrders,
-            cancelledOrders,
-            revenueResult
-        ] = await Promise.all([
-            User.countDocuments(),
-            User.countDocuments({ isLocked: false }),
-            Product.countDocuments(),
-            Category.countDocuments(),
-            Order.countDocuments(),
-            Order.countDocuments({ status: 'PENDING' }),
-            Order.countDocuments({ status: 'SHIPPING' }),
-            Order.countDocuments({ status: 'COMPLETED' }),
-            Order.countDocuments({ status: 'CANCELLED' }),
-            Order.aggregate([
-                { $match: { status: 'COMPLETED' } },
-                { $group: { _id: null, total: { $sum: '$totalAmount' } } }
-            ])
-        ]);
-
-        const totalRevenue = revenueResult[0]?.total || 0;
-
-        res.json({
-            users: {
-                total:  totalUsers,
-                active: activeUsers,
-                locked: totalUsers - activeUsers
-            },
-            products: {
-                total: totalProducts
-            },
-            categories: {
-                total: totalCategories
-            },
-            orders: {
-                total:     totalOrders,
-                pending:   pendingOrders,
-                shipping:  shippingOrders,
-                completed: completedOrders,
-                cancelled: cancelledOrders
-            },
-            revenue: {
-                total: totalRevenue
-            }
-        });
+        const data = await getDashboardStatsService();
+        res.json(data);
     } catch (err) {
-        res.status(500).json({ message: err.message });
+        return handleServiceError(res, err);
     }
 };
 
@@ -76,28 +27,10 @@ const getDashboardStats = async (req, res) => {
 // ─────────────────────────────────────────────
 const getStaffStats = async (req, res) => {
     try {
-        const [
-            totalProducts,
-            pendingOrders,
-            shippingOrders,
-            totalOrders
-        ] = await Promise.all([
-            Product.countDocuments(),
-            Order.countDocuments({ status: 'PENDING' }),
-            Order.countDocuments({ status: 'SHIPPING' }),
-            Order.countDocuments()
-        ]);
-
-        res.json({
-            products: { total: totalProducts },
-            orders: {
-                total:    totalOrders,
-                pending:  pendingOrders,
-                shipping: shippingOrders
-            }
-        });
+        const data = await getStaffStatsService();
+        res.json(data);
     } catch (err) {
-        res.status(500).json({ message: err.message });
+        return handleServiceError(res, err);
     }
 };
 

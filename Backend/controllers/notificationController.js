@@ -1,4 +1,12 @@
-const Notification = require('../schemas/notificationSchema');
+const {
+    getMyNotifications: getMyNotificationsService,
+    markAllAsRead: markAllAsReadService,
+    markOneAsRead: markOneAsReadService,
+    deleteNotification: deleteNotificationService,
+    createNotification: createNotificationService,
+    broadcastNotification: broadcastNotificationService
+} = require('../services/notificationService');
+const { handleServiceError } = require('../utils/serviceErrorHandler');
 
 // ─────────────────────────────────────────────
 // [ANY] GET /api/notifications
@@ -9,18 +17,10 @@ const Notification = require('../schemas/notificationSchema');
 // ─────────────────────────────────────────────
 const getMyNotifications = async (req, res) => {
     try {
-        const filter = { userId: req.user.id };
-        if (req.query.unread === 'true') filter.isRead = false;
-
-        const notifications = await Notification.find(filter)
-            .sort({ createdAt: -1 })
-            .limit(50);
-
-        const unreadCount = await Notification.countDocuments({ userId: req.user.id, isRead: false });
-
-        res.json({ notifications, unreadCount });
+        const data = await getMyNotificationsService(req.user.id, req.query.unread);
+        res.json(data);
     } catch (err) {
-        res.status(500).json({ message: err.message });
+        return handleServiceError(res, err);
     }
 };
 
@@ -31,13 +31,10 @@ const getMyNotifications = async (req, res) => {
 // ─────────────────────────────────────────────
 const markAllAsRead = async (req, res) => {
     try {
-        await Notification.updateMany(
-            { userId: req.user.id, isRead: false },
-            { isRead: true }
-        );
-        res.json({ message: 'Đã đánh dấu tất cả thông báo là đã đọc' });
+        const data = await markAllAsReadService(req.user.id);
+        res.json(data);
     } catch (err) {
-        res.status(500).json({ message: err.message });
+        return handleServiceError(res, err);
     }
 };
 
@@ -48,15 +45,10 @@ const markAllAsRead = async (req, res) => {
 // ─────────────────────────────────────────────
 const markOneAsRead = async (req, res) => {
     try {
-        const notif = await Notification.findOneAndUpdate(
-            { _id: req.params.id, userId: req.user.id },
-            { isRead: true },
-            { new: true }
-        );
-        if (!notif) return res.status(404).json({ message: 'Không tìm thấy thông báo' });
-        res.json({ message: 'Đã đánh dấu đã đọc', notification: notif });
+        const data = await markOneAsReadService(req.params.id, req.user.id);
+        res.json(data);
     } catch (err) {
-        res.status(500).json({ message: err.message });
+        return handleServiceError(res, err);
     }
 };
 
@@ -67,14 +59,10 @@ const markOneAsRead = async (req, res) => {
 // ─────────────────────────────────────────────
 const deleteNotification = async (req, res) => {
     try {
-        const notif = await Notification.findOneAndDelete({
-            _id: req.params.id,
-            userId: req.user.id
-        });
-        if (!notif) return res.status(404).json({ message: 'Không tìm thấy thông báo' });
-        res.json({ message: 'Đã xóa thông báo' });
+        const data = await deleteNotificationService(req.params.id, req.user.id);
+        res.json(data);
     } catch (err) {
-        res.status(500).json({ message: err.message });
+        return handleServiceError(res, err);
     }
 };
 
@@ -83,11 +71,7 @@ const deleteNotification = async (req, res) => {
 // Ví dụ: tạo thông báo khi user đặt hàng thành công
 // ─────────────────────────────────────────────
 const createNotification = async (userId, title, message) => {
-    try {
-        await Notification.create({ userId, title, message });
-    } catch (err) {
-        console.error('Lỗi tạo notification:', err.message);
-    }
+    return createNotificationService(userId, title, message);
 };
 
 // ─────────────────────────────────────────────
@@ -98,17 +82,10 @@ const createNotification = async (userId, title, message) => {
 // ─────────────────────────────────────────────
 const broadcastNotification = async (req, res) => {
     try {
-        const { userIds, title, message } = req.body;
-        if (!userIds || !Array.isArray(userIds) || !title || !message) {
-            return res.status(400).json({ message: 'Thiếu thông tin: userIds (array), title, message' });
-        }
-
-        const docs = userIds.map(uid => ({ userId: uid, title, message }));
-        await Notification.insertMany(docs);
-
-        res.status(201).json({ message: `Đã gửi thông báo đến ${userIds.length} người dùng` });
+        const data = await broadcastNotificationService(req.body);
+        res.status(201).json(data);
     } catch (err) {
-        res.status(500).json({ message: err.message });
+        return handleServiceError(res, err);
     }
 };
 

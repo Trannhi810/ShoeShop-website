@@ -11,11 +11,25 @@ const inventoryRoutes = require("./routes/inventoryRoutes");
 const orderRoutes    = require("./routes/orderRoutes");
 const paymentRoutes  = require("./routes/paymentRoutes");
 const colorRoutes    = require("./routes/colorRoutes");
+const productVariantController = require("./controllers/productVariantController");
+const { getAllColors, createColor, deleteColor } = require("./controllers/colorController");
+const { verifyToken, verifyAdmin } = require("./middlewares/authMiddleware");
+const upload = require("./middlewares/uploadMiddleware");
 
 const app = express();
 
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
+
+// Explicit API mappings for admin product/color screens
+app.get("/api/colors", getAllColors);
+app.post("/api/colors", verifyToken, verifyAdmin, createColor);
+app.delete("/api/colors/:id", verifyToken, verifyAdmin, deleteColor);
+app.get("/api/products/:productId/variants", productVariantController.getVariants);
+app.post("/api/products/:productId/variants", verifyToken, verifyAdmin, upload.single("image"), productVariantController.addVariant);
+app.put("/api/products/variants/:variantId", verifyToken, verifyAdmin, upload.single("image"), productVariantController.updateVariant);
+app.delete("/api/products/variants/:variantId", verifyToken, verifyAdmin, productVariantController.deleteVariant);
+app.patch("/api/products/:productId/variants/batch-price", verifyToken, verifyAdmin, productVariantController.batchUpdateVariantPrice);
 
 // Gọi hàm kết nối database
 connectDB();

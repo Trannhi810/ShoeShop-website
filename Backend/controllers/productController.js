@@ -3,7 +3,10 @@ const {
     getProductById: getProductByIdService,
     createProduct: createProductService,
     updateProduct: updateProductService,
-    deleteProduct: deleteProductService
+    deleteProduct: deleteProductService,
+    uploadColorImage: uploadColorImageService,
+    updateImageOrder: updateImageOrderService,
+    deleteColorImage: deleteColorImageService
 } = require('../services/productService');
 const { handleServiceError } = require('../utils/serviceErrorHandler');
 
@@ -57,5 +60,41 @@ const deleteProduct = async (req, res) => {
     }
 };
 
-module.exports = { getAllProducts, getProductById, createProduct, updateProduct, deleteProduct };
+const uploadColorImage = async (req, res) => {
+    try {
+        const product = await uploadColorImageService(req.params.id, req.params.colorId, req.file);
+        return res.status(200).json(product);
+    } catch (error) {
+        return handleServiceError(res, error);
+    }
+};
+
+const updateImageOrder = async (req, res) => {
+    try {
+        const product = await updateImageOrderService(req.params.id, req.body.imageId, req.body.order);
+        return res.status(200).json(product);
+    } catch (error) {
+        return handleServiceError(res, error);
+    }
+};
+
+const deleteColorImage = async (req, res) => {
+    try {
+        const product = await deleteColorImageService(req.params.id, req.params.imageId);
+        return res.status(200).json(product);
+    } catch (error) {
+        return handleServiceError(res, error);
+    }
+};
+
+module.exports = {
+    getAllProducts,
+    getProductById,
+    createProduct,
+    updateProduct,
+    deleteProduct,
+    uploadColorImage,
+    updateImageOrder,
+    deleteColorImage
+};
 
