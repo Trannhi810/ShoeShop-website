@@ -3,10 +3,6 @@ const qs = require('qs');
 const moment = require('moment');
 const Order = require('../schemas/orderSchema');
 
-/**
- * Sắp xếp object theo thứ tự alphabet và URL-encode key + value.
- * Đây là chuẩn chính thức từ tài liệu VNPAY Node.js.
- */
 function sortObject(obj) {
     let sorted = {};
     let str = [];
@@ -23,7 +19,7 @@ function sortObject(obj) {
     return sorted;
 }
 
-exports.createPaymentUrl = (req, res) => {
+exports.createPayment = (req, res) => {
     try {
         let ipAddr = req.headers['x-forwarded-for'] ||
             req.socket.remoteAddress ||
@@ -34,31 +30,31 @@ exports.createPaymentUrl = (req, res) => {
             ipAddr = '127.0.0.1';
         }
 
-        const tmnCode   = (process.env.VNP_TMN_CODE    || '').trim();
-        const secretKey = (process.env.VNP_HASH_SECRET  || '').trim();
-        const vnpUrl    = (process.env.VNP_URL           || 'https://sandbox.vnpayment.vn/paymentv2/vpcpay.html').trim();
-        const returnUrl = (process.env.VNP_RETURN_URL    || 'http://localhost:3000/api/payment/vnpay_return').trim();
+        const tmnCode = (process.env.VNP_TMN_CODE || '').trim();
+        const secretKey = (process.env.VNP_HASH_SECRET || '').trim();
+        const vnpUrl = (process.env.VNP_URL || 'https://sandbox.vnpayment.vn/paymentv2/vpcpay.html').trim();
+        const returnUrl = (process.env.VNP_RETURN_URL || 'http://localhost:3000/api/payments/vnpay-return').trim();
 
-        const date       = new Date();
+        const date = new Date();
         const createDate = moment(date).format('YYYYMMDDHHmmss');
-        const orderId    = req.body.orderId || moment(date).format('DDHHmmss');
-        const amount     = req.body.amount;
-        const bankCode   = req.body.bankCode || '';
-        const locale     = req.body.language || 'vn';
+        const orderId = req.body.orderId || moment(date).format('DDHHmmss');
+        const amount = req.body.amount;
+        const bankCode = req.body.bankCode || '';
+        const locale = req.body.language || 'vn';
 
         let vnp_Params = {};
-        vnp_Params['vnp_Version']   = '2.1.0';
-        vnp_Params['vnp_Command']   = 'pay';
-        vnp_Params['vnp_TmnCode']   = tmnCode;
-        vnp_Params['vnp_Locale']    = locale;
-        vnp_Params['vnp_CurrCode']  = 'VND';
-        vnp_Params['vnp_TxnRef']    = orderId;
+        vnp_Params['vnp_Version'] = '2.1.0';
+        vnp_Params['vnp_Command'] = 'pay';
+        vnp_Params['vnp_TmnCode'] = tmnCode;
+        vnp_Params['vnp_Locale'] = locale;
+        vnp_Params['vnp_CurrCode'] = 'VND';
+        vnp_Params['vnp_TxnRef'] = orderId;
         vnp_Params['vnp_OrderInfo'] = 'Thanh toan don hang ' + orderId;
         vnp_Params['vnp_OrderType'] = 'other';
-        vnp_Params['vnp_Amount']    = amount * 100;
+        vnp_Params['vnp_Amount'] = amount * 100;
         vnp_Params['vnp_ReturnUrl'] = returnUrl;
-        vnp_Params['vnp_IpAddr']    = ipAddr;
-        vnp_Params['vnp_CreateDate']= createDate;
+        vnp_Params['vnp_IpAddr'] = ipAddr;
+        vnp_Params['vnp_CreateDate'] = createDate;
 
         if (bankCode) {
             vnp_Params['vnp_BankCode'] = bankCode;
@@ -71,7 +67,7 @@ exports.createPaymentUrl = (req, res) => {
         const signData = qs.stringify(vnp_Params, { encode: false });
 
         // Bước 3: Băm HMAC-SHA512
-        const hmac   = crypto.createHmac('sha512', secretKey);
+        const hmac = crypto.createHmac('sha512', secretKey);
         const signed = hmac.update(Buffer.from(signData, 'utf-8')).digest('hex');
 
         // Bước 4: Gắn chữ ký vào params và tạo URL
@@ -103,10 +99,10 @@ exports.vnpayReturn = async (req, res) => {
 
         vnp_Params = sortObject(vnp_Params);
 
-        const secretKey  = (process.env.VNP_HASH_SECRET || '').trim();
-        const signData   = qs.stringify(vnp_Params, { encode: false });
-        const hmac       = crypto.createHmac('sha512', secretKey);
-        const signed     = hmac.update(Buffer.from(signData, 'utf-8')).digest('hex');
+        const secretKey = (process.env.VNP_HASH_SECRET || '').trim();
+        const signData = qs.stringify(vnp_Params, { encode: false });
+        const hmac = crypto.createHmac('sha512', secretKey);
+        const signed = hmac.update(Buffer.from(signData, 'utf-8')).digest('hex');
 
         if (secureHash === signed) {
             const rspCode = vnp_Params['vnp_ResponseCode'];
@@ -176,7 +172,7 @@ exports.vnpayIpn = async (req, res) => {
             } else {
                 order.paymentStatus = 'FAILED';
             }
-            
+
             await order.save();
 
             return res.status(200).json({ RspCode: '00', Message: 'Confirm Success' });

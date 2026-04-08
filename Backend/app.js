@@ -22,15 +22,7 @@ const app = express();
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
-// Explicit API mappings for admin product/color screens
-app.get("/api/colors", getAllColors);
-app.post("/api/colors", verifyToken, verifyAdmin, createColor);
-app.delete("/api/colors/:id", verifyToken, verifyAdmin, deleteColor);
-app.get("/api/products/:productId/variants", productVariantController.getVariants);
-app.post("/api/products/:productId/variants", verifyToken, verifyAdmin, upload.single("image"), productVariantController.addVariant);
-app.put("/api/products/variants/:variantId", verifyToken, verifyAdmin, upload.single("image"), productVariantController.updateVariant);
-app.delete("/api/products/variants/:variantId", verifyToken, verifyAdmin, productVariantController.deleteVariant);
-app.patch("/api/products/:productId/variants/batch-price", verifyToken, verifyAdmin, productVariantController.batchUpdateVariantPrice);
+// Explicit API mappings removed (already handled in specific route files)
 
 // Gọi hàm kết nối database
 connectDB();
@@ -42,7 +34,7 @@ app.use("/api/categories", categoryRoutes);
 app.use("/api/cart",       cartRoutes);
 app.use("/api/inventory",  inventoryRoutes);
 app.use("/api/orders",     orderRoutes);
-app.use("/api/payment",    paymentRoutes);
+app.use("/api/payments",   paymentRoutes);
 app.use("/api/colors",     colorRoutes);
 app.use("/api/notifications", notificationRoutes);
 
@@ -125,6 +117,12 @@ app.get("/pages/notifications.html", (req, res) => {
 // Ưu tiên dùng PORT trong file .env, nếu không có thì chạy port 5000
 const PORT = process.env.PORT || 5000;
 
+// 404 Handler cho các API không tồn tại (Tránh việc trả về HTML <!DOCTYPE)
+app.use("/api", (req, res) => {
+    res.status(404).json({ success: false, message: "API endpoint not found" });
+});
+
+// Error handler chung
 app.use((err, req, res, next) => {
     console.error(err.stack);
     res.status(500).json({
