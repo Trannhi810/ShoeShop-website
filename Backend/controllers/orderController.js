@@ -1,10 +1,10 @@
-const {
-    createOrderFromCart,
-    getOrdersByUser,
-    getOrderDetailByUser,
-    getAllOrdersAdmin,
-    updateOrderStatusAdmin,
-    cancelOrderUser
+const { 
+    createOrderFromCart, 
+    getOrdersByUser, 
+    getOrderDetailByUser, 
+    getAllOrdersAdmin, 
+    updateOrderStatusAdmin, 
+    cancelOrderUser 
 } = require('../services/orderService');
 const { sendSuccess } = require('../utils/responseHelper');
 const { handleServiceError } = require('../utils/serviceErrorHandler');
@@ -15,7 +15,7 @@ const socketUtils = require('../utils/socketUtils');
 const createOrder = async (req, res) => {
     try {
         const populatedOrder = await createOrderFromCart(req.user.id, req.body);
-
+        
         // Notify user
         const orderCode = populatedOrder._id.toString().slice(-6).toUpperCase();
         const notification = await Notification.create({
@@ -59,9 +59,9 @@ const updateOrderStatus = async (req, res) => {
     try {
         const { status } = req.body;
         const orderId = req.params.orderId;
-
+        
         const updatedOrder = await updateOrderStatusService(orderId, status);
-
+        
         // Notify Customer about status change
         let statusText = status;
         if (status === 'APPROVED') statusText = 'Đã duyệt';
@@ -70,22 +70,18 @@ const updateOrderStatus = async (req, res) => {
         if (status === 'CANCELLED') statusText = 'Đã bị hủy';
 
         const orderCode = updatedOrder.orderNumber || updatedOrder._id.toString().slice(-6).toUpperCase();
-
+        
         const notification = await Notification.create({
             userId: updatedOrder.userId,
             title: "Cập nhật đơn hàng",
             message: `Đơn hàng #${orderCode} của bạn đã được chuyển sang trạng thái: ${statusText}`
         });
-
+        
         socketUtils.sendNotificationToUser(updatedOrder.userId, notification);
 
         return sendSuccess(res, updatedOrder, 'Cập nhật trạng thái thành công');
     } catch (error) {
         console.error('[updateOrderStatus] Error:', error);
-        return handleServiceError(res, error, 'Đã xảy ra lỗi khi cập nhật trạng thái đơn hàng.');
-    }
-};
-
 // GET /api/orders/admin
 const getAllOrdersAdminHandler = async (req, res) => {
     try {
@@ -123,12 +119,11 @@ const cancelOrderHandler = async (req, res) => {
     }
 };
 
-module.exports = {
-    createOrder,
-    getMyOrders,
+module.exports = { 
+    createOrder, 
+    getMyOrders, 
     getOrderById,
     getAllOrdersAdmin: getAllOrdersAdminHandler,
-    updateOrderStatus: updateOrderStatus,
     updateOrderStatusAdmin: updateOrderStatusAdminHandler,
     cancelOrder: cancelOrderHandler
 };

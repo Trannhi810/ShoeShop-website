@@ -3,16 +3,21 @@ const router = express.Router();
 const orderController = require('../controllers/orderController');
 const { verifyToken, verifyAdmin } = require('../middlewares/authMiddleware');
 
+// Tất cả các route đơn hàng đều yêu cầu đăng nhập
 router.use(verifyToken);
 
-// Admin Routes
-router.get('/', verifyAdmin, orderController.getAllOrdersAdmin);
-router.patch('/:orderId/status', verifyAdmin, orderController.updateOrderStatus);
+// --- Admin Routes ---
+// Chú ý: Đặt /admin lên trước /:orderId để tránh bị nhầm lẫn route
+router.get('/admin', verifyAdmin, orderController.getAllOrdersAdmin);
+router.put('/admin/:orderId/status', verifyAdmin, orderController.updateOrderStatusAdmin);
 
-// User Routes
-router.post('/', orderController.createOrder); // Checkout
-router.get('/mine', orderController.getMyOrders); // My orders
-router.get('/:orderId', orderController.getOrderById); // Order detail
-router.patch('/:orderId/cancel', orderController.cancelOrder); // Cancel order
+// --- User Routes ---
+router.post('/checkout', orderController.createOrder);
+router.get('/my-orders', orderController.getMyOrders);
+router.put('/:orderId/cancel', orderController.cancelOrder);
+router.get('/:orderId', orderController.getOrderById);
+
+// Admin route
+router.patch('/admin/:orderId/status', verifyAdmin, orderController.updateOrderStatus);
 
 module.exports = router;

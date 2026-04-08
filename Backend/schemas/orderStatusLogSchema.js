@@ -1,21 +1,17 @@
-const mongoose = require('mongoose');
-
 const orderStatusLogSchema = new mongoose.Schema({
   orderId: {
     type: mongoose.Schema.Types.ObjectId,
-    ref: "Order",
-    required: true
+    ref: "Order"
   },
-  oldStatus: { type: String, default: null },
-  newStatus: { type: String, required: true },
+  oldStatus: String,
+  newStatus: String,
 
   changedBy: {
     type: mongoose.Schema.Types.ObjectId,
-    ref: "User",
-    default: null
+    ref: "User"
   },
 
-  note: { type: String, default: '' }
+  note: String
 }, { timestamps: true });
 
 module.exports = mongoose.model("OrderStatusLog", orderStatusLogSchema);
