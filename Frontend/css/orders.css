@@ -349,3 +349,11 @@
     font-size: 18px;
   }
 }
+@charset " UTF-8\;
+
+/* B? sung style cho tr?ng thái m?i và nút h?y */
+.status-PROCESSING { background: #fff3cd; color: #856404; border: 1px solid #ffe69b; }
+.status-RETURNED { background: #f3e8ff; color: #6b21a8; border: 1px solid #e9d5ff; }
+.btn-cancel-order { display: inline-block; background: transparent; color: #b91c1c; border: 1.5px solid #fca5a5; padding: 7px 16px; border-radius: 10px; font-weight: 600; font-size: 13px; cursor: pointer; transition: background 0.2s, color 0.2s; }
+.btn-cancel-order:hover { background: #fee2e2; }
+.order-card-footer-right { display: flex; align-items: center; gap: 16px; }

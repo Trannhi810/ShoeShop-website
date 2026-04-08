@@ -141,7 +141,7 @@ async function handleOrderSubmit(e) {
     submitBtn.textContent = '⏳ Đang xử lý...';
 
     try {
-        const res = await fetch('/api/orders/checkout', {
+        const res = await fetch('/api/orders', {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
@@ -158,7 +158,7 @@ async function handleOrderSubmit(e) {
         // Nếu là VNPAY, gọi tiếp API tạo URL
         if (method === 'VNPAY') {
             submitBtn.textContent = '🔄 Đang chuyển hướng VNPAY...';
-            const vnpRes = await fetch('/api/payment/create_payment_url', {
+            const vnpRes = await fetch('/api/payments', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',

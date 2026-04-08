@@ -17,26 +17,26 @@ const colorApi = {
 const userApi = {
     /** Lấy danh sách users (admin). params: URLSearchParams hoặc string */
     getAll(params = '') {
-        return apiFetch(`/api/users/admin/users?${params}`);
+        return apiFetch(`/api/users?${params}`);
     },
     /** Lấy chi tiết 1 user */
     getById(id) {
-        return apiFetch(`/api/users/admin/users/${id}`);
+        return apiFetch(`/api/users/${id}`);
     },
     /** Cập nhật thông tin user */
     update(id, data) {
-        return apiFetch(`/api/users/admin/users/${id}`, {
+        return apiFetch(`/api/users/${id}`, {
             method: 'PUT',
             body: JSON.stringify(data)
         });
     },
     /** Khóa / Mở khóa tài khoản */
     toggleLock(id) {
-        return apiFetch(`/api/users/admin/users/${id}/toggle-lock`, { method: 'PATCH' });
+        return apiFetch(`/api/users/${id}/toggle-lock`, { method: 'PATCH' });
     },
     /** Xóa tài khoản */
     delete(id) {
-        return apiFetch(`/api/users/admin/users/${id}`, { method: 'DELETE' });
+        return apiFetch(`/api/users/${id}`, { method: 'DELETE' });
     },
     /** Đăng ký tài khoản mới (admin tạo) */
     register(data) {
@@ -47,10 +47,10 @@ const userApi = {
     },
     /** Thống kê nhanh */
     stats: {
-        total()  { return apiFetch('/api/users/admin/users?limit=1'); },
-        active() { return apiFetch('/api/users/admin/users?status=active&limit=1'); },
-        locked() { return apiFetch('/api/users/admin/users?status=locked&limit=1'); },
-        admins() { return apiFetch('/api/users/admin/users?role=ADMIN&limit=1'); },
+        total()  { return apiFetch('/api/users?limit=1'); },
+        active() { return apiFetch('/api/users?status=active&limit=1'); },
+        locked() { return apiFetch('/api/users?status=locked&limit=1'); },
+        admins() { return apiFetch('/api/users?role=ADMIN&limit=1'); },
     }
 };
 
@@ -165,25 +165,25 @@ const cartApi = {
     },
     /** Thêm sản phẩm vào giỏ hàng */
     addToCart(variantId, quantity = 1) {
-        return apiFetch('/api/cart/add', {
+        return apiFetch('/api/cart', {
             method: 'POST',
             body: JSON.stringify({ variantId, quantity })
         });
     },
     /** Cập nhật số lượng item */
     updateQuantity(itemId, quantity) {
-        return apiFetch(`/api/cart/update/${itemId}`, {
-            method: 'PUT',
+        return apiFetch(`/api/cart/items/${itemId}`, {
+            method: 'PATCH',
             body: JSON.stringify({ quantity })
         });
     },
     /** Xóa 1 item khỏi giỏ hàng */
     removeItem(itemId) {
-        return apiFetch(`/api/cart/remove/${itemId}`, { method: 'DELETE' });
+        return apiFetch(`/api/cart/items/${itemId}`, { method: 'DELETE' });
     },
     /** Xóa toàn bộ giỏ hàng */
     clearCart() {
-        return apiFetch('/api/cart/clear', { method: 'DELETE' });
+        return apiFetch('/api/cart', { method: 'DELETE' });
     }
 };
 
@@ -209,10 +209,10 @@ const inventoryApi = {
 const orderApi = {
     // Admin APIs
     getAllAdmin(params = '') {
-        return apiFetch(`/api/orders/admin?${params}`);
+        return apiFetch(`/api/orders?${params}`);
     },
     updateStatusAdmin(orderId, statusData) {
-        return apiFetch(`/api/orders/admin/${orderId}/status`, {
+        return apiFetch(`/api/orders/${orderId}/status`, {
             method: 'PUT',
             body: JSON.stringify(statusData)
         });
@@ -220,20 +220,20 @@ const orderApi = {
     
     // User APIs
     getMyOrders() {
-        return apiFetch('/api/orders/my-orders');
+        return apiFetch('/api/orders/mine');
     },
     getById(orderId) {
         return apiFetch(`/api/orders/${orderId}`);
     },
     create(data) {
-        return apiFetch('/api/orders/checkout', {
+        return apiFetch('/api/orders', {
             method: 'POST',
             body: JSON.stringify(data)
         });
     },
     cancel(orderId) {
         return apiFetch(`/api/orders/${orderId}/cancel`, {
-            method: 'PUT'
+            method: 'PATCH'
         });
     }
 };

@@ -50,7 +50,7 @@ const PAYMENT_MAP = {
 
 // ===== FETCH ORDERS =====
 async function fetchMyOrders() {
-    const res = await fetch('/api/orders/my-orders', {
+    const res = await fetch('/api/orders/mine', {
         headers: { 'Authorization': 'Bearer ' + getToken() }
     });
     const data = await res.json();
@@ -206,7 +206,7 @@ function createOrderCard(order) {
             if(confirm('Bạn có chắc chắn muốn hủy đơn hàng này?')) {
                 try {
                     const res = await fetch(`/api/orders/${order._id}/cancel`, {
-                        method: 'PUT',
+                        method: 'PATCH',
                         headers: { 'Authorization': 'Bearer ' + getToken() }
                     });
                     const data = await res.json();
