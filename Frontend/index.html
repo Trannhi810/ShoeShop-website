@@ -188,8 +188,8 @@
       <p>Khám phá bộ sưu tập giày sneaker, running và casual hiện đại.</p>
 
       <div class="hero-actions">
-        <a class="btn-main" href="pages/products.html">Mua ngay</a>
-        <a class="btn-outline" href="pages/products.html">Xem sản phẩm</a>
+        <a class="btn-main" href="/pages/customer/products.html">Mua ngay</a>
+        <a class="btn-outline" href="/pages/customer/products.html">Xem sản phẩm</a>
       </div>
     </div>
 
@@ -205,7 +205,7 @@
 <section class="section">
   <div class="section-head">
     <h2>Sản phẩm nổi bật</h2>
-    <a href="pages/products.html">Xem tất cả</a>
+    <a href="/pages/customer/products.html">Xem tất cả</a>
   </div>
 
   <div id="featuredProducts" class="product-grid"></div>
@@ -245,9 +245,9 @@ function renderHeaderAuth() {
     let extra = "";
 
     if (user.role === "ADMIN") {
-      extra += `<a class="header-link" href="/admin-dashboard.html">Admin</a>`;
+      extra += `<a class="header-link" href="/pages/admin/dashboard.html">Admin</a>`;
     } else if (user.role === "STAFF") {
-      extra += `<a class="header-link" href="/pages/staff-dashboard.html">Staff</a>`;
+      extra += `<a class="header-link" href="/pages/staff/dashboard.html">Staff</a>`;
     }
 
     headerRight.innerHTML = `
@@ -258,8 +258,8 @@ function renderHeaderAuth() {
     `;
   } else {
     headerRight.innerHTML = `
-      <a class="header-link" href="pages/auth.html">Đăng nhập</a>
-      <a class="header-link" href="pages/auth.html?tab=register">Đăng ký</a>
+      <a class="header-link" href="/pages/customer/auth.html">Đăng nhập</a>
+      <a class="header-link" href="/pages/customer/auth.html?tab=register">Đăng ký</a>
     `;
   }
 }
@@ -284,7 +284,7 @@ async function renderFeaturedProducts() {
     container.innerHTML = featuredProducts.map(p => {
       const imgUrl = p.images && p.images.length > 0 ? p.images[0].url : 'https://images.unsplash.com/photo-1542291026-7eec264c27ff?auto=format&fit=crop&w=600&q=80';
       return `
-      <div class="product-card" onclick="window.location.href='pages/product-detail.html?id=${p._id}'">
+      <div class="product-card" onclick="window.location.href='/pages/customer/product-detail.html?id=${p._id}'">
         <div class="product-image-wrapper">
           <img src="${imgUrl}" alt="${p.name}" onerror="this.onerror=null;this.src='https://images.unsplash.com/photo-1542291026-7eec264c27ff?auto=format&fit=crop&w=600&q=80';">
           ${p.isNew ? '<span class="new-badge">MỚI</span>' : ''}
@@ -311,7 +311,7 @@ async function addToCart(productId) {
   
   if (!currentUser) {
     alert("Vui lòng đăng nhập để thêm vào giỏ hàng");
-    window.location.href = "pages/auth.html";
+    window.location.href = "/pages/customer/auth.html";
     return;
   }
 

@@ -194,7 +194,7 @@ async function renderOrders() {
     const user = getCurrentUser();
 
     if (!user || !getToken()) {
-        setEmptyState('🔒', 'Bạn chưa đăng nhập', 'Vui lòng đăng nhập để xem đơn hàng.', 'Đăng nhập ngay', '/pages/auth.html');
+        setEmptyState('🔒', 'Bạn chưa đăng nhập', 'Vui lòng đăng nhập để xem đơn hàng.', 'Đăng nhập ngay', '/pages/customer/auth.html');
         return;
     }
 
@@ -204,7 +204,7 @@ async function renderOrders() {
         const orders = await fetchMyOrders();
 
         if (!orders.length) {
-            setEmptyState('📦', 'Bạn chưa có đơn hàng nào', 'Hãy chọn cho mình một đôi giày ưng ý nhé!', 'Mua sắm ngay', '/pages/products.html');
+            setEmptyState('📦', 'Bạn chưa có đơn hàng nào', 'Hãy chọn cho mình một đôi giày ưng ý nhé!', 'Mua sắm ngay', '/pages/customer/products.html');
             return;
         }
 
@@ -216,7 +216,7 @@ async function renderOrders() {
 
     } catch (err) {
         console.error('[renderOrders] Error:', err);
-        setEmptyState('⚠️', 'Không thể tải đơn hàng', err.message, 'Thử lại', '/pages/orders.html');
+        setEmptyState('⚠️', 'Không thể tải đơn hàng', err.message, 'Thử lại', '/pages/customer/orders.html');
     }
 }
 
@@ -236,8 +236,8 @@ function renderHeaderAuth() {
     const user = getCurrentUser();
     if (user) {
         let extraLink = '';
-        if (user.role === 'ADMIN') extraLink = `<a class="header-link" href="/pages/admin-dashboard.html">Admin</a>`;
-        else if (user.role === 'STAFF') extraLink = `<a class="header-link" href="/pages/staff-dashboard.html">Staff</a>`;
+        if (user.role === 'ADMIN') extraLink = `<a class="header-link" href="/pages/admin/dashboard.html">Admin</a>`;
+        else if (user.role === 'STAFF') extraLink = `<a class="header-link" href="/pages/staff/dashboard.html">Staff</a>`;
         headerRight.innerHTML = `
             <div id="notificationBellArea"></div>
             ${extraLink}
@@ -247,8 +247,8 @@ function renderHeaderAuth() {
         if (typeof renderNotificationBell === 'function') renderNotificationBell();
     } else {
         headerRight.innerHTML = `
-            <a class="header-link" href="/pages/auth.html">Đăng nhập</a>
-            <a class="header-link" href="/pages/auth.html?tab=register">Đăng ký</a>
+            <a class="header-link" href="/pages/customer/auth.html">Đăng nhập</a>
+            <a class="header-link" href="/pages/customer/auth.html?tab=register">Đăng ký</a>
         `;
     }
 }
@@ -256,7 +256,7 @@ function renderHeaderAuth() {
 function handleLogout() {
     localStorage.removeItem(USER_KEY);
     localStorage.removeItem(TOKEN_KEY);
-    window.location.href = '/Frontend/index.html';
+    window.location.href = '/index.html';
 }
 
 // ===== BOOT =====

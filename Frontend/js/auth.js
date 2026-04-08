@@ -85,9 +85,9 @@ function handleLogin(event) {
         alert("Đăng nhập thành công");
 
         if (data.user.role === "ADMIN") {
-          window.location.href = "/admin-dashboard.html";
+          window.location.href = "/pages/admin/dashboard.html";
         } else if (data.user.role === "STAFF") {
-          window.location.href = "/pages/staff-dashboard.html";
+          window.location.href = "/pages/staff/dashboard.html";
         } else {
           // Chuyển về trang chủ để thấy header đã cập nhật
           window.location.href = "/index.html";
@@ -109,7 +109,7 @@ function logout() {
   localStorage.removeItem("shoeshop_token");
   localStorage.removeItem("shoeshop_current_user_v1");
   alert("Đã đăng xuất");
-  window.location.href = "../index.html";
+  window.location.href = "/index.html";
 }
 
 function switchTab(tab) {
@@ -179,9 +179,9 @@ function handleGoogleCallback(response) {
 
         // Redirect theo role
         if (data.user.role === "ADMIN") {
-          window.location.href = "/admin-dashboard.html";
+          window.location.href = "/pages/admin/dashboard.html";
         } else if (data.user.role === "STAFF") {
-          window.location.href = "/pages/staff-dashboard.html";
+          window.location.href = "/pages/staff/dashboard.html";
         } else {
           // Chuyển về trang chủ để thấy header đã cập nhật
           window.location.href = "/index.html";

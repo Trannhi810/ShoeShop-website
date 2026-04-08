@@ -17,7 +17,7 @@ function initAdminPage() {
     const user  = getCurrentUser();
     if (!token || user.role !== 'ADMIN') {
         alert('Bạn không có quyền truy cập trang này!');
-        window.location.href = '/pages/auth.html';
+        window.location.href = '/pages/customer/auth.html';
         return {};
     }
     const el = document.getElementById('admin-name');
@@ -66,7 +66,7 @@ function toggleSidebar() {
 function logout() {
     localStorage.removeItem('shoeshop_token');
     localStorage.removeItem('shoeshop_user');
-    window.location.href = '/pages/auth.html';
+    window.location.href = '/pages/customer/auth.html';
 }
 
 // ===== TOAST =====
