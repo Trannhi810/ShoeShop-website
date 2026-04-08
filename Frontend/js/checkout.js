@@ -166,6 +166,7 @@ async function handleOrderSubmit(e) {
                 },
                 body: JSON.stringify({ 
                     amount: orderCreated.totalAmount, 
+                    orderId: orderCreated._id,
                     language: 'vn' 
                 })
             });

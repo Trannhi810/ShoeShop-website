@@ -140,4 +140,141 @@ const getOrderDetailByUser = async (userId, orderId) => {
     return order;
 };
 
-module.exports = { createOrderFromCart, getOrdersByUser, getOrderDetailByUser };
+const getAllOrdersAdmin = async ({ page = 1, limit = 10, status, search, date }) => {
+    const query = {};
+    if (date) {
+        const startOfDay = new Date(date);
+        startOfDay.setHours(0,0,0,0);
+        const endOfDay = new Date(date);
+        endOfDay.setHours(23,59,59,999);
+        query.createdAt = { $gte: startOfDay, $lte: endOfDay };
+    }
+    if (status) query.status = status;
+    if (search) {
+        query.$or = [
+            { orderNumber: { $regex: search, $options: 'i' } },
+            { shippingAddress: { $regex: search, $options: 'i' } }
+        ];
+    }
+
+    const skip = (page - 1) * limit;
+
+    const orders = await Order.find(query)
+        .populate('userId', 'fullName email phone')
+        .sort({ createdAt: -1 })
+        .skip(skip)
+        .limit(Number(limit));
+
+    const totalOrders = await Order.countDocuments(query);
+
+    return {
+        orders,
+        totalPages: Math.ceil(totalOrders / limit),
+        currentPage: Number(page),
+        totalOrders
+    };
+};
+
+const updateOrderStatusAdmin = async (orderId, status, paymentStatus) => {
+    const session = await mongoose.startSession();
+    session.startTransaction();
+
+    try {
+        const order = await Order.findById(orderId).session(session);
+        if (!order) {
+            throw new AppError('Không tìm thấy đơn hàng', 404);
+        }
+
+        // Hoàn lại kho khi đơn hàng bị HỦY hoặc TRẢ LẠI
+        if (status && (status === 'CANCELLED' || status === 'RETURNED') && order.status !== 'CANCELLED' && order.status !== 'RETURNED') {
+            for (const item of order.items) {
+                if (item.variantId) {
+                    await ProductVariant.findByIdAndUpdate(
+                        item.variantId,
+                        { $inc: { stock: item.quantity } },
+                        { session }
+                    );
+                }
+            }
+        }
+
+        // Trừ lại kho khi khôi phục từ HỦY hoặc TRẢ LẠI
+        if (status && (order.status === 'CANCELLED' || order.status === 'RETURNED') && status !== 'CANCELLED' && status !== 'RETURNED') {
+            for (const item of order.items) {
+                if (item.variantId) {
+                    const variant = await ProductVariant.findById(item.variantId).session(session);
+                    if (!variant || variant.stock < item.quantity) {
+                        throw new AppError(`Sản phẩm ${item.productName} không đủ tồn kho để khôi phục đơn hàng`, 400);
+                    }
+                    await ProductVariant.findByIdAndUpdate(
+                        item.variantId,
+                        { $inc: { stock: -item.quantity } },
+                        { session }
+                    );
+                }
+            }
+        }
+
+        if (status) order.status = status;
+        if (paymentStatus) order.paymentStatus = paymentStatus;
+
+        await order.save({ session });
+        await session.commitTransaction();
+
+        return order;
+    } catch (error) {
+        await session.abortTransaction();
+        throw error;
+    } finally {
+        session.endSession();
+    }
+};
+
+const cancelOrderUser = async (userId, orderId) => {
+    const session = await mongoose.startSession();
+    session.startTransaction();
+
+    try {
+        const order = await Order.findOne({ _id: orderId, userId }).session(session);
+        if (!order) {
+            throw new AppError('Không tìm thấy đơn hàng', 404);
+        }
+
+        if (order.status !== 'PENDING') {
+            throw new AppError('Không thể hủy đơn hàng đang được xử lý hoặc đã hoàn thành', 400);
+        }
+
+        order.status = 'CANCELLED';
+
+        // Hoàn lại kho
+        for (const item of order.items) {
+            if (item.variantId) {
+                await ProductVariant.findByIdAndUpdate(
+                    item.variantId,
+                    { $inc: { stock: item.quantity } },
+                    { session }
+                );
+            }
+        }
+
+        await order.save({ session });
+        await session.commitTransaction();
+
+        return order;
+    } catch (error) {
+        await session.abortTransaction();
+        throw error;
+    } finally {
+        session.endSession();
+    }
+};
+
+module.exports = { 
+    createOrderFromCart, 
+    getOrdersByUser, 
+    getOrderDetailByUser,
+    getAllOrdersAdmin,
+    updateOrderStatusAdmin,
+    cancelOrderUser
+};
+
