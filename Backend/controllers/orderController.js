@@ -1,4 +1,11 @@
-const { createOrderFromCart, getOrdersByUser, getOrderDetailByUser, updateOrderStatus: updateOrderStatusService } = require('../services/orderService');
+const { 
+    createOrderFromCart, 
+    getOrdersByUser, 
+    getOrderDetailByUser, 
+    getAllOrdersAdmin, 
+    updateOrderStatusAdmin, 
+    cancelOrderUser 
+} = require('../services/orderService');
 const { sendSuccess } = require('../utils/responseHelper');
 const { handleServiceError } = require('../utils/serviceErrorHandler');
 const Notification = require('../schemas/notificationSchema');
@@ -75,8 +82,48 @@ const updateOrderStatus = async (req, res) => {
         return sendSuccess(res, updatedOrder, 'Cập nhật trạng thái thành công');
     } catch (error) {
         console.error('[updateOrderStatus] Error:', error);
+// GET /api/orders/admin
+const getAllOrdersAdminHandler = async (req, res) => {
+    try {
+        const { page, limit, status, search, date } = req.query;
+        const result = await getAllOrdersAdmin({ page, limit, status, search, date });
+        return sendSuccess(res, result, 'Lấy danh sách đơn hàng thành công');
+    } catch (error) {
+        console.error('[getAllOrdersAdmin] Error:', error);
         return handleServiceError(res, error);
     }
 };
 
-module.exports = { createOrder, getMyOrders, getOrderById, updateOrderStatus };
+// PUT /api/orders/admin/:orderId/status
+const updateOrderStatusAdminHandler = async (req, res) => {
+    try {
+        const { orderId } = req.params;
+        const { status, paymentStatus } = req.body;
+        const result = await updateOrderStatusAdmin(orderId, status, paymentStatus);
+        return sendSuccess(res, result, 'Cập nhật trạng thái đơn hàng thành công');
+    } catch (error) {
+        console.error('[updateOrderStatusAdmin] Error:', error);
+        return handleServiceError(res, error);
+    }
+};
+
+// PUT /api/orders/:orderId/cancel
+const cancelOrderHandler = async (req, res) => {
+    try {
+        const { orderId } = req.params;
+        const result = await cancelOrderUser(req.user.id, orderId);
+        return sendSuccess(res, result, 'Hủy đơn hàng thành công');
+    } catch (error) {
+        console.error('[cancelOrder] Error:', error);
+        return handleServiceError(res, error);
+    }
+};
+
+module.exports = { 
+    createOrder, 
+    getMyOrders, 
+    getOrderById,
+    getAllOrdersAdmin: getAllOrdersAdminHandler,
+    updateOrderStatusAdmin: updateOrderStatusAdminHandler,
+    cancelOrder: cancelOrderHandler
+};

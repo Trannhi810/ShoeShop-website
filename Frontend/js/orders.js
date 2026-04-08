@@ -34,9 +34,11 @@ function setEmptyState(icon, title, desc, actionText, actionHref) {
 // ===== STATUS / PAYMENT MAPS =====
 const STATUS_MAP = {
     'PENDING': { label: 'Chờ xử lý', dot: '🟡' },
+    'PROCESSING': { label: 'Đang xử lý', dot: '⏳' },
     'CONFIRMED': { label: 'Đã xác nhận', dot: '🔵' },
     'SHIPPING': { label: 'Đang giao', dot: '🟣' },
     'COMPLETED': { label: 'Hoàn tất', dot: '🟢' },
+    'RETURNED': { label: 'Hoàn trả', dot: '🔙' },
     'CANCELLED': { label: 'Đã hủy', dot: '🔴' },
 };
 
@@ -183,7 +185,43 @@ function createOrderCard(order) {
     totalEl.className = 'order-total-amount';
     totalEl.textContent = `Tổng: ${formatCurrency(order.totalAmount)}`;
 
-    footer.append(paymentEl, totalEl);
+    const footerRight = document.createElement('div');
+    footerRight.style.display = 'flex';
+    footerRight.style.alignItems = 'center';
+    footerRight.style.gap = '15px';
+    footerRight.appendChild(totalEl);
+
+    // Thêm nút Hủy nếu đang PENDING
+    if (order.status === 'PENDING') {
+        const cancelBtn = document.createElement('button');
+        cancelBtn.textContent = 'Hủy Đơn';
+        cancelBtn.className = 'btn-danger';
+        cancelBtn.style.padding = '6px 12px';
+        cancelBtn.style.border = 'none';
+        cancelBtn.style.borderRadius = '4px';
+        cancelBtn.style.background = '#ef4444';
+        cancelBtn.style.color = '#fff';
+        cancelBtn.style.cursor = 'pointer';
+        cancelBtn.onclick = async () => {
+            if(confirm('Bạn có chắc chắn muốn hủy đơn hàng này?')) {
+                try {
+                    const res = await fetch(`/api/orders/${order._id}/cancel`, {
+                        method: 'PUT',
+                        headers: { 'Authorization': 'Bearer ' + getToken() }
+                    });
+                    const data = await res.json();
+                    if(!res.ok) throw new Error(data.message || 'Lỗi hủy đơn');
+                    alert('Hủy đơn hàng thành công');
+                    renderOrders(); // Reload danh sách
+                } catch(error) {
+                    alert(error.message);
+                }
+            }
+        };
+        footerRight.appendChild(cancelBtn);
+    }
+
+    footer.append(paymentEl, footerRight);
 
     card.append(header, body, footer);
     return card;

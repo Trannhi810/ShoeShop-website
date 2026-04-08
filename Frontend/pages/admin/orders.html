@@ -7,32 +7,8 @@
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
   <link rel="stylesheet" href="../../css/admin-shared.css">
   <link rel="stylesheet" href="../../css/layout.css" />
-  <style>
-    .page {
-      width: 100%;
-      max-width: 100%;
-      margin: 0;
-    }
-    /* Adjustments for matching sidebar layout */
-    .main-content {
-      padding: 30px;
-    }
-    .panel {
-      background: var(--surface);
-      border: 1px solid var(--border);
-      border-radius: 18px;
-      padding: 24px;
-      box-shadow: var(--shadow-sm);
-    }
-    /* Rest of the existing styles adjusted slightly */
-    .status-badge {
-      display: inline-block;
-      padding: 6px 12px;
-      border-radius: 20px;
-      font-size: 12px;
-      font-weight: 600;
-    }
-  </style>
+
+  <link rel="stylesheet" href="../../css/admin-orders.css" />
 </head>
 <body>
   <!-- Sidebar -->
@@ -46,6 +22,7 @@
         <i class="fa-solid fa-bars-staggered"></i>
       </button>
     </div>
+
     <nav class="sidebar-nav">
       <p class="nav-label">Quản trị</p>
       <a href="/pages/admin/dashboard.html" class="nav-item">
@@ -72,12 +49,14 @@
         <i class="fa-solid fa-file-invoice-dollar"></i>
         <span>Đơn hàng</span>
       </a>
+
       <p class="nav-label">Hệ thống</p>
       <a href="/index.html" class="nav-item">
         <i class="fa-solid fa-house"></i>
         <span>Trang chủ</span>
       </a>
     </nav>
+
     <div class="sidebar-footer">
       <div class="admin-avatar" id="admin-avatar">A</div>
       <div class="admin-info">
@@ -92,145 +71,442 @@
 
   <!-- Main Content -->
   <main class="main-content">
-      <header class="page-header">
-          <div class="header-left">
-              <div>
-                  <h1 class="page-title">Quản Lý Đơn Hàng</h1>
-                  <p class="page-subtitle">Theo dõi và cập nhật trạng thái đơn hàng của khách hàng</p>
-              </div>
-          </div>
-      </header>
-      
-      <div id="adminOrdersContent"></div>
+    <header class="page-header">
+      <div class="header-left">
+        <div>
+          <h1 class="page-title">Quản Lý Đơn Hàng</h1>
+          <p class="page-subtitle">Theo dõi, cập nhật trạng thái và quản lý toàn bộ đơn hàng trong hệ thống</p>
+        </div>
+      </div>
+
+      <div class="header-actions">
+        <button class="btn-secondary" onclick="loadOrders()">
+          <i class="fa-solid fa-rotate-right"></i>
+          Làm mới
+        </button>
+      </div>
+    </header>
+
+    <section class="stats-grid" id="orderStats">
+      <div class="stat-card">
+        <div class="stat-icon total">
+          <i class="fa-solid fa-cart-shopping"></i>
+        </div>
+        <div class="stat-content">
+          <span class="stat-label">Tổng đơn hàng</span>
+          <span class="stat-value" id="totalOrders">0</span>
+        </div>
+      </div>
+
+      <div class="stat-card">
+        <div class="stat-icon pending">
+          <i class="fa-solid fa-hourglass-half"></i>
+        </div>
+        <div class="stat-content">
+          <span class="stat-label">Chờ xử lý</span>
+          <span class="stat-value" id="pendingOrders">0</span>
+        </div>
+      </div>
+
+      <div class="stat-card">
+        <div class="stat-icon shipping">
+          <i class="fa-solid fa-truck-fast"></i>
+        </div>
+        <div class="stat-content">
+          <span class="stat-label">Đang giao</span>
+          <span class="stat-value" id="shippingOrders">0</span>
+        </div>
+      </div>
+
+      <div class="stat-card">
+        <div class="stat-icon completed">
+          <i class="fa-solid fa-circle-check"></i>
+        </div>
+        <div class="stat-content">
+          <span class="stat-label">Hoàn tất</span>
+          <span class="stat-value" id="completedOrders">0</span>
+        </div>
+      </div>
+    </section>
+
+    <!-- TRÌNH TÌM KIẾM VÀ LỌC -->
+    <section class="filters-section" style="margin-bottom: 24px; display: flex; gap: 12px; align-items: center; background: var(--surface); padding: 16px; border-radius: 12px; border: 1px solid var(--border); overflow-x: auto;">
+      <div style="flex:1; min-width: 250px;">
+        <input type="text" id="searchOrderInput" placeholder="Tìm kiếm theo mã đơn, sđt..." style="width: 100%; padding: 10px 16px; border-radius: 8px; border: 1px solid var(--border); background: var(--bg); color: #fff;">
+      </div>
+      <div>
+        <select id="statusFilterInput" style="padding: 10px 16px; border-radius: 8px; border: 1px solid var(--border); background: var(--bg); color: #fff; outline:none; cursor:pointer;">
+          <option value="">Tất cả trạng thái</option>
+          <option value="PENDING">Chờ xử lý</option>
+          <option value="PROCESSING">Đang xử lý</option>
+          <option value="SHIPPING">Đang giao</option>
+          <option value="COMPLETED">Hoàn tất</option>
+          <option value="CANCELLED">Đã hủy</option>
+        </select>
+      </div>
+      <div>
+        <input type="date" id="dateFilterInput" style="padding: 10px 16px; border-radius: 8px; border: 1px solid var(--border); background: var(--bg); color: #fff; outline:none; cursor:pointer;" title="Lọc theo ngày">
+      </div>
+      <div>
+        <button onclick="applyFilters()" class="btn-primary" style="padding: 10px 20px; white-space: nowrap;"><i class="fa-solid fa-filter"></i> Áp dụng bộ lọc</button>
+      </div>
+    </section>
+
+    <div id="adminOrdersContent"></div>
   </main>
 
   <div class="toast-container" id="toast-container"></div>
-  
+
+  <!-- Modal Chi Tiết Đơn Hàng -->
+  <div class="modal-overlay" id="modal-order-detail" onclick="closeModalOnOverlay(event, 'modal-order-detail')">
+    <div class="modal modal-lg">
+      <div class="modal-header">
+        <h2>Chi tiết đơn <span id="detailOrderCode" style="color:var(--primary); font-weight:800;"></span></h2>
+        <button class="btn-close" onclick="closeModal('modal-order-detail')"><i class="fa-solid fa-xmark"></i></button>
+      </div>
+      <div class="modal-body" id="detailOrderContent" style="max-height: 70vh; overflow-y: auto;">
+        <!-- JS render -->
+      </div>
+      <div class="modal-actions" style="border-top:1px solid var(--border); padding: 15px; display:flex; justify-content: flex-end;">
+        <button class="btn-secondary" onclick="closeModal('modal-order-detail')">Đóng</button>
+      </div>
+    </div>
+  </div>
+
   <script src="../../js/admin-utils.js"></script>
+  <script src="../../js/api-client.js"></script>
+
   <script>
-    const USER_KEY = "shoeshop_current_user_v1";
-    const ORDERS_KEY = "shoeshop_orders_v1";
+    const currentUser = initAdminPage();
+    let currentOrders = [];
 
-    function renderHeaderAuth() {
-        // Removed as unified sidebar handles auth display
+    function formatDate(date) {
+      if (!date) return "--";
+      const d = new Date(date);
+      if (isNaN(d.getTime())) return "--";
+      return d.toLocaleDateString("vi-VN");
     }
 
-    function logout() {
-      localStorage.removeItem(USER_KEY);
-      window.location.href = "/Frontend/index.html";
+    function getCustomerName(order) {
+      return order?.userId?.fullName || "Khách vãng lai";
     }
 
-    function getOrders() {
-      return JSON.parse(localStorage.getItem(ORDERS_KEY)) || [];
+    function getCustomerAvatar(order) {
+      const name = getCustomerName(order);
+      return name.trim().charAt(0).toUpperCase() || "K";
     }
 
-    function saveOrders(orders) {
-      localStorage.setItem(ORDERS_KEY, JSON.stringify(orders));
+    function getPhone(order) {
+      if (!order?.shippingAddress) return "Chưa có SĐT";
+
+      const parts = order.shippingAddress.split(" | ");
+      const phonePart = parts.find(item => item.includes("SĐT:"));
+      return phonePart ? phonePart.replace("SĐT:", "").trim() : "Chưa có SĐT";
+    }
+
+    function getPaymentMethodText(method) {
+      if (!method) return "Không rõ";
+      const map = {
+        COD: "COD",
+        CASH: "Tiền mặt",
+        BANKING: "Chuyển khoản",
+        BANK_TRANSFER: "Chuyển khoản",
+        MOMO: "MoMo",
+        VNPAY: "VNPay",
+        PAYPAL: "PayPal"
+      };
+      return map[method] || method;
+    }
+
+    function getPaymentStatusClass(status) {
+      if (!status) return "unpaid";
+      const normalized = status.toUpperCase();
+      if (["PAID", "SUCCESS", "COMPLETED"].includes(normalized)) return "paid";
+      if (["UNPAID", "FAILED", "CANCELLED", "PENDING"].includes(normalized)) return "unpaid";
+      return "unpaid";
+    }
+
+    function getPaymentStatusText(status) {
+      if (!status) return "Chờ thanh toán";
+      const normalized = status.toUpperCase();
+      const map = {
+        PAID: "Đã thanh toán",
+        UNPAID: "Chưa thanh toán",
+        PENDING: "Chưa thanh toán",
+        FAILED: "Thất bại",
+        SUCCESS: "Thành công",
+        COMPLETED: "Hoàn tất",
+        CANCELLED: "Đã hủy"
+      };
+      return map[normalized] || status;
     }
 
     function getStatusClass(status) {
-      if (status === "Chờ xử lý") return "pending";
-      if (status === "Đang giao") return "shipping";
-      if (status === "Hoàn tất") return "completed";
-      if (status === "Hủy") return "cancelled";
-      return "pending";
+      switch (status) {
+        case "PENDING":
+        case "PROCESSING":
+          return "pending";
+        case "SHIPPING":
+          return "shipping";
+        case "COMPLETED":
+          return "completed";
+        case "CANCELLED":
+          return "cancelled";
+        default:
+          return "pending";
+      }
     }
 
-    function renderAdminOrders() {
-      const currentUser = JSON.parse(localStorage.getItem(USER_KEY));
+    function updateStatusClass(selectEl, status) {
+      selectEl.classList.remove("pending", "shipping", "completed", "cancelled");
+      selectEl.classList.add(getStatusClass(status));
+    }
+
+    function updateStats(orders) {
+      const total = orders.length;
+      const pending = orders.filter(order =>
+        ["PENDING", "PROCESSING"].includes(order.status)
+      ).length;
+      const shipping = orders.filter(order => order.status === "SHIPPING").length;
+      const completed = orders.filter(order => order.status === "COMPLETED").length;
+
+      document.getElementById("totalOrders").textContent = total;
+      document.getElementById("pendingOrders").textContent = pending;
+      document.getElementById("shippingOrders").textContent = shipping;
+      document.getElementById("completedOrders").textContent = completed;
+    }
+
+    function applyFilters() {
+      loadOrders();
+    }
+
+    async function loadOrders() {
+      try {
+        const searchVal = document.getElementById('searchOrderInput').value.trim();
+        const statusVal = document.getElementById('statusFilterInput').value;
+        const dateVal = document.getElementById('dateFilterInput').value;
+
+        const params = new URLSearchParams();
+        if (searchVal) params.append('search', searchVal);
+        if (statusVal) params.append('status', statusVal);
+        if (dateVal) params.append('date', dateVal);
+
+        const container = document.getElementById("adminOrdersContent");
+
+        if (currentOrders.length === 0) {
+          container.innerHTML = `
+            <div class="table-wrapper">
+              <div class="loading-box">
+                <i class="fa-solid fa-spinner fa-spin"></i>
+              </div>
+            </div>
+          `;
+        }
+
+        const res = await orderApi.getAllAdmin(params.toString());
+        const result = res.data || res;
+        currentOrders = result.orders || [];
+
+        updateStats(currentOrders);
+        renderOrdersTable(currentOrders);
+      } catch (error) {
+        showToast(error.message || "Lỗi tải quản lý đơn hàng", "error");
+      }
+    }
+
+    function renderOrdersTable(orders) {
       const container = document.getElementById("adminOrdersContent");
 
-      if (!currentUser || currentUser.role !== "admin") {
-        container.innerHTML = `<div class="empty-box">Bạn không có quyền truy cập trang này.</div>`;
+      if (!orders || orders.length === 0) {
+        container.innerHTML = `
+          <div class="table-wrapper">
+            <div class="empty-state">
+              <i class="fa-solid fa-inbox"></i>
+              <p>Chưa có đơn hàng nào trong hệ thống.</p>
+            </div>
+          </div>
+        `;
         return;
       }
 
-      const orders = getOrders();
-
       container.innerHTML = `
-        <div class="panel">
-          <h1>Quản lý đơn hàng</h1>
+        <div class="table-wrapper">
+          <div class="table-topbar">
+            <div>
+              <div class="table-title">Danh sách đơn hàng</div>
+              <div class="table-count">Hiển thị ${orders.length} đơn hàng</div>
+            </div>
+          </div>
 
-          ${
-            orders.length
-              ? `
-                <table>
-                  <thead>
-                    <tr>
-                      <th>Mã đơn</th>
-                      <th>Khách hàng</th>
-                      <th>Ngày đặt</th>
-                      <th>Trạng thái hiện tại</th>
-                      <th>Cập nhật trạng thái</th>
-                      <th>Tổng tiền</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    ${orders.map(order => `
-                      <tr>
-                        <td>#${order.id}</td>
-                        <td>${order.customerName}</td>
-                        <td>${order.createdAt}</td>
-                        <td><span class="status-badge ${getStatusClass(order.status)}">${order.status}</span></td>
-                        <td>
-                          <select onchange="changeOrderStatus(${order.id}, this.value)">
-                            <option value="Chờ xử lý" ${order.status === "Chờ xử lý" ? "selected" : ""}>Chờ xử lý</option>
-                            <option value="Đang giao" ${order.status === "Đang giao" ? "selected" : ""}>Đang giao</option>
-                            <option value="Hoàn tất" ${order.status === "Hoàn tất" ? "selected" : ""}>Hoàn tất</option>
-                            <option value="Hủy" ${order.status === "Hủy" ? "selected" : ""}>Hủy</option>
-                          </select>
-                        </td>
-                        <td>${order.total.toLocaleString("vi-VN")}đ</td>
-                      </tr>
-                    `).join("")}
-                  </tbody>
-                </table>
-              `
-              : `<div>Chưa có đơn hàng nào.</div>`
-          }
+          <table class="data-table">
+            <thead>
+              <tr>
+                <th>Mã đơn</th>
+                <th>Khách hàng</th>
+                <th>Ngày đặt</th>
+                <th>Thanh toán</th>
+                <th>Trạng thái</th>
+                <th>Tổng tiền</th>
+                <th>Thao tác</th>
+              </tr>
+            </thead>
+            <tbody>
+              ${orders.map(order => `
+                <tr>
+                  <td>
+                    <span class="order-code">#${order.orderNumber || "---"}</span>
+                  </td>
+
+                  <td>
+                    <div class="customer-cell">
+                      <div class="customer-avatar">${getCustomerAvatar(order)}</div>
+                      <div class="customer-info">
+                        <div class="customer-name">${getCustomerName(order)}</div>
+                        <div class="customer-phone">SĐT: ${getPhone(order)}</div>
+                      </div>
+                    </div>
+                  </td>
+
+                  <td class="td-date">${formatDate(order.createdAt)}</td>
+
+                  <td>
+                    <div class="payment-stack">
+                      <span class="payment-badge">
+                        <i class="fa-solid fa-wallet"></i>
+                        ${getPaymentMethodText(order.paymentMethod)}
+                      </span>
+                      <span class="payment-status-badge ${getPaymentStatusClass(order.paymentStatus)}">
+                        <i class="fa-solid fa-circle"></i>
+                        ${getPaymentStatusText(order.paymentStatus)}
+                      </span>
+                    </div>
+                  </td>
+
+                  <td class="status-cell">
+                    <select
+                      onchange="changeOrderStatus('${order._id}', this.value, this)"
+                      class="status-select ${getStatusClass(order.status)}"
+                    >
+                      <option value="PENDING" ${order.status === "PENDING" ? "selected" : ""}>Chờ xử lý</option>
+                      <option value="PROCESSING" ${order.status === "PROCESSING" ? "selected" : ""}>Đang xử lý</option>
+                      <option value="SHIPPING" ${order.status === "SHIPPING" ? "selected" : ""}>Đang giao</option>
+                      <option value="COMPLETED" ${order.status === "COMPLETED" ? "selected" : ""}>Hoàn tất</option>
+                      <option value="CANCELLED" ${order.status === "CANCELLED" ? "selected" : ""}>Đã hủy</option>
+                    </select>
+                  </td>
+
+                  <td>
+                    <span class="price-value">
+                      ${(order.totalAmount || 0).toLocaleString("vi-VN")}đ
+                    </span>
+                  </td>
+
+                  <td>
+                    <button class="btn-secondary" style="padding: 8px; border-radius: 8px;" onclick="viewOrderDetails('${order._id}')" title="Xem chi tiết">
+                      <i class="fa-solid fa-eye"></i>
+                    </button>
+                  </td>
+                </tr>
+              `).join("")}
+            </tbody>
+          </table>
         </div>
       `;
     }
 
-    function changeOrderStatus(orderId, newStatus) {
-  const orders = getOrders();
-  const order = orders.find(item => item.id === orderId);
-  if (!order) return;
+    async function changeOrderStatus(orderId, newStatus, selectEl) {
+      try {
+        if (selectEl) updateStatusClass(selectEl, newStatus);
 
-  const oldStatus = order.status;
-  order.status = newStatus;
-  saveOrders(orders);
+        await orderApi.updateStatusAdmin(orderId, { status: newStatus });
+        showToast("Đã cập nhật trạng thái đơn hàng", "success");
+        loadOrders();
+      } catch (error) {
+        showToast(error.message || "Lỗi cập nhật trạng thái đơn hàng", "error");
+        loadOrders();
+      }
+    }
 
-  if (oldStatus !== newStatus) {
-    addNotification({
-      title: "Đơn hàng được cập nhật",
-      message: `Đơn hàng #${order.id} đã chuyển từ "${oldStatus}" sang "${newStatus}".`,
-      role: "customer",
-      type: "info"
+    function viewOrderDetails(orderId) {
+      const order = currentOrders.find(o => o._id === orderId);
+      if (!order) return;
+
+      document.getElementById('detailOrderCode').textContent = '#' + (order.orderNumber || orderId.substring(0,6));
+      
+      const content = document.getElementById('detailOrderContent');
+      
+      let itemsHtml = '<div style="color:var(--text-muted); text-align:center; padding: 20px;">Không có sản phẩm nào</div>';
+      
+      if (order.items && order.items.length > 0) {
+        itemsHtml = order.items.map(item => `
+          <div style="display:flex; gap:16px; align-items:center; border-bottom:1px solid var(--border); padding: 12px 0;">
+            <div style="width:60px; height:60px; background:var(--surface2); border-radius:8px; display:flex; align-items:center; justify-content:center; overflow:hidden; flex-shrink:0;">
+              ${item.productImage ? `<img src="${item.productImage}" style="width:100%; height:100%; object-fit:cover;" />` : '👟'}
+            </div>
+            <div style="flex:1;">
+              <div style="font-weight:700; color:#fff; font-size:15px; margin-bottom:4px;">${item.productName || 'Sản phẩm'}</div>
+              <div style="font-size:13px; color:var(--text-soft);">
+                ${item.color ? 'Màu: ' + item.color : ''} 
+                ${item.size ? '| Size: ' + item.size : ''}
+              </div>
+            </div>
+            <div style="text-align:right;">
+              <div style="font-weight:700; color:var(--primary); font-size:15px;">${(item.price || 0).toLocaleString('vi-VN')}đ</div>
+              <div style="font-size:13px; color:var(--text-soft);">SL: ${item.quantity || 1}</div>
+            </div>
+          </div>
+        `).join('');
+      }
+
+      content.innerHTML = `
+        <div style="display:flex; flex-direction:column; gap:20px;">
+          <div style="display:grid; grid-template-columns:1fr 1fr; gap:16px; background:var(--surface2); padding:16px; border-radius:12px; border:1px solid var(--border);">
+            <div>
+              <p style="color:var(--text-soft); font-size:13px; margin-bottom:4px;">Khách hàng</p>
+              <p style="font-weight:600; color:#fff;">${getCustomerName(order)}</p>
+            </div>
+            <div>
+              <p style="color:var(--text-soft); font-size:13px; margin-bottom:4px;">Số điện thoại</p>
+              <p style="font-weight:600; color:#fff;">${getPhone(order)}</p>
+            </div>
+            <div>
+              <p style="color:var(--text-soft); font-size:13px; margin-bottom:4px;">Thanh toán</p>
+              <p style="font-weight:600; color:#fff;">${getPaymentMethodText(order.paymentMethod)}</p>
+            </div>
+            <div>
+              <p style="color:var(--text-soft); font-size:13px; margin-bottom:4px;">Trạng thái thanh toán</p>
+              <span class="payment-status-badge ${getPaymentStatusClass(order.paymentStatus)}" style="font-size: 11px; padding: 2px 8px;">
+                ${getPaymentStatusText(order.paymentStatus)}
+              </span>
+            </div>
+            <div style="grid-column: span 2;">
+              <p style="color:var(--text-soft); font-size:13px; margin-bottom:4px;">Địa chỉ giao hàng</p>
+              <p style="font-weight:600; color:#fff; line-height:1.4;">${order.shippingAddress || 'Chưa cung cấp'}</p>
+            </div>
+          </div>
+          
+          <div>
+            <h3 style="font-size:16px; color:#fff; margin-bottom:12px; border-bottom:1px solid var(--border); padding-bottom:8px;">Danh sách sản phẩm</h3>
+            ${itemsHtml}
+          </div>
+          
+          <div style="background:var(--surface2); padding:16px; border-radius:12px; border:1px solid var(--border); display:flex; justify-content:space-between; align-items:center;">
+             <span style="font-weight:600; color:var(--text-soft);">Tổng cộng (Gồm cả phí vận chuyển/vouchers):</span>
+             <span style="font-weight:800; color:var(--success); font-size:18px;">${(order.totalAmount || 0).toLocaleString('vi-VN')}đ</span>
+          </div>
+        </div>
+      `;
+
+      if (typeof openModal === 'function') {
+        openModal('modal-order-detail');
+      } else {
+        document.getElementById('modal-order-detail').classList.add('active');
+      }
+    }
+
+    document.addEventListener("DOMContentLoaded", () => {
+      loadOrders();
     });
-
-    addNotification({
-      title: "Admin cập nhật đơn hàng",
-      message: `Đơn hàng #${order.id} của ${order.customerName} đã đổi sang "${newStatus}".`,
-      role: "staff",
-      type: "warning"
-    });
-
-    addNotification({
-      title: "Cập nhật trạng thái đơn",
-      message: `Bạn vừa đổi trạng thái đơn #${order.id} sang "${newStatus}".`,
-      role: "admin",
-      type: "success"
-    });
-  }
-
-  renderAdminOrders();
-}
-    
-
-    loadComponent("header", "components/header.html");
-    loadComponent("footer", "components/footer.html");
-    renderAdminOrders();
   </script>
 </body>
 </html>
