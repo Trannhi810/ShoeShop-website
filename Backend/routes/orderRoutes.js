@@ -17,4 +17,7 @@ router.get('/my-orders', orderController.getMyOrders);
 router.put('/:orderId/cancel', orderController.cancelOrder);
 router.get('/:orderId', orderController.getOrderById);
 
+// Admin route
+router.patch('/admin/:orderId/status', verifyAdmin, orderController.updateOrderStatus);
+
 module.exports = router;

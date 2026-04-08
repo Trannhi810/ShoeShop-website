@@ -11,6 +11,7 @@ const inventoryRoutes = require("./routes/inventoryRoutes");
 const orderRoutes    = require("./routes/orderRoutes");
 const paymentRoutes  = require("./routes/paymentRoutes");
 const colorRoutes    = require("./routes/colorRoutes");
+const notificationRoutes = require("./routes/notificationRoutes");
 const productVariantController = require("./controllers/productVariantController");
 const { getAllColors, createColor, deleteColor } = require("./controllers/colorController");
 const { verifyToken, verifyAdmin } = require("./middlewares/authMiddleware");
@@ -43,6 +44,7 @@ app.use("/api/inventory",  inventoryRoutes);
 app.use("/api/orders",     orderRoutes);
 app.use("/api/payment",    paymentRoutes);
 app.use("/api/colors",     colorRoutes);
+app.use("/api/notifications", notificationRoutes);
 
 // Serve frontend
 app.use(express.static(path.join(__dirname, "../Frontend")));
@@ -132,6 +134,20 @@ app.use((err, req, res, next) => {
     });
 });
 
-app.listen(PORT, () => {
+const http = require('http');
+const { Server } = require("socket.io");
+const socketUtils = require("./utils/socketUtils");
+
+const server = http.createServer(app);
+const io = new Server(server, {
+    cors: {
+        origin: "*", 
+        methods: ["GET", "POST", "PUT", "DELETE", "PATCH"]
+    }
+});
+socketUtils.init(io);
+app.set("io", io);
+
+server.listen(PORT, () => {
     console.log(`Server running at http://localhost:${PORT}`);
 });

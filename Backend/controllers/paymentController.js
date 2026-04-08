@@ -143,33 +143,48 @@ exports.vnpayIpn = async (req, res) => {
 
         vnp_Params = sortObject(vnp_Params);
 
-        const secretKey  = (process.env.VNP_HASH_SECRET || '').trim();
-        const signData   = qs.stringify(vnp_Params, { encode: false });
-        const hmac       = crypto.createHmac('sha512', secretKey);
-        const signed     = hmac.update(Buffer.from(signData, 'utf-8')).digest('hex');
+        const secretKey = (process.env.VNP_HASH_SECRET || '').trim();
+        const signData = qs.stringify(vnp_Params, { encode: false });
+        const hmac = crypto.createHmac('sha512', secretKey);
+        const signed = hmac.update(Buffer.from(signData, 'utf-8')).digest('hex');
 
         if (secureHash === signed) {
             const orderId = vnp_Params['vnp_TxnRef'];
             const rspCode = vnp_Params['vnp_ResponseCode'];
+            const vnpAmount = parseInt(vnp_Params['vnp_Amount']) / 100; // VNPAY nhân 100
 
-            try {
-                // If payment was successful
-                if (rspCode === '00') {
-                    await Order.findByIdAndUpdate(orderId, { paymentStatus: 'PAID' });
-                } else {
-                    // Payment failed or was canceled
-                    await Order.findByIdAndUpdate(orderId, { paymentStatus: 'FAILED' });
-                }
-            } catch (err) {
-                console.error('[vnpayIpn] Database error:', err);
-                return res.status(200).json({ RspCode: '99', Message: 'Unknown error' });
+            // 1. Tìm đơn hàng trong DB
+            const order = await Order.findById(orderId);
+            if (!order) {
+                return res.status(200).json({ RspCode: '01', Message: 'Order not found' });
             }
+
+            // 2. Kiểm tra số tiền (RẤT QUAN TRỌNG)
+            if (order.totalAmount !== vnpAmount) {
+                return res.status(200).json({ RspCode: '04', Message: 'Invalid amount' });
+            }
+
+            // 3. Kiểm tra trạng thái đơn hàng (Tránh xử lý lặp lại)
+            if (order.paymentStatus !== 'PENDING') {
+                return res.status(200).json({ RspCode: '02', Message: 'Order already confirmed' });
+            }
+
+            // 4. Cập nhật kết quả
+            if (rspCode === '00') {
+                order.paymentStatus = 'PAID';
+                // Trigger notification tại đây nếu cần
+            } else {
+                order.paymentStatus = 'FAILED';
+            }
+            
+            await order.save();
 
             return res.status(200).json({ RspCode: '00', Message: 'Confirm Success' });
         } else {
             return res.status(200).json({ RspCode: '97', Message: 'Fail checksum' });
         }
     } catch (error) {
+        console.error('[vnpayIpn] Error:', error);
         return res.status(200).json({ RspCode: '99', Message: 'Unknown error' });
     }
 };
