@@ -140,4 +140,21 @@ const getOrderDetailByUser = async (userId, orderId) => {
     return order;
 };
 
-module.exports = { createOrderFromCart, getOrdersByUser, getOrderDetailByUser };
+const updateOrderStatus = async (orderId, status) => {
+    const validStatuses = ["PENDING", "APPROVED", "SHIPPING", "COMPLETED", "CANCELLED"];
+    if (!validStatuses.includes(status)) {
+        throw new AppError('Trạng thái không hợp lệ', 400);
+    }
+
+    const order = await Order.findByIdAndUpdate(
+        orderId, 
+        { status }, 
+        { new: true }
+    );
+    if (!order) {
+        throw new AppError('Không tìm thấy đơn hàng', 404);
+    }
+    return order;
+};
+
+module.exports = { createOrderFromCart, getOrdersByUser, getOrderDetailByUser, updateOrderStatus };

@@ -137,6 +137,7 @@ exports.vnpayIpn = (req, res) => {
 
         if (secureHash === signed) {
             // TODO: Cập nhật trạng thái đơn hàng trong DB theo vnp_TxnRef
+            // Giả lập Notification vì chưa có ID order/user thực ở đây
             return res.status(200).json({ RspCode: '00', Message: 'Confirm Success' });
         } else {
             return res.status(200).json({ RspCode: '97', Message: 'Fail checksum' });

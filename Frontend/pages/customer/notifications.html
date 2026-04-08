@@ -126,7 +126,7 @@
 
   <div id="footer"></div>
 
-  <script src="../../js/notify.js"></script>
+  <script src="../../js/api-client.js"></script>
   <script>
     const USER_KEY = "shoeshop_current_user_v1";
 
@@ -180,69 +180,74 @@
       window.location.href = "/index.html";
     }
 
-    function renderNotificationsPage() {
-      const currentUser = JSON.parse(localStorage.getItem(USER_KEY));
+    async function renderNotificationsPage() {
       const container = document.getElementById("notificationsList");
-
-      if (!currentUser) {
-        container.innerHTML = `
-          <div class="empty-box">
-            Bạn cần đăng nhập để xem thông báo.
-          </div>
-        `;
+      const token = localStorage.getItem("shoeshop_token") || localStorage.getItem("token");
+      
+      if (!token) {
+        container.innerHTML = `<div class="empty-box">Bạn cần đăng nhập để xem thông báo.</div>`;
         return;
       }
 
-      const notifications = getNotificationsByRole(currentUser.role);
+      try {
+        const res = await fetch("http://localhost:3000/api/notifications", {
+            headers: { 'Authorization': 'Bearer ' + token }
+        });
+        const result = await res.json();
+        if (result.message && !result.notifications) throw new Error(result.message);
+        
+        const notifications = result.notifications || [];
+        if (!notifications.length) {
+          container.innerHTML = `<div class="empty-box">Chưa có thông báo nào.</div>`;
+          return;
+        }
 
-      if (!notifications.length) {
-        container.innerHTML = `
-          <div class="empty-box">
-            Chưa có thông báo nào.
+        container.innerHTML = notifications.map(item => `
+          <div class="notify-card ${item.isRead ? "" : "unread"}">
+            <div class="notify-head">
+              <div class="notify-title">${item.title}</div>
+              <div class="notify-time">${new Date(item.createdAt).toLocaleString('vi-VN')}</div>
+            </div>
+            <div class="notify-message">${item.message}</div>
+            <div class="notify-actions">
+              ${!item.isRead ? `<button class="btn-light" onclick="handleMarkOneAsRead('${item._id}')">Đánh dấu đã đọc</button>` : ""}
+            </div>
           </div>
-        `;
-        return;
+        `).join("");
+      } catch (err) {
+        container.innerHTML = `<div class="empty-box">Lỗi tải thông báo: ${err.message}</div>`;
       }
-
-      container.innerHTML = notifications.map(item => `
-        <div class="notify-card ${item.isRead ? "" : "unread"}">
-          <div class="notify-head">
-            <div class="notify-title">${item.title}</div>
-            <div class="notify-time">${item.createdAt}</div>
-          </div>
-
-          <div class="notify-message">${item.message}</div>
-
-          <div class="notify-actions">
-            ${!item.isRead ? `<button class="btn-light" onclick="handleMarkOneAsRead(${item.id})">Đánh dấu đã đọc</button>` : ""}
-            <button class="btn-danger" onclick="handleDeleteNotification(${item.id})">Xóa</button>
-          </div>
-        </div>
-      `).join("");
     }
 
-    function handleMarkAllAsRead() {
-      const currentUser = JSON.parse(localStorage.getItem(USER_KEY));
-      if (!currentUser) return;
-
-      markAllAsRead(currentUser.role);
-      renderNotificationsPage();
+    async function handleMarkAllAsRead() {
+      const token = localStorage.getItem("shoeshop_token") || localStorage.getItem("token");
+      if (!token) return;
+      try {
+          await fetch("http://localhost:3000/api/notifications/read-all", {
+              method: 'PATCH',
+              headers: { 'Authorization': 'Bearer ' + token }
+          });
+          renderNotificationsPage();
+          if(typeof window.renderNotificationBell === 'function') window.renderNotificationBell();
+      } catch(e) {}
     }
 
-    function handleMarkOneAsRead(id) {
-      markOneAsRead(id);
-      renderNotificationsPage();
+    async function handleMarkOneAsRead(id) {
+      const token = localStorage.getItem("shoeshop_token") || localStorage.getItem("token");
+      if (!token) return;
+      try {
+          await fetch(`http://localhost:3000/api/notifications/${id}/read`, {
+              method: 'PATCH',
+              headers: { 'Authorization': 'Bearer ' + token }
+          });
+          renderNotificationsPage();
+          if(typeof window.renderNotificationBell === 'function') window.renderNotificationBell();
+      } catch(e) {}
     }
 
-    function handleDeleteNotification(id) {
-      deleteNotification(id);
-      renderNotificationsPage();
-    }
-
-    seedNotifications();
     loadComponent("header", "../../components/header.html");
     loadComponent("footer", "../../components/footer.html");
-    renderNotificationsPage();
+    setTimeout(renderNotificationsPage, 500); // Đợi js load xong
   </script>
 </body>
 </html>

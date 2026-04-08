@@ -251,3 +251,101 @@ setInterval(() => {
         window.updateGlobalCartBadge();
     }
 }, 1000);
+
+// ===== NOTIFICATION API =====
+window.renderNotificationBell = async function() {
+    const area = document.getElementById("notificationBellArea");
+    const token = localStorage.getItem('shoeshop_token') || localStorage.getItem('token');
+    if (!area || !token) return;
+    area.innerHTML = `
+        <a href="/pages/customer/notifications.html" style="position:relative; display:inline-block; margin-right: 15px; color:#333; text-decoration:none; font-size: 18px;">
+            🛎️
+            <span id="bellBadgeCount" style="display:none; position:absolute; top:-8px; right:-10px; background:#e63946; color:#fff; font-size:10px; font-weight:bold; padding:2px 5px; border-radius:50%;">0</span>
+        </a>
+    `;
+    try {
+        const res = await fetch('http://localhost:3000/api/notifications', { headers: { 'Authorization': 'Bearer ' + token } });
+        const data = await res.json();
+        if (data && data.notifications) {
+            const unreadCount = data.unreadCount || 0;
+            const badge = document.getElementById("bellBadgeCount");
+            if (unreadCount > 0 && badge) {
+                badge.textContent = unreadCount;
+                badge.style.display = 'inline-block';
+            }
+        }
+    } catch(e) {}
+};
+
+const notificationApi = {
+    getMyNotifications() { return apiFetch('/api/notifications'); },
+    markAsRead(id) { return apiFetch(`/api/notifications/${id}/read`, { method: 'PATCH' }); },
+    markAllAsRead() { return apiFetch('/api/notifications/read-all', { method: 'PATCH' }); }
+};
+
+// ===== SOCKET.IO REALTIME NOTIFICATION INIT =====
+function initSocket() {
+    const user = JSON.parse(localStorage.getItem("shoeshop_user")) || JSON.parse(localStorage.getItem("shoeshop_current_user_v1"));
+    if (!user) return; // Do not connect if not logged in
+
+    const script = document.createElement('script');
+    script.src = "https://cdn.socket.io/4.7.2/socket.io.min.js";
+    script.onload = () => {
+        const socket = io('http://localhost:3000');
+        socket.on('connect', () => {
+            console.log('Connected to socket server');
+            socket.emit('register', user._id || user.id);
+        });
+
+        socket.on('notification', (data) => {
+            console.log('Received notification:', data);
+            showNotificationToast(data.title, data.message);
+            // Cập nhật icon chuông nếu cần thiết
+            const bellCount = document.getElementById('bellBadgeCount');
+            if (bellCount) {
+                let current = parseInt(bellCount.textContent || '0');
+                bellCount.textContent = current + 1;
+                bellCount.style.display = 'inline-block';
+            }
+        });
+    };
+    document.head.appendChild(script);
+}
+
+function showNotificationToast(title, message) {
+    let container = document.getElementById('toastWrap');
+    if (!container) {
+        container = document.createElement('div');
+        container.id = 'toastWrap';
+        container.style.cssText = `
+            position: fixed; top: 80px; right: 20px; z-index: 9999;
+            display: flex; flex-direction: column; gap: 10px;
+        `;
+        document.body.appendChild(container);
+    }
+    const toast = document.createElement('div');
+    toast.style.cssText = `
+        background: #fff; border-left: 5px solid #1a73e8; border-radius: 4px;
+        box-shadow: 0 4px 12px rgba(0,0,0,0.15); padding: 15px 20px;
+        min-width: 250px; transform: translateX(120%); transition: transform 0.3s ease;
+    `;
+    toast.innerHTML = `
+        <strong style="color:#333; display:block; margin-bottom:5px; font-size:14px">${title}</strong>
+        <p style="margin:0; color:#666; font-size:13px">${message}</p>
+    `;
+    container.appendChild(toast);
+    
+    // Animate in
+    setTimeout(() => toast.style.transform = 'translateX(0)', 10);
+    
+    // Auto remove
+    setTimeout(() => {
+        toast.style.transform = 'translateX(120%)';
+        setTimeout(() => toast.remove(), 300);
+    }, 5000);
+}
+
+document.addEventListener("DOMContentLoaded", () => {
+    initSocket();
+});
+

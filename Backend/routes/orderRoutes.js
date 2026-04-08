@@ -1,7 +1,7 @@
 const express = require('express');
 const router = express.Router();
 const orderController = require('../controllers/orderController');
-const { verifyToken } = require('../middlewares/authMiddleware');
+const { verifyToken, verifyAdmin } = require('../middlewares/authMiddleware');
 
 // Tất cả các route đơn hàng đều yêu cầu đăng nhập
 router.use(verifyToken);
@@ -9,5 +9,8 @@ router.use(verifyToken);
 router.post('/checkout', orderController.createOrder);
 router.get('/my-orders', orderController.getMyOrders);
 router.get('/:orderId', orderController.getOrderById);
+
+// Admin route
+router.patch('/admin/:orderId/status', verifyAdmin, orderController.updateOrderStatus);
 
 module.exports = router;
