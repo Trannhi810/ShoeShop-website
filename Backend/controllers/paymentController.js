@@ -1,6 +1,7 @@
 const crypto = require('crypto');
 const qs = require('qs');
 const moment = require('moment');
+const Order = require('../schemas/orderSchema');
 
 /**
  * Sắp xếp object theo thứ tự alphabet và URL-encode key + value.
@@ -40,7 +41,7 @@ exports.createPaymentUrl = (req, res) => {
 
         const date       = new Date();
         const createDate = moment(date).format('YYYYMMDDHHmmss');
-        const orderId    = moment(date).format('DDHHmmss');
+        const orderId    = req.body.orderId || moment(date).format('DDHHmmss');
         const amount     = req.body.amount;
         const bankCode   = req.body.bankCode || '';
         const locale     = req.body.language || 'vn';
@@ -92,7 +93,7 @@ exports.createPaymentUrl = (req, res) => {
     }
 };
 
-exports.vnpayReturn = (req, res) => {
+exports.vnpayReturn = async (req, res) => {
     try {
         let vnp_Params = { ...req.query };
 
@@ -109,10 +110,22 @@ exports.vnpayReturn = (req, res) => {
 
         if (secureHash === signed) {
             const rspCode = vnp_Params['vnp_ResponseCode'];
-            res.redirect(`/pages/payment-result.html?code=${rspCode}&amount=${vnp_Params['vnp_Amount']}`);
+            const orderId = vnp_Params['vnp_TxnRef'];
+
+            try {
+                if (rspCode === '00') {
+                    await Order.findByIdAndUpdate(orderId, { paymentStatus: 'PAID' });
+                } else {
+                    await Order.findByIdAndUpdate(orderId, { paymentStatus: 'FAILED' });
+                }
+            } catch (dbErr) {
+                console.error('[vnpayReturn] DB Update Error:', dbErr);
+            }
+
+            res.redirect(`/pages/customer/payment-result.html?code=${rspCode}&amount=${vnp_Params['vnp_Amount']}`);
         } else {
             console.warn('[vnpayReturn] Invalid hash! received:', secureHash, 'expected:', signed);
-            res.redirect('/pages/payment-result.html?code=97');
+            res.redirect('/pages/customer/payment-result.html?code=97');
         }
     } catch (error) {
         console.error('[vnpayReturn] Error:', error);
@@ -120,7 +133,7 @@ exports.vnpayReturn = (req, res) => {
     }
 };
 
-exports.vnpayIpn = (req, res) => {
+exports.vnpayIpn = async (req, res) => {
     try {
         let vnp_Params = { ...req.query };
         const secureHash = vnp_Params['vnp_SecureHash'];
@@ -136,7 +149,22 @@ exports.vnpayIpn = (req, res) => {
         const signed     = hmac.update(Buffer.from(signData, 'utf-8')).digest('hex');
 
         if (secureHash === signed) {
-            // TODO: Cập nhật trạng thái đơn hàng trong DB theo vnp_TxnRef
+            const orderId = vnp_Params['vnp_TxnRef'];
+            const rspCode = vnp_Params['vnp_ResponseCode'];
+
+            try {
+                // If payment was successful
+                if (rspCode === '00') {
+                    await Order.findByIdAndUpdate(orderId, { paymentStatus: 'PAID' });
+                } else {
+                    // Payment failed or was canceled
+                    await Order.findByIdAndUpdate(orderId, { paymentStatus: 'FAILED' });
+                }
+            } catch (err) {
+                console.error('[vnpayIpn] Database error:', err);
+                return res.status(200).json({ RspCode: '99', Message: 'Unknown error' });
+            }
+
             return res.status(200).json({ RspCode: '00', Message: 'Confirm Success' });
         } else {
             return res.status(200).json({ RspCode: '97', Message: 'Fail checksum' });

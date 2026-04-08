@@ -10,6 +10,7 @@
     <nav class="main-nav">
       <a href="/index.html">Trang chủ</a>
       <a href="/pages/customer/products.html">Sản phẩm</a>
+      <a href="/pages/customer/orders.html">Đơn hàng</a>
       <a href="/pages/customer/cart.html" style="position: relative; display: inline-flex; align-items: center; gap: 4px;">
         Giỏ hàng
         <span id="cartCount" style="display: none; background: #e63946; color: white; border-radius: 50%; padding: 2px 6px; font-size: 11px; font-weight: bold;">0</span>
@@ -89,7 +90,6 @@
       if (user.role === "customer" || user.role === "CUSTOMER") {
         extra += `<a class="header-link" href="/pages/customer/orders.html">Đơn hàng</a>`;
       }
-
       headerRight.innerHTML = `
       <div id="notificationBellArea"></div>
       ${extra}

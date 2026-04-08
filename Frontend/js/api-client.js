@@ -205,6 +205,39 @@ const inventoryApi = {
         });
     }
 };
+// ===== ORDER API =====
+const orderApi = {
+    // Admin APIs
+    getAllAdmin(params = '') {
+        return apiFetch(`/api/orders/admin?${params}`);
+    },
+    updateStatusAdmin(orderId, statusData) {
+        return apiFetch(`/api/orders/admin/${orderId}/status`, {
+            method: 'PUT',
+            body: JSON.stringify(statusData)
+        });
+    },
+    
+    // User APIs
+    getMyOrders() {
+        return apiFetch('/api/orders/my-orders');
+    },
+    getById(orderId) {
+        return apiFetch(`/api/orders/${orderId}`);
+    },
+    create(data) {
+        return apiFetch('/api/orders/checkout', {
+            method: 'POST',
+            body: JSON.stringify(data)
+        });
+    },
+    cancel(orderId) {
+        return apiFetch(`/api/orders/${orderId}/cancel`, {
+            method: 'PUT'
+        });
+    }
+};
+
 // ===== GLOBAL HEADER UI LOGIC =====
 window.syncCartCountFromAPI = async function() {
     const token = localStorage.getItem("shoeshop_token") || localStorage.getItem("token");
