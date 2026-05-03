@@ -1,0 +1,441 @@
+<!DOCTYPE html>
+<html lang="vi">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Sản phẩm - ShoeShop</title>
+  <link rel="stylesheet" href="../../css/layout.css">
+  <link rel="stylesheet" href="../../css/products.css">
+</head>
+
+<body>
+
+  <!-- HEADER -->
+  <div id="header"></div>
+
+  <main class="page">
+
+    <!-- Breadcrumb -->
+    <div class="breadcrumb">
+      <a href="/index.html">Trang chủ</a>
+      <span>></span>
+      <a href="#">Sản phẩm</a>
+    </div>
+
+    <!-- Page Header -->
+    <div class="page-header">
+      <h1>Sản phẩm</h1>
+      <p>Tìm kiếm sản phẩm trong trang này</p>
+    </div>
+
+    <!-- Search Section -->
+    <div class="search-section">
+      <div class="search-input-wrapper">
+        <input type="text" class="search-input" placeholder="Tìm kiếm sản phẩm trong trang này" id="pageSearchInput">
+        <button class="search-btn" onclick="performPageSearch()">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <circle cx="11" cy="11" r="8"></circle>
+            <path d="m21 21-4.35-4.35"></path>
+          </svg>
+        </button>
+      </div>
+    </div>
+
+    <!-- Main Content -->
+    <div class="main-content">
+
+      <!-- Sidebar Filters -->
+      <aside class="sidebar">
+
+        <!-- Size Filter -->
+        <div class="filter-section">
+          <h3 class="filter-title">KÍCH THƯỚC</h3>
+          <div id="sizeFilters"></div>
+        </div>
+
+        <!-- Color Filter -->
+        <div class="filter-section">
+          <h3 class="filter-title">MÀU SẮC</h3>
+          <div id="colorFilters"></div>
+        </div>
+
+      </aside>
+
+      <!-- Product Area -->
+      <section class="product-area">
+
+        <div class="product-header">
+          <div class="product-count" id="productCount">0 sản phẩm</div>
+          <select class="sort-dropdown" id="sortDropdown">
+            <option value="default">Sắp xếp</option>
+            <option value="price-asc">Giá: Thấp đến cao</option>
+            <option value="price-desc">Giá: Cao đến thấp</option>
+            <option value="name-asc">Tên: A-Z</option>
+            <option value="name-desc">Tên: Z-A</option>
+            <option value="newest">Mới nhất</option>
+          </select>
+        </div>
+
+        <div id="productList" class="product-grid"></div>
+
+        <!-- Pagination -->
+        <div class="pagination" id="pagination"></div>
+
+      </section>
+
+    </div>
+
+  </main>
+
+  <!-- FOOTER -->
+  <div id="footer"></div>
+
+  <script src="../../js/api-client.js"></script>
+
+  <script>
+    // Pagination variables
+    let currentPage = 1;
+    const productsPerPage = 12;
+    let totalProducts = 0;
+    let allProductsOrigin = [];
+    let allProducts = [];
+    let allSizes = [];
+    let allColors = [];
+
+    function renderHeaderAuth() {
+      const headerRight = document.getElementById("headerRight");
+      if (!headerRight) return;
+
+      const user = JSON.parse(localStorage.getItem("shoeshop_user")) ||
+        JSON.parse(localStorage.getItem("shoeshop_current_user_v1"));
+
+      if (user) {
+        let extra = "";
+
+        if (user.role === "ADMIN" || user.role === "admin") {
+          extra += `<a class="header-link" href="/pages/admin/dashboard.html">Admin</a>`;
+        }
+
+        if (user.role === "STAFF" || user.role === "staff") {
+          extra += `<a class="header-link" href="/pages/staff/dashboard.html">Staff</a>`;
+        }
+
+        if (user.role === "customer" || user.role === "CUSTOMER") {
+          extra += `<a class="header-link" href="/pages/customer/orders.html">Đơn hàng</a>`;
+        }
+
+        headerRight.innerHTML = `
+    <div id="notificationBellArea"></div>
+    ${extra}
+    <span class="user-text">Xin chào, ${user.fullName || user.email}</span>
+    <button class="header-btn" onclick="logout()">Đăng xuất</button>
+  `;
+
+        if (typeof renderNotificationBell === "function") {
+          renderNotificationBell();
+        }
+      } else {
+        headerRight.innerHTML = `
+    <a class="header-link" href="/pages/customer/auth.html">Đăng nhập</a>
+    <a class="header-link" href="/pages/customer/auth.html?tab=register">Đăng ký</a>
+  `;
+      }
+    }
+
+    async function loadComponent(id, file) {
+      const res = await fetch(file);
+      const html = await res.text();
+      document.getElementById(id).innerHTML = html;
+
+      // Nếu là header, gọi renderHeaderAuth để cập nhật UI
+      if (id === "header") {
+        setTimeout(() => {
+          const user = JSON.parse(localStorage.getItem("shoeshop_user")) ||
+            JSON.parse(localStorage.getItem("shoeshop_current_user_v1"));
+          console.log("User in localStorage:", user);
+
+          if (typeof renderHeaderAuth === "function") {
+            renderHeaderAuth();
+          }
+        }, 200);
+      }
+    }
+
+    async function renderProducts(page = 1) {
+      try {
+        if (allProductsOrigin.length === 0) {
+          // Lấy tất cả sản phẩm
+          const res = await fetch("http://localhost:3000/api/products");
+          allProductsOrigin = await res.json();
+          allProducts = [...allProductsOrigin];
+
+          totalProducts = allProducts.length;
+
+          // Trích xuất kích thước và màu sắc từ database variants
+          allSizes = [...new Set(allProductsOrigin.flatMap(p => p.variants ? p.variants.map(v => v.size) : []).filter(Boolean))].sort((a, b) => a.localeCompare(b, undefined, { numeric: true }));
+          allColors = [...new Set(allProductsOrigin.flatMap(p => p.variants ? p.variants.map(v => v.color) : []).filter(Boolean))];
+
+          // Render filters
+          renderFilters();
+        }
+
+        renderProductsDisplay(page);
+
+      } catch (error) {
+        console.error("Lỗi load sản phẩm:", error);
+        const list = document.getElementById("productList");
+        if (list) list.innerHTML = `<div class="not-found">Không thể tải sản phẩm. Vui lòng thử lại sau.</div>`;
+      }
+    }
+
+    function renderProductsDisplay(page = 1) {
+      const startIndex = (page - 1) * productsPerPage;
+      const endIndex = startIndex + productsPerPage;
+      const currentPageProducts = allProducts.slice(startIndex, endIndex);
+
+      const list = document.getElementById("productList");
+      const productCount = document.getElementById("productCount");
+
+      if (productCount) {
+        productCount.textContent = `Hiển thị ${currentPageProducts.length} trong ${totalProducts} sản phẩm`;
+      }
+
+      if (!list) return;
+
+      list.innerHTML = currentPageProducts.map(p => {
+        const imgUrl = p.images && p.images.length > 0 ? p.images[0].url : 'https://images.unsplash.com/photo-1542291026-7eec264c27ff?auto=format&fit=crop&w=600&q=80';
+        return `
+      <div class="product-card" onclick="window.location.href='product-detail.html?id=${p._id}'">
+        <div class="product-image-wrapper">
+          <img class="product-image" src="${imgUrl}" alt="${p.name}" onerror="this.onerror=null;this.src='https://images.unsplash.com/photo-1542291026-7eec264c27ff?auto=format&fit=crop&w=600&q=80';">
+          ${p.isNew ? '<span class="new-badge">MỚI</span>' : ''}
+        </div>
+        <div class="product-info">
+          <h3>${p.name}</h3>
+          <p class="product-desc">${p.category?.name || p.brand || 'Khám phá sản phẩm'}</p>
+          <p class="product-price">${(p.price || 0).toLocaleString("vi-VN")} đ</p>
+        </div>
+      </div>
+      `
+      }).join("");
+
+      // Render pagination
+      renderPagination(page);
+    }
+
+    function renderFilters() {
+      // Render size filters
+      const sizeContainer = document.getElementById('sizeFilters');
+      if (sizeContainer) {
+        const sizeFiltersHTML = allSizes.map(size => {
+          const count = allProductsOrigin.filter(p => p.variants && p.variants.some(v => v.size === size)).length;
+          return `
+        <div class="filter-option">
+          <input type="checkbox" id="size-${size}" value="${size}" onchange="applyFilters()">
+          <label for="size-${size}">${size}</label>
+          <span class="filter-count">(${count})</span>
+        </div>
+      `;
+        }).join('');
+        sizeContainer.innerHTML = sizeFiltersHTML;
+      }
+
+      // Render color filters
+      const colorContainer = document.getElementById('colorFilters');
+      if (colorContainer) {
+        const colorFiltersHTML = allColors.map(color => {
+          const count = allProductsOrigin.filter(p => p.variants && p.variants.some(v => v.color === color)).length;
+          const colorName = {
+            'black': 'Đen',
+            'white': 'Trắng',
+            'blue': 'Xanh',
+            'red': 'Đỏ',
+            'gray': 'Xám',
+            'green': 'Xanh lá',
+            'yellow': 'Vàng',
+            'purple': 'Tím',
+            'orange': 'Cam',
+            'brown': 'Nâu'
+          }[color.toLowerCase()] || color;
+
+          return `
+        <div class="filter-option">
+          <input type="checkbox" id="color-${color}" value="${color}" onchange="applyFilters()">
+          <label for="color-${color}">${colorName}</label>
+          <span class="filter-count">(${count})</span>
+        </div>
+      `;
+        }).join('');
+        colorContainer.innerHTML = colorFiltersHTML;
+      }
+    }
+
+    function applyFilters() {
+      const selectedSizes = Array.from(document.querySelectorAll('#sizeFilters input:checked'))
+        .map(input => input.value);
+      const selectedColors = Array.from(document.querySelectorAll('#colorFilters input:checked'))
+        .map(input => input.value);
+
+      let filteredProducts = [...allProductsOrigin];
+
+      // Apply size filter
+      if (selectedSizes.length > 0) {
+        filteredProducts = filteredProducts.filter(p =>
+          p.variants && p.variants.some(v => selectedSizes.includes(v.size))
+        );
+      }
+
+      // Apply color filter
+      if (selectedColors.length > 0) {
+        filteredProducts = filteredProducts.filter(p =>
+          p.variants && p.variants.some(v => selectedColors.includes(v.color))
+        );
+      }
+
+      // Update display without fetching again
+      allProducts = filteredProducts;
+      totalProducts = allProducts.length;
+      renderProductsDisplay(1);
+    }
+
+    function renderPagination(currentPage) {
+      const paginationContainer = document.getElementById("pagination");
+      const totalPages = Math.ceil(totalProducts / productsPerPage);
+
+      if (totalPages <= 1) {
+        paginationContainer.innerHTML = "";
+        return;
+      }
+
+      let paginationHTML = "";
+
+      // Previous button
+      paginationHTML += `
+    <button class="pagination-btn" onclick="renderProducts(${currentPage - 1})" 
+            ${currentPage === 1 ? 'disabled' : ''}>
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <polyline points="15 18 9 12 15 6"></polyline>
+      </svg>
+      Trước
+    </button>
+  `;
+
+      // Page numbers
+      const maxVisiblePages = 5;
+      let startPage = Math.max(1, currentPage - Math.floor(maxVisiblePages / 2));
+      let endPage = Math.min(totalPages, startPage + maxVisiblePages - 1);
+
+      if (endPage - startPage < maxVisiblePages - 1) {
+        startPage = Math.max(1, endPage - maxVisiblePages + 1);
+      }
+
+      for (let i = startPage; i <= endPage; i++) {
+        paginationHTML += `
+      <button class="pagination-btn ${i === currentPage ? 'active' : ''}" 
+              onclick="renderProducts(${i})">${i}</button>
+    `;
+      }
+
+      // Next button
+      paginationHTML += `
+    <button class="pagination-btn" onclick="renderProducts(${currentPage + 1})" 
+            ${currentPage === totalPages ? 'disabled' : ''}>
+      Tiếp
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <polyline points="9 18 15 12 9 6"></polyline>
+      </svg>
+    </button>
+  `;
+
+      paginationContainer.innerHTML = paginationHTML;
+    }
+
+    async function addToCart(productId) {
+      const currentUser = JSON.parse(localStorage.getItem("shoeshop_user")) ||
+        JSON.parse(localStorage.getItem("shoeshop_current_user_v1"));
+
+      if (!currentUser) {
+        alert("Vui lòng đăng nhập để thêm vào giỏ hàng");
+        window.location.href = "/pages/customer/auth.html";
+        return;
+      }
+
+      try {
+        // Dùng fetch trực tiếp với token
+        const token = localStorage.getItem("shoeshop_token") || localStorage.getItem("token");
+        const res = await fetch("http://localhost:3000/api/cart", {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': 'Bearer ' + token
+          },
+          body: JSON.stringify({ variantId: productId, quantity: 1 })
+        });
+
+        if (!res.ok) {
+          const error = await res.json();
+          throw new Error(error.message || 'Lỗi khi thêm vào giỏ hàng');
+        }
+
+        alert("Đã thêm sản phẩm vào giỏ hàng");
+        updateCartCount();
+      } catch (error) {
+        alert("Lỗi: " + error.message);
+      }
+    }
+
+    function performPageSearch() {
+      const searchInput = document.getElementById('pageSearchInput');
+      const searchTerm = searchInput.value.trim();
+      if (searchTerm) {
+        // Filter products based on search term
+        const filteredProducts = allProducts.filter(p =>
+          p.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+          p.brand?.toLowerCase().includes(searchTerm.toLowerCase())
+        );
+
+        const tempProducts = allProducts;
+        allProducts = filteredProducts;
+        totalProducts = filteredProducts.length;
+        renderProducts(1);
+
+        // Reset on clear
+        searchInput.addEventListener('input', function () {
+          if (this.value.trim() === '') {
+            allProducts = tempProducts;
+            totalProducts = tempProducts.length;
+            renderProducts(1);
+          }
+        });
+      }
+    }
+
+    function updateCartCount() {
+      const cart = JSON.parse(localStorage.getItem('shoeshop_cart_v1') || '[]');
+      const cartCount = document.getElementById('cartCount');
+      if (cartCount) {
+        const totalItems = cart.reduce((sum, item) => sum + (item.quantity || 1), 0);
+        cartCount.textContent = totalItems;
+        cartCount.style.display = totalItems > 0 ? 'flex' : 'none';
+      }
+    }
+
+    function logout() {
+      localStorage.removeItem("shoeshop_user");
+      localStorage.removeItem("shoeshop_current_user_v1");
+      localStorage.removeItem("shoeshop_token");
+      localStorage.removeItem("user");
+      localStorage.removeItem("token");
+      window.location.href = "/index.html";
+    }
+
+    /* INIT */
+    loadComponent("header", "../../components/header.html");
+    loadComponent("footer", "../../components/footer.html");
+    renderProducts();
+  </script>
+
+</body>
+
+</html>

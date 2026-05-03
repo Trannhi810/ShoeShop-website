@@ -39,8 +39,13 @@ function handleRegister(event) {
       if (data.token) {
         localStorage.setItem("user", JSON.stringify(data.user));
         localStorage.setItem("token", data.token);
+        // Đồng bộ key theo format mà các trang admin dùng API backend kỳ vọng
+        localStorage.setItem("shoeshop_user", JSON.stringify(data.user));
+        localStorage.setItem("shoeshop_token", data.token);
+        // Đồng bộ thêm key cũ để đảm bảo tương thích
+        localStorage.setItem("shoeshop_current_user_v1", JSON.stringify(data.user));
         alert("Đăng ký thành công");
-        window.location.href = "/pages/auth.html";
+        window.location.href = "/index.html";
       } else {
         alert("Đăng ký thất bại: " + (data.message || "Lỗi không xác định"));
       }
@@ -75,14 +80,17 @@ function handleLogin(event) {
         // Đồng bộ key theo format mà các trang admin dùng API backend kỳ vọng
         localStorage.setItem("shoeshop_user", JSON.stringify(data.user));
         localStorage.setItem("shoeshop_token", data.token);
+        // Đồng bộ thêm key cũ để đảm bảo tương thích
+        localStorage.setItem("shoeshop_current_user_v1", JSON.stringify(data.user));
         alert("Đăng nhập thành công");
 
         if (data.user.role === "ADMIN") {
-          window.location.href = "/admin-dashboard.html";
+          window.location.href = "/pages/admin/dashboard.html";
         } else if (data.user.role === "STAFF") {
-          window.location.href = "/pages/staff-dashboard.html";
+          window.location.href = "/pages/staff/dashboard.html";
         } else {
-          window.location.href = "/pages/products.html";
+          // Chuyển về trang chủ để thấy header đã cập nhật
+          window.location.href = "/index.html";
         }
       } else {
         alert("Sai email hoặc mật khẩu");
@@ -99,8 +107,9 @@ function logout() {
   localStorage.removeItem("token");
   localStorage.removeItem("shoeshop_user");
   localStorage.removeItem("shoeshop_token");
+  localStorage.removeItem("shoeshop_current_user_v1");
   alert("Đã đăng xuất");
-  window.location.href = "../index.html";
+  window.location.href = "/index.html";
 }
 
 function switchTab(tab) {
@@ -163,15 +172,18 @@ function handleGoogleCallback(response) {
         // Đồng bộ key theo format mà các trang admin dùng API backend kỳ vọng
         localStorage.setItem("shoeshop_user", JSON.stringify(data.user));
         localStorage.setItem("shoeshop_token", data.token);
+        // Đồng bộ thêm key cũ để đảm bảo tương thích
+        localStorage.setItem("shoeshop_current_user_v1", JSON.stringify(data.user));
 
         alert("Đăng nhập Google thành công!");
 
         // Redirect theo role
         if (data.user.role === "ADMIN") {
-          window.location.href = "/admin-dashboard.html";
+          window.location.href = "/pages/admin/dashboard.html";
         } else if (data.user.role === "STAFF") {
-          window.location.href = "/pages/staff-dashboard.html";
+          window.location.href = "/pages/staff/dashboard.html";
         } else {
+          // Chuyển về trang chủ để thấy header đã cập nhật
           window.location.href = "/index.html";
         }
       } else {

@@ -9,8 +9,12 @@
     <!-- MENU -->
     <nav class="main-nav">
       <a href="/index.html">Trang chủ</a>
-      <a href="/pages/products.html">Sản phẩm</a>
-      <a href="/pages/cart.html">Giỏ hàng</a>
+      <a href="/pages/customer/products.html">Sản phẩm</a>
+      <a href="/pages/customer/orders.html">Đơn hàng</a>
+      <a href="/pages/customer/cart.html" style="position: relative; display: inline-flex; align-items: center; gap: 4px;">
+        Giỏ hàng
+        <span id="cartCount" style="display: none; background: #e63946; color: white; border-radius: 50%; padding: 2px 6px; font-size: 11px; font-weight: bold;">0</span>
+      </a>
     </nav>
 
     <!-- RIGHT -->
@@ -20,27 +24,72 @@
 </header>
 
 <script>
+  function performSearch() {
+    const searchInput = document.getElementById('searchInput');
+    const searchTerm = searchInput.value.trim();
+    if (searchTerm) {
+      window.location.href = `/pages/customer/products.html?search=${encodeURIComponent(searchTerm)}`;
+    }
+  }
+
+  async function fetchAndUpdateCartCount() {
+    const token = localStorage.getItem("shoeshop_token") || localStorage.getItem("token");
+    if (!token) {
+      localStorage.removeItem('shoeshop_cart_count');
+      updateCartBadge();
+      return;
+    }
+    try {
+      const res = await fetch("http://localhost:3000/api/cart", {
+        headers: { 'Authorization': 'Bearer ' + token }
+      });
+      if (res.ok) {
+        const cartData = await res.json();
+        const items = (cartData.data && cartData.data.items) || [];
+        const totalItems = items.reduce((sum, item) => sum + (item.quantity || 1), 0);
+        localStorage.setItem('shoeshop_cart_count', totalItems);
+        updateCartBadge();
+      }
+    } catch (e) {
+      console.log("Lỗi đồng bộ số lượng giỏ hàng", e);
+    }
+  }
+
+  function updateCartBadge() {
+    const cartCount = document.getElementById('cartCount');
+    if (cartCount) {
+      const totalItems = parseInt(localStorage.getItem('shoeshop_cart_count') || '0', 10);
+      cartCount.textContent = totalItems > 99 ? '99+' : totalItems;
+      cartCount.style.display = totalItems > 0 ? 'inline-block' : 'none';
+    }
+  }
+
+  // Thay thế các hàm updateCartCount cũ bằng updateCartBadge
+  window.updateCartCount = updateCartBadge;
+  window.syncCartCountFromAPI = fetchAndUpdateCartCount;
+
   function renderHeaderAuth() {
     const headerRight = document.getElementById("headerRight");
-    const user = JSON.parse(localStorage.getItem("shoeshop_current_user_v1"));
+    // Đọc user từ cả 2 key để đảm bảo tương thích
+    let user = JSON.parse(localStorage.getItem("shoeshop_user")) || 
+              JSON.parse(localStorage.getItem("shoeshop_current_user_v1"));
 
     if (!headerRight) return;
 
     if (user) {
       let extra = "";
 
-      if (user.role === "admin") {
-        extra += `<a class="header-link" href="/pages/admin-dashboard.html">Admin</a>`;
+      if (user.role === "admin" || user.role === "ADMIN") {
+        extra += `<a class="header-link" href="/pages/admin/dashboard.html">Admin</a>`;
       }
 
-      if (user.role === "staff") {
-        extra += `<a class="header-link" href="/pages/staff-dashboard.html">Staff</a>`;
+      if (user.role === "staff" || user.role === "STAFF") {
+        extra += `<a class="header-link" href="/pages/staff/dashboard.html">Staff</a>`;
       }
 
-      if (user.role === "customer") {
-        extra += `<a class="header-link" href="/pages/orders.html">Đơn hàng</a>`;
+      if (user.role === "customer" || user.role === "CUSTOMER") {
+        extra += `<a class="header-link" href="/pages/customer/orders.html">Đơn hàng</a>`;
       }
-
       headerRight.innerHTML = `
       <div id="notificationBellArea"></div>
       ${extra}
@@ -53,14 +102,39 @@
       }
     } else {
       headerRight.innerHTML = `
-      <a class="header-link" href="/pages/auth.html">Đăng nhập</a>
-      <a class="header-link" href="/pages/auth.html?tab=register">Đăng ký</a>
+      <a class="header-link" href="/pages/customer/auth.html">Đăng nhập</a>
+      <a class="header-link" href="/pages/customer/auth.html?tab=register">Đăng ký</a>
     `;
     }
   }
 
   function logout() {
     localStorage.removeItem("shoeshop_current_user_v1");
+    localStorage.removeItem("shoeshop_user");
+    localStorage.removeItem("shoeshop_token");
+    localStorage.removeItem("user");
+    localStorage.removeItem("token");
     window.location.href = "/index.html";
   }
+
+  document.addEventListener('DOMContentLoaded', function() {
+    // Add enter key support for search
+    const searchInput = document.getElementById('searchInput');
+    if (searchInput) {
+      searchInput.addEventListener('keypress', function(e) {
+        if (e.key === 'Enter') {
+          performSearch();
+        }
+      });
+    }
+
+    // Call API exactly once on load to get true cart count
+    fetchAndUpdateCartCount();
+
+    // Update UI from purely lightweight localStorage polling
+    setInterval(updateCartBadge, 1000);
+    
+    // Update header auth on load
+    renderHeaderAuth();
+  });
 </script>

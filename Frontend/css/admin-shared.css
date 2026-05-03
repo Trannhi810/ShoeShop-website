@@ -325,7 +325,7 @@ body {
     background: var(--surface);
     border: 1px solid var(--border);
     border-radius: 16px;
-    overflow: hidden;
+    overflow-x: auto;
     position: relative;
 }
 .table-loading {
@@ -504,6 +504,7 @@ body {
 .modal-overlay.show .modal { transform: translateY(0) scale(1); }
 .modal.modal-sm { max-width: 420px; }
 .modal.modal-lg { max-width: 1000px; }
+.modal.modal-xl { max-width: 1200px; width: 96%; }
 
 .modal-header {
     display: flex; align-items: center; justify-content: space-between;

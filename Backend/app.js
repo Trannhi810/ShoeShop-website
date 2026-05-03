@@ -7,11 +7,22 @@ const productRoutes  = require("./routes/productRoutes");
 const userRoutes     = require("./routes/userRoutes");
 const categoryRoutes = require("./routes/categoryRoutes");
 const cartRoutes     = require("./routes/cartRoutes");
+const inventoryRoutes = require("./routes/inventoryRoutes");
+const orderRoutes    = require("./routes/orderRoutes");
+const paymentRoutes  = require("./routes/paymentRoutes");
+const colorRoutes    = require("./routes/colorRoutes");
+const notificationRoutes = require("./routes/notificationRoutes");
+const productVariantController = require("./controllers/productVariantController");
+const { getAllColors, createColor, deleteColor } = require("./controllers/colorController");
+const { verifyToken, verifyAdmin } = require("./middlewares/authMiddleware");
+const upload = require("./middlewares/uploadMiddleware");
 
 const app = express();
 
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
+
+// Explicit API mappings removed (already handled in specific route files)
 
 // Gọi hàm kết nối database
 connectDB();
@@ -21,6 +32,11 @@ app.use("/api/products",   productRoutes);
 app.use("/api/users",      userRoutes);
 app.use("/api/categories", categoryRoutes);
 app.use("/api/cart",       cartRoutes);
+app.use("/api/inventory",  inventoryRoutes);
+app.use("/api/orders",     orderRoutes);
+app.use("/api/payments",   paymentRoutes);
+app.use("/api/colors",     colorRoutes);
+app.use("/api/notifications", notificationRoutes);
 
 // Serve frontend
 app.use(express.static(path.join(__dirname, "../Frontend")));
@@ -40,6 +56,10 @@ app.get("/admin-products", (req, res) => {
 
 app.get("/admin-categories", (req, res) => {
     res.sendFile(path.join(__dirname, "../Frontend/admin-categories.html"));
+});
+
+app.get("/admin-inventory", (req, res) => {
+    res.sendFile(path.join(__dirname, "../Frontend/admin-inventory.html"));
 });
 
 app.get("/pages/products.html", (req, res) => {
@@ -64,6 +84,10 @@ app.get("/pages/admin-orders.html", (req, res) => {
 
 app.get("/pages/admin-categories.html", (req, res) => {
     res.sendFile(path.join(__dirname, "../Frontend/pages/admin-categories.html"));
+});
+
+app.get("/pages/admin-inventory.html", (req, res) => {
+    res.sendFile(path.join(__dirname, "../Frontend/admin-inventory.html"));
 });
 
 app.get("/pages/staff-dashboard.html", (req, res) => {
@@ -93,6 +117,35 @@ app.get("/pages/notifications.html", (req, res) => {
 // Ưu tiên dùng PORT trong file .env, nếu không có thì chạy port 5000
 const PORT = process.env.PORT || 5000;
 
-app.listen(PORT, () => {
+// 404 Handler cho các API không tồn tại (Tránh việc trả về HTML <!DOCTYPE)
+app.use("/api", (req, res) => {
+    res.status(404).json({ success: false, message: "API endpoint not found" });
+});
+
+// Error handler chung
+app.use((err, req, res, next) => {
+    console.error(err.stack);
+    res.status(500).json({
+        success: false,
+        message: "Server bị lỗi rồi, đợi xíu nhé!",
+        error: err.message
+    });
+});
+
+const http = require('http');
+const { Server } = require("socket.io");
+const socketUtils = require("./utils/socketUtils");
+
+const server = http.createServer(app);
+const io = new Server(server, {
+    cors: {
+        origin: "*", 
+        methods: ["GET", "POST", "PUT", "DELETE", "PATCH"]
+    }
+});
+socketUtils.init(io);
+app.set("io", io);
+
+server.listen(PORT, () => {
     console.log(`Server running at http://localhost:${PORT}`);
 });

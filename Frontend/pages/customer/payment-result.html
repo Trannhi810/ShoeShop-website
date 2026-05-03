@@ -1,0 +1,215 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Kết quả giao dịch - ShoeShop</title>
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <link rel="stylesheet" href="../../css/layout.css" />
+  <style>
+    .result-container {
+      max-width: 600px;
+      margin: 60px auto;
+      text-align: center;
+      background: var(--surface);
+      border-radius: 24px;
+      padding: 40px;
+      box-shadow: 0 10px 40px rgba(0, 0, 0, 0.05);
+      border: 1px solid var(--border);
+    }
+    
+    .icon-wrapper {
+      width: 100px;
+      height: 100px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin: 0 auto 24px;
+      font-size: 48px;
+      color: white;
+    }
+    
+    .success {
+      background: linear-gradient(135deg, #10b981, #059669);
+      box-shadow: 0 10px 25px rgba(16, 185, 129, 0.3);
+    }
+    
+    .error {
+      background: linear-gradient(135deg, #ef4444, #dc2626);
+      box-shadow: 0 10px 25px rgba(239, 68, 68, 0.3);
+    }
+
+    h1 {
+      font-size: 28px;
+      color: var(--text);
+      margin-bottom: 12px;
+    }
+
+    p {
+      color: var(--text-muted);
+      font-size: 16px;
+      line-height: 1.6;
+      margin-bottom: 24px;
+    }
+
+    .amount-box {
+      background: rgba(var(--primary-rgb), 0.05);
+      border: 1px dashed var(--primary);
+      padding: 16px;
+      border-radius: 12px;
+      margin-bottom: 30px;
+      display: inline-block;
+    }
+
+    .amount-box .label {
+      font-size: 14px;
+      color: var(--text-muted);
+      margin-bottom: 4px;
+    }
+
+    .amount-box .value {
+      font-size: 24px;
+      font-weight: 700;
+      color: var(--primary);
+    }
+
+    .action-buttons {
+      display: flex;
+      gap: 12px;
+      justify-content: center;
+    }
+
+    .btn {
+      padding: 12px 24px;
+      border-radius: 99px;
+      font-weight: 600;
+      text-decoration: none;
+      transition: all 0.2s;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .btn-primary {
+      background: var(--primary);
+      color: white;
+      border: none;
+    }
+
+    .btn-primary:hover {
+      background: var(--primary-dark);
+      transform: translateY(-2px);
+    }
+
+    .btn-outline {
+      border: 1px solid var(--border);
+      color: var(--text);
+      background: transparent;
+    }
+
+    .btn-outline:hover {
+      background: var(--background);
+      border-color: var(--text-muted);
+    }
+  </style>
+</head>
+<body>
+  <div id="header"></div>
+
+  <div class="result-container" id="resultCard" style="display: none;">
+    <div class="icon-wrapper" id="resultIcon">
+      <i class="fa-solid fa-spinner fa-spin"></i>
+    </div>
+    <h1 id="resultTitle">Đang xử lý...</h1>
+    <p id="resultMessage">Vui lòng đợi trong giây lát</p>
+    
+    <div class="amount-box" id="amountBox" style="display: none;">
+      <div class="label">Số tiền giao dịch</div>
+      <div class="value" id="txAmount">0đ</div>
+    </div>
+
+    <div class="action-buttons">
+      <a href="/pages/customer/orders.html" class="btn btn-primary" id="primaryBtn">
+        <i class="fa-solid fa-list-check"></i> Theo dõi đơn hàng
+      </a>
+      <a href="/index.html" class="btn btn-outline" id="secondaryBtn">
+        <i class="fa-solid fa-house"></i> Về trang chủ
+      </a>
+    </div>
+  </div>
+
+  <div id="footer"></div>
+
+  <script src="../../js/notify.js"></script>
+  <script>
+    async function loadLayout() {
+      try {
+        const [h, f] = await Promise.all([
+          fetch('/components/header.html').then(r => r.text()),
+          fetch('/components/footer.html').then(r => r.text())
+        ]);
+        document.getElementById('header').innerHTML = h;
+        document.getElementById('footer').innerHTML = f;
+      } catch (e) { console.warn('Layout load failed'); }
+    }
+
+    function parseURLParams() {
+      const urlParams = new URLSearchParams(window.location.search);
+      return {
+        code: urlParams.get('code'),
+        amount: urlParams.get('amount')
+      };
+    }
+
+    function renderResult() {
+      const params = parseURLParams();
+      const card = document.getElementById('resultCard');
+      const icon = document.getElementById('resultIcon');
+      const title = document.getElementById('resultTitle');
+      const message = document.getElementById('resultMessage');
+      const amountBox = document.getElementById('amountBox');
+      const txAmount = document.getElementById('txAmount');
+      const primaryBtn = document.getElementById('primaryBtn');
+
+      card.style.display = 'block';
+
+      // Parse amount if available (VNPay amount is * 100)
+      if (params.amount) {
+        const amountVND = parseInt(params.amount) / 100;
+        txAmount.textContent = amountVND.toLocaleString('vi-VN') + 'đ';
+        amountBox.style.display = 'inline-block';
+      }
+
+      if (params.code === '00') {
+        // Success
+        icon.className = 'icon-wrapper success';
+        icon.innerHTML = '<i class="fa-solid fa-check"></i>';
+        title.textContent = 'Thanh toán thành công!';
+        message.textContent = 'Cảm ơn bạn đã mua sắm tại ShoeShop. Đơn hàng của bạn đã được ghi nhận và đang được xử lý.';
+      } else {
+        // Failed
+        icon.className = 'icon-wrapper error';
+        icon.innerHTML = '<i class="fa-solid fa-xmark"></i>';
+        title.textContent = 'Thanh toán không thành công';
+        
+        let errorMsg = 'Giao dịch đã bị hủy hoặc xảy ra lỗi trong quá trình xử lý.';
+        if (params.code === '97') errorMsg = 'Chữ ký không hợp lệ! Vui lòng liên hệ với bộ phận hỗ trợ.';
+        if (params.code === '24') errorMsg = 'Khách hàng hủy giao dịch.';
+        
+        message.textContent = errorMsg + ' Vui lòng thử lại sau hoặc chọn phương thức thanh toán khác.';
+        
+        primaryBtn.innerHTML = '<i class="fa-solid fa-rotate-left"></i> Thử thanh toán lại';
+        primaryBtn.href = '/pages/customer/checkout.html';
+      }
+    }
+
+    document.addEventListener('DOMContentLoaded', () => {
+      loadLayout();
+      renderResult();
+    });
+  </script>
+</body>
+</html>

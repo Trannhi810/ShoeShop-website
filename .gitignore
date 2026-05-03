@@ -94,3 +94,9 @@ build/
 # Temporary files
 *.tmp
 *.temp
+
+#Rules
+.antigravityrules
+
+# Uploads
+public/uploads/

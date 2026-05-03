@@ -1,3 +1,5 @@
+const mongoose = require('mongoose');
+
 const orderSchema = new mongoose.Schema({
   userId: {
     type: mongoose.Schema.Types.ObjectId,
@@ -26,7 +28,7 @@ const orderSchema = new mongoose.Schema({
 
   status: {
     type: String,
-    enum: ["PENDING", "SHIPPING", "COMPLETED", "CANCELLED"],
+    enum: ["PENDING", "PROCESSING", "SHIPPING", "COMPLETED", "CANCELLED"],
     default: "PENDING"
   },
 

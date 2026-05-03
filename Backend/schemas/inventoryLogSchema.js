@@ -1,21 +1,23 @@
+const mongoose = require("mongoose");
+
 const inventoryLogSchema = new mongoose.Schema({
-  productId: { type: mongoose.Schema.Types.ObjectId, ref: 'Product' },
-  variantId: { type: mongoose.Schema.Types.ObjectId, ref: 'ProductVariant' },
+  productId: { type: mongoose.Schema.Types.ObjectId, ref: 'Product', required: true },
+  variantId: { type: mongoose.Schema.Types.ObjectId, ref: 'ProductVariant', default: null },
 
   type: {
     type: String,
-    enum: ["IMPORT", "ORDER", "CANCEL", "ADJUST"]
+    enum: ["IMPORT", "EXPORT", "ORDER", "CANCEL", "ADJUST"],
+    required: true
   },
 
-  quantity: Number,
+  quantity: { type: Number, required: true },
+  beforeStock: { type: Number, required: true },
+  afterStock: { type: Number, required: true },
 
-  beforeStock: Number,
-  afterStock: Number,
+  referenceId: { type: String, default: '' },
+  note: { type: String, default: '' },
 
-  referenceId: String,
-  note: String,
-
-  changedBy: { type: mongoose.Schema.Types.ObjectId, ref: 'User' }
+  changedBy: { type: mongoose.Schema.Types.ObjectId, ref: 'User', default: null }
 }, { timestamps: true });
 
 module.exports = mongoose.model('InventoryLog', inventoryLogSchema);
